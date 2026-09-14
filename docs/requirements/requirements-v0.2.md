@@ -1,11 +1,13 @@
-# lintsight · JS/TS 静态分析引擎 · 技术设计文档
+# lintsight · JS/TS 静态分析引擎 · 技术设计文档 v0.2
 
-> 版本：v0.2（评审修订） · 日期：2026-09-14 · 状态：技术路线已确认，随《需求文档 v0.1》（docs/requirements/requirements-v0.1.md）进入执行
-> 修订记录（v0.1 → v0.2，落实评审结论）：
+> 版本：v0.2（评审修订②） · 日期：2026-09-14 · 状态：技术路线已确认，随《需求文档 v0.1》（docs/requirements/requirements-v0.1.md）进入执行
+> 修订记录（v0.1 → v0.2 修订①，落实评审结论）：
 > ① 消除 §11 与 §2.1 的矛盾——M1 定案为 oxlint 基座 + Node 薄封装，删除自建 Node 引擎残留草图；
 > ② M2 由「整体重建 Rust 内核」调整为「Rust 深度分析引擎（sidecar）+ oxlint」双引擎架构，不重建规则宿主，LSP 移至 M3；
 > ③ M0 spike 清单补齐：Vue SFC × oxlint JS Plugins 集成 PoC、tsgolint 存量 tsconfig 兼容性实测；
 > ④ 补充 tsgolint（TypeScript 7）不支持 `baseUrl` 的约束与降级方案。
+> 修订记录（v0.2 修订②，评审定稿，落实第二轮评审 16 条）：
+> ⑤ 规则数口径统一为 865+（2026-09 经 oxc.rs 核实），注明统计日期；⑥ P0 规则账目修正：候选池初审去重后改为「自有差异化 ~25~30 条 + 内置启用映射清单」（§4.1、§8.2）；⑦ 关闭附录 B #1（JS runtime 自建选型随 DR-1 失效），alpha 稳定性转入风险清单；⑧ 新增 §3.6 双引擎诊断重叠消解（规则归属矩阵 + 升级即换宿主）；⑨ M1 指纹锚点修正，新增 spike ④（oxlint JSON 诊断字段完备性）；⑩ rule-sdk 生命周期标注 M1/M2 生效范围（onProgramEnd 为 M2 钩子）；⑪ `program` 级规则直接启用 oxlint --type-aware（不自实现，§2.2）；⑫ Vue processor 补路径上下文与 fix 逆映射职责（§11.2）；⑬ M2 内部排序（架构规则先行 → taint 竖切），风险清单补 4 条外部依赖；⑭ 误报超标改「门禁拦截 + 人工决策」，附录 C 契约补 contractVersion / isMainTrace / hasSource 并锁定字符串类型。
 > 读者：引擎研发团队、SAST 平台团队、技术决策者
 > 定位：动手写代码前的准备文档——目标边界、选型决策、架构设计、准备清单。本文档不是 API 手册，接口细节在 M0 阶段冻结。
 
@@ -19,7 +21,7 @@
 | --- | --- | --- |
 | 团队规模 | ≤3 人：纯 Node.js 起步，不做 Rust；≥6 人且有编译器/Rust 经验：混合架构 | 4~6 人，1 名有编译器背景 |
 | 预算/周期 | 预算紧：MVP 收窄到安全规则；预算足：完整 IR 分期建设 | 半年内出可用版本 |
-| 是否必须兼容 ESLint 生态 | 必须兼容 → 规则 API 做 ESLint 兼容层或直接分叉 lint 侧；不要求 → 自有 SDK | 互补而非兼容，提供迁移工具 |
+| 是否必须兼容 ESLint 生态 | 必须兼容 → 规则 API 做 ESLint 兼容层或直接分叉 lint 侧；不要求 → 自有 SDK | JS 轨道天然 ESLint 兼容（复用 oxlint JS Plugins 白捡）；Rust 轨道与自有 SDK 不承诺 ESLint API 兼容，提供迁移工具 |
 | 目标代码库规模 | 万行：单进程即可；百万行：增量+并行必须；千万行：Rust 内核 + 分布式分片 | 百万行级（含公司 monorepo） |
 | 是否要求 Rust 级性能 | 要求 → 深度分析引擎 Rust 化提上 M2；不要求 → Node worker_threads 够用 | Rust 深度分析引擎 + OXC 已定案（§2.4，sidecar 双引擎形态），规则层 JS/Rust 双轨对冲人才风险 |
 | AI/LLM 需求 | 有 → 规则输出需结构化（供 LLM 消费）、预留置信度字段与复核闭环 | 有，对接 SAST 平台 AI 研判 |
@@ -80,7 +82,7 @@
 
 **推荐（分阶段）：**
 
-- **M1（MVP）**：**不自建内核，直接以 oxlint + JS Plugins 为基座**（650+ Rust 内置规则 + ESLint 兼容 JS 插件 API），自有规则用 JS/TS 编写，Vue SFC 走 processor。理由：CI 可用性与规则面铺开最快，自有规则天然 ESLint 兼容、可迁移。
+- **M1（MVP）**：**不自建内核，直接以 oxlint + JS Plugins 为基座**（865+ Rust 内置规则 + ESLint 兼容 JS 插件 API），自有规则用 JS/TS 编写，Vue SFC 走 processor。理由：CI 可用性与规则面铺开最快，自有规则天然 ESLint 兼容、可迁移。
 - **M2（深度分析引擎）**：基于 OXC crate 自建 **Rust 深度分析引擎**（parser + semantic + cfg 进程内直连，在其上自建 def-use/DFG/taint），以 **sidecar 双引擎**形态与 oxlint 并行：oxlint 继续作为语法级规则宿主（不重建其规则调度与嵌入式 JS runtime），深度规则（taint/跨文件/架构约束）用 Rust native 实现，两引擎诊断在报告层合并。是否把 oxlint 整体收编进自家内核，推迟到 M3 之后按维护成本再评估。
 - **关键架构约束**：从第一天起，**规则代码禁止直接依赖具体 parser 的 AST 类型**：JS 轨道走 ESLint 兼容 API 面，Rust 轨道走引擎 IR API 面——这是解析器可替换与双轨并存的唯一保障。
 
@@ -92,7 +94,7 @@
 | CFG（oxc_cfg + oxc_semantic 可选 CFG） | GA：basic blocks、petgraph 图分析、DOT 导出、visitor 集成 | L2 层地基免建，DFG 可直接在其上构建 |
 | 类型感知（tsgolint） | GA：基于 typescript-go，覆盖 59/61 typescript-eslint type-aware 规则；`oxlint --type-aware` | 类型事实不再依赖 Node 侧 tsc，性能与 Rust 内核同栈 |
 | 多文件分析 | oxlint 一等公民：project-wide module graph、跨规则共享解析结果 | 跨文件规则的模块图白捡 |
-| 现成规则面 | oxlint v1.x（stable）：500+ 规则，含 security 类 | M1 可直接以 oxlint 为规则面基线，自建规则聚焦其空缺 |
+| 现成规则面 | oxlint v1.x（stable）：865+ 规则，含 security 类（**口径：865+，2026-09 经 oxc.rs 核实**，随上游演进需更新） | M1 可直接以 oxlint 为规则面基线，自建规则聚焦其空缺 |
 
 **OXC 未具备（需自建）：** DFG/def-use 链、taint 传播引擎（source→sanitizer→sink）、路径事件流输出（见附录 C）。oxc_cfg 提供 CFG 但没有可复用的数据流分析框架，oxlint 的安全规则基本停留在语法级/常量传播——这正是本引擎的差异化空间。
 
@@ -118,6 +120,7 @@ type TypeRequirement =
 
 - `program` 级规则的代价：引擎为同一 tsconfig 建 Program 后**跨规则共享**，并按 tsconfig 内容哈希缓存；增量模式复用 tsc incremental 的 tsbuildinfo。
 - MVP 期只实现 `none/local`，`program` 排 M2——避免第一版就被 tsc 性能拖死。
+- **（v0.2 修订②）`program` 级规则直接启用 oxlint --type-aware（tsgolint）的 type-aware 规则集**（59/61 条，含 no-floating-promises / unsafe-any）——深度引擎**不自实现** type-aware 规则，省一个量级工作量；深度引擎仅消费类型事实做 taint 增强（M3 方向）。
 
 ### 2.3 AST / IR 设计
 
@@ -152,7 +155,7 @@ IR 与 AST 解耦（v0.2 修订）：M1 的 JS 轨道规则经 ESLint 兼容 API
 | 轨道 | 语言 | 适用 | 依据 |
 | --- | --- | --- | --- |
 | 插件规则 | JS/TS | 语法/结构级规则、生态兼容规则、第三方贡献 | oxlint JS Plugins（alpha，2026-03）：ESLint 兼容插件 API 跑在嵌入式 JS runtime；以 ESLint 官方测试套件（33,006 例）验证 100% 通过；提供 `createOnce` 高性能 API 与 auto-fix/IDE 集成 |
-| Native 规则 | Rust | 深度规则：taint/数据流/跨文件，需直接查询引擎 IR（CFG/DFG/CG） | oxlint 650+ 内置规则全 Rust native，性能与内存最优 |
+| Native 规则 | Rust | 深度规则：taint/数据流/跨文件，需直接查询引擎 IR（CFG/DFG/CG） | oxlint 865+ 内置规则全 Rust native，性能与内存最优 |
 
 分界原则：**需要 CFG/DFG/调用图查询的规则必须 Rust native**（JS 轨道拿不到引擎 IR 全量 API）；语法级/结构级规则走 JS 轨道保持迭代速度。两条轨道共用同一诊断模型与报告层（附录 C）。
 
@@ -194,7 +197,7 @@ lintsight/                  # pnpm monorepo + changesets 版本策略
 flowchart TB
     subgraph Entry["入口层"]
         CLI["CLI"]
-        LSP["LSP Server"]
+        LSP["LSP Server（M3）"]
         CIRUN["CI Runner"]
         WATCH["Watch 模式"]
     end
@@ -227,9 +230,11 @@ flowchart TB
 
 **规则接口（M1 冻结初版，此后只加不改）：**
 
+> v0.2 修订② 生命周期生效范围：M1 生效 = `create(ctx)` / `onFileStart` / visitor / `onFileEnd`（oxlint JS Plugins 的 per-file 模型）；`onProgramEnd(globalView)` 与 `createProgramRule` 为 **M2 Rust 轨道钩子**（FR-205），M1 不暴露。M1 冻结的是接口形状与演进纪律，不是 M1 全量兑现承诺。
+
 ```ts
 interface RuleMeta {
-  id: string;                 // 'security/no-prototype-polluting-merge'
+  id: string;                 // 'lintsight/no-prototype-polluting-merge'——物理 id 统一为 pluginName/ruleName（v0.2 修订③），category 走 meta.category 不进 id
   category: RuleCategory;     // correctness | security | performance | maintainability | architecture
   severity: Severity;         // error | warning | info | hint（默认级别，配置可覆盖）
   confidence: Confidence;     // high | medium | low —— 独立于 severity，供 CI 门禁与 AI 研判消费
@@ -274,12 +279,12 @@ sequenceDiagram
 ```jsonc
 {
   "rules": {
-    "security/no-hardcoded-credentials": ["error", { "entropy": true }],
-    "architecture/no-cross-layer-import": ["error", { "layers": ["ui", "service", "dao"] }]
+    "lintsight/no-hardcoded-credentials": ["error", { "entropy": true }],
+    "lintsight/no-cross-layer-import": ["error", { "layers": ["ui", "service", "dao"] }]
   },
   "overrides": [
     { "files": ["**/*.vue"], "processor": "@lintsight/vue" },
-    { "files": ["src/legacy/**"], "rules": { "security/*": "warning" } }
+    { "files": ["src/legacy/**"], "rules": { "lintsight/*": "warning" } }
   ]
 }
 ```
@@ -324,10 +329,20 @@ flowchart LR
 
 ### 3.5 并行与性能
 
-- 文件级并行：worker pool（Node `worker_threads` 或 Rust rayon），默认 min(cpu-1, 8)，`--concurrency` 可调。
+- 文件级并行（v0.2 修订②）：**M1 由 oxlint 自身并行调度承担，Node 薄封装不起 worker pool**；M2 深度分析引擎内使用 rayon，默认 min(cpu-1, 8)，`--concurrency` 可调。
 - 分片策略：按目录/包分片保持局部性，跨文件规则天然串行不影响单文件规则并行度。
 - 内存：worker 上限 + AST 流式释放（规则跑完即弃，仅诊断与缓存结果留存）；超大文件（>1MB）告警并单线程处理。
 - 性能预算（M2 验收）：≥ 15 万 LOC/s（none 类规则、单 worker 折算）、10 万行项目全量 <60s、增量 <5s。此数字需在 M1 用语料库校准。
+
+### 3.6 规则归属与双报消解（v0.2 修订②新增）
+
+双引擎并行后，同一问题可能被 oxlint 内置 security 规则与深度引擎 taint 规则同时命中。消解模型：
+
+1. **规则注册表**：所有规则（oxlint native / JS Plugin / 深度引擎 Rust）在统一注册表登记四元组：`ruleId`、`owner 引擎`、`检测层`（syntax/local/taint）、`状态`（active / retired）。
+2. **升级即换宿主**：附录 A 中标注 ◆ 的规则在 M2 升级为 taint 实现后，注册表将同名 JS 轨道版本标记 `retired`（默认停用，项目配置显式启用可覆盖），owner 切换至深度引擎——**不并存双报**。
+3. **消解规则**：同 `ruleId` 同 span 的重复诊断按 fingerprint 去重（taint 版优先输出，携带 evidenceChain）；不同 `ruleId` 命中同 span **不合并**（语义视角不同，属正常报告），聚合层输出 `dedupGroup` 供平台侧折叠展示。
+4. **跨名接管对（v0.2 修订③）**：M1 自建规则在 M2 被内置/type-aware 规则以**不同 ruleId** 接管时（如 `lintsight/no-floating-promise` → `typescript/no-floating-promises`），在注册表登记「接管对」映射；聚合层对接管对**视为同 ruleId 语义**按 span 去重（接管方优先），否则按规则 3 会产生语义双报。映射清单随「内置启用映射清单」维护（FR-407）。
+5. **验收**：语料库断言双报率为 0（FR-407），接管对与同名升级均覆盖。
 
 ---
 
@@ -337,8 +352,8 @@ flowchart LR
 
 | 批次 | 类别 | 数量目标 | 代表规则 |
 | --- | --- | --- | --- |
-| P0（M1） | 正确性 | 30~50 条 | `no-await-in-non-async`、`no-floating-promise`（local）、`eqeqeq-null-only`、`no-empty-catch`、闭包循环陷阱 |
-| P0（M1） | 安全（语法级） | 15~25 条 | 硬编码凭证（熵+正则）、不安全正则（ReDoS 静态特征）、`eval/new Function`、危险 API 调用面 |
+| P0（M1） | 正确性 | 差异化 ~10 条（去重后） | `no-floating-promise`（local）、`no-then-without-catch`（local）、`no-swallowed-promise-error`、闭包循环陷阱（通用规则如 no-eqeqeq/no-fallthrough 由内置启用映射清单覆盖，不自建） |
+| P0（M1） | 安全（语法级） | 差异化 ~14 条 | 硬编码凭证（熵+正则）、不安全正则（ReDoS 静态特征）、危险 API 调用面（`eval` 等通用项由内置覆盖，见附录 A v2） |
 | P1（M2） | 安全（数据流） | 15~30 条（难但值钱） | XSS（HTML sink）、原型污染（merge sink）、路径穿越、SSRF（URL sink）、SQL/命令注入 |
 | P1（M2） | 架构与依赖 | 10~15 条 | 分层 import 约束、禁止依赖、公共 API 泄漏、循环依赖 |
 | P1（M2） | 性能/度量 | 15~25 条 | 循环内 await、大对象拷贝、圈复杂度/认知复杂度、重复代码、死代码 |
@@ -355,7 +370,7 @@ flowchart LR
 
 - **confidence 与 severity 解耦**（见 3.2）：CI 门禁只拦 `error + high confidence`；medium/low 进报告与平台复核流。
 - 数据流规则必须提供 **suppress 机制**：行内注释（`// lintsight-ignore-next-line: reason`）+ 平台侧白名单（SAST 平台已有审核流程，规则结果需带稳定指纹 hash 供平台登记）。
-- 每条规则文档强制含 `falsePositives` 字段，语料库回归中误报率超标的规则自动降级为 warning（见 §5.1）。
+- 每条规则文档强制含 `falsePositives` 字段，语料库回归中误报率超标触发**门禁拦截 + 人工决策**（修复 / 降级 / 禁用），不自动静默变更 severity——避免平台侧被静默偷袭（见 §5.1）。
 - 总原则：**宁可漏报，不可高频误报**——误报是静态分析采用率的第一杀手。
 
 ---
@@ -395,7 +410,7 @@ flowchart LR
 
 - 日志分级（`--log-level`），`--profile` 输出 per-phase/per-rule 耗时 JSON（性能调优入口）。
 - 崩溃兜底：单文件解析失败 → 降级为诊断（“文件无法解析”）而非整次扫描失败；错误上报（自托管 Sentry 或日志文件）含脱敏。
-- 所有诊断带稳定指纹（ruleId + 文件 + 语义位置的 hash），支撑平台侧历史对比与抑制管理。
+- 所有诊断带稳定指纹（v0.2 修订③）：**M1 = hash(ruleId + 文件路径 + 诊断 span + messageId)**——用 messageId 而非消息模板文本，避免改文案导致全量历史指纹失效；**messageId 的增删/改名视为 breaking，走显式评审**。「语义位置」锚点（外层函数名等）待 spike ④ 验证 oxlint JSON 诊断字段完备性后再启用——支撑平台侧历史对比与抑制管理。
 
 ---
 
@@ -441,7 +456,7 @@ import { defineRule } from '@lintsight/rule-sdk';
 
 export default defineRule({
   meta: {
-    id: 'correctness/no-floating-promise',
+    id: 'lintsight/no-floating-promise',
     category: 'correctness',
     severity: 'error',
     confidence: 'medium',
@@ -495,9 +510,9 @@ export default defineRule({
 
 | 里程碑 | 范围 | 验收标准 |
 | --- | --- | --- |
-| **M0 准备**（~1 月） | 本设计评审冻结；三项选型 spike（① oxc crate PoC：semantic/cfg 消费实测，定 M2 深度分析引擎路线；② Vue SFC × oxlint JS Plugins 集成 PoC：虚拟块注入与诊断回映射，定 M1 Vue 路线；③ tsgolint 存量 tsconfig 兼容性实测：baseUrl/paths/TS5，定类型感知降级策略）；语料库 v0（3 个真实仓库）；规则清单评审（P0 50 条定稿，先与 oxlint 内置去重） | spike 数据支撑 M1/M2 路线定案 |
-| **M1 MVP**（~3 月） | oxlint 基座：收集/解析/内置 650+ 规则；自有 50 条 P0 规则以 JS Plugin 实现；Vue processor；JSON 报告/CLI/RuleTester/基础缓存 | 内部 ≥3 个项目试用；万行库 <10s |
-| **M2 可用**（~4 月） | Rust 深度分析引擎（oxc crate 直连，sidecar 双引擎）+ 并行；CFG/def-use + 首批 taint 规则（Rust native）；tsconfig 全对齐 + tsgolint 类型子进程；增量+影响域缓存；SARIF；CI 新增问题模式（LSP alpha 移至 M3） | 10 万行库全量 <60s / 增量 <5s；接入 ≥2 条 CI 门禁；taint 规则误报率 <15% |
+| **M0 准备**（~1 月） | 本设计评审冻结；四项选型 spike（① oxc crate PoC：semantic/cfg 消费实测，定 M2 深度分析引擎路线；② Vue SFC × oxlint JS Plugins 集成 PoC：虚拟块注入、诊断回映射与 fix 逆映射，定 M1 Vue 路线；③ tsgolint 实测：存量 tsconfig 兼容性（baseUrl/paths/TS5）+ 类型事实传输/延迟/缓存 + oxlint --type-aware 存量项目跑通，定类型感知策略；④ oxlint JSON 诊断字段完备性实测：定 M1 指纹语义锚点可用性）；语料库 v0（3 个真实仓库，先确认 monorepo 授权与脱敏）+ 基线脚本 + **标注规范 v0**（抽样方法、双人交叉标注、仲裁）；规则清单评审（**差异化 25~30 条 + 内置启用映射清单**定稿） | spike 数据支撑 M1/M2 路线定案 |
+| **M1 MVP**（~3 月） | oxlint 基座：收集/解析/内置 865+ 规则；自有差异化 25~30 条 P0 规则以 JS Plugin 实现（与内置重合项由启用映射清单配置）；Vue processor；JSON 报告/CLI/RuleTester/基础缓存 | 内部 ≥3 个项目试用；万行库 <10s |
+| **M2 可用**（~4 月） | Rust 深度分析引擎（oxc crate 直连，sidecar 双引擎）+ 并行；**内部排序：架构约束规则 + tsconfig 全对齐（含 baseUrl 兜底）先行 → taint 竖切（硬门槛 3 条）→ 其余 stretch**；type-aware 直接启用 oxlint --type-aware（不自实现）；增量+影响域缓存；SARIF + 平台路径契约 + 双报消解；CI 新增问题模式；迁移工具与长驻 worker 顺延（LSP 已移 M3） | 10 万行库全量 <60s / 增量 <5s；接入 ≥2 条 CI 门禁；taint 硬门槛规则误报率 <15% |
 | **M3 企业级**（持续） | LSP alpha → VS Code 插件 GA、调用图跨文件 taint、fixer 全量、远端缓存、插件市场/规则平台联动、AI 研判对接（诊断→LLM 降噪→复核闭环） | 平台侧全量接入；月度误报率持续下降 |
 
 ### 8.3 风险清单
@@ -508,6 +523,10 @@ export default defineRule({
 | OXC 语义层未冻结 | 内核返工 | M0 spike 验证；oxc 版本锁定 + 语料库回归门禁；M1 走 oxlint 基座不受影响 |
 | tsc Program 性能 | 大仓不可用 | typeRequirement 分级 + Program 共享/缓存；`program` 级规则限流 |
 | tsgolint 需 TS7 且不支持 baseUrl | 存量项目类型感知规则不可用 | typeRequirement 自动降级到 local；引擎侧别名解析兜底；推动存量项目迁移 paths-only |
+| oxlint JS Plugins 处于 alpha（v0.2 修订②，承接附录 B #1 关闭） | 自有规则运行时行为随上游变化 | 锁定 oxlint 版本；语料库 diff 门禁；跟踪上游变更日志 |
+| 平台复核流程未就位 | taint 误报率 <15% 验收口径空转 | M2 前 1 月与 cleancode 约定复核 SLA 与口径；过渡期双人交叉标注 |
+| 附录 C 契约被动演进 | 平台前端改字段导致引擎返工 | contractVersion 版本化 + formatter 快照测试 + 每里程碑平台联调窗口 |
+| 公司 monorepo 语料库授权 | 语料库 v0 无法建立 | M0 第一周确认授权与脱敏方案；备选开源大仓（Vue / element-plus 级） |
 | 误报声誉损害 | 团队弃用 | confidence 分级、CI 只拦 high、平台复核闭环、语料库回归门禁 |
 | 与 ESLint 生态撕裂 | 迁移阻力 | 迁移工具 + 明确分工（深度分析 vs 风格 lint） |
 | 关键人依赖（编译器专家） | 单点 | 设计文档 + IR 中间产物文档化；结对开发 |
@@ -532,10 +551,11 @@ export default defineRule({
 - [ ] 本设计评审并冻结边界（§1.3 非目标签字确认）
 - [ ] 前置决策变量（§0）逐项拍板
 - [ ] 选型 spike ①：oxc crate PoC（parser/semantic/cfg 直连、性能、内存实测）→ 定 M2 深度分析引擎路线
-- [ ] 选型 spike ②：Vue SFC × oxlint JS Plugins 集成 PoC（SFC 虚拟块注入、诊断位置回映射、vize bridge 方案评估）→ 定 M1 Vue 支持路线
-- [ ] 选型 spike ③：tsgolint 在公司存量 tsconfig（baseUrl/paths、TS 5.x）上的兼容性实测 → 定类型感知降级策略
-- [ ] P0 规则清单（50 条）逐条评审：检测逻辑、confidence、误报场景
-- [ ] 语料库 v0：3 个真实仓库（含 1 个公司 monorepo）+ 基线脚本
+- [ ] 选型 spike ②：Vue SFC × oxlint JS Plugins 集成 PoC（SFC 虚拟块注入、诊断位置回映射、safe fix 逆映射、vize bridge 方案评估）→ 定 M1 Vue 支持路线
+- [ ] 选型 spike ③：tsgolint 实测（存量 tsconfig 兼容性 baseUrl/paths/TS5、类型事实传输/延迟/缓存、oxlint --type-aware 存量项目跑通）→ 定类型感知策略（含「不自实现 program 级规则」的执行确认）
+- [ ] 选型 spike ④：oxlint JSON 诊断字段完备性实测（span/上下文/fix 结构）→ 定 M1 指纹锚点方案
+- [ ] P0 规则清单逐条评审（差异化 25~30 条 + 内置启用映射清单）：检测逻辑、confidence、误报场景
+- [ ] 语料库 v0：3 个真实仓库（含 1 个公司 monorepo，先确认授权与脱敏）+ 基线脚本 + 标注规范 v0（抽样方法、双人交叉标注、仲裁）
 - [ ] monorepo 脚手架 + CI（test/lint/bench 门禁）+ changesets
 - [ ] `rule-sdk` 接口 RFC 评审（这是对外承诺，最难改）
 
@@ -595,7 +615,7 @@ flowchart LR
         VUE["VueProcessor<br/>.vue → 虚拟块 + 位置回映射"]
     end
     subgraph Ox["oxlint 基座（Rust，M1）"]
-        NATIVE["内置 650+ native 规则"]
+        NATIVE["内置 865+ native 规则"]
         JSPLUG["JS Plugins<br/>自有 P0 规则（ESLint 兼容 API）"]
     end
     subgraph Deep["深度分析引擎（Rust sidecar，M2）"]
@@ -615,7 +635,7 @@ flowchart LR
 | --- | --- | --- | --- |
 | cli | Node | 参数、配置加载校验、oxlint/深度引擎进程编排、exit code | 业务逻辑 |
 | config-bridge | Node | lintsight.config → .oxlintrc 翻译、规则等价映射 | 规则逻辑 |
-| vue-processor | Node | SFC 拆块、虚拟文件喂入 oxlint、诊断位置回映射 | template 深度分析 |
+| vue-processor | Node | SFC 拆块、虚拟文件喂入 oxlint（**就地临时文件约定**：保持原 .vue 路径上下文以正确解析 import、并发写冲突处理、临时文件 gitignore 规则）、诊断位置回映射、safe fix 区间逆映射回写 | template 深度分析 |
 | diagnostic-bridge | Node | oxlint 诊断 → 统一诊断模型（指纹/confidence/平台字段） | 格式化 |
 | deep-analysis | Rust（M2） | CFG/def-use/DFG/taint、架构规则、附录 C 路径输出 | 语法级规则 |
 | formatter | Node | JSON/文本输出、SARIF（M2） | 消费侧逻辑 |
@@ -637,10 +657,10 @@ flowchart LR
 
 | # | 问题 | 倾向 |
 | --- | --- | --- |
-| 1 | JS 规则 runtime 选型：复用 oxlint JS Plugins 的嵌入式实现（开源）vs 自建（rquickjs / boa / deno_core） | M0 spike 实测定案 |
+| 1 | ~~JS 规则 runtime 选型~~ **已关闭（v0.2 修订②）**：DR-1 定案复用 oxlint JS Plugins 自带 runtime（自建 rquickjs / boa / deno_core 路线随自建内核一起废弃）；alpha 稳定性风险转入 §8.3 风险清单跟踪 | 已关闭 |
 | 2 | Vue template 内表达式（指令中的 JS）是否进 MVP 分析范围 | script 先行，template M2 |
 | 3 | 是否接受规则跑在独立进程（插件隔离 vs 性能损耗） | 默认进程内，崩溃隔离 M3 |
-| 4 | `program` 级规则首批发哪几条（性能代价最大的决策） | 仅 floating-promise / unsafe-any 两类 |
+| 4 | `program` 级规则首批发哪几条（性能代价最大的决策） | **已收敛（v0.2 修订②）**：直接启用 oxlint --type-aware 全集（含 floating-promise / unsafe-any），深度引擎不自实现 |
 | 5 | 配置文件最终格式（JSONC vs YAML） | JSONC（与 tsconfig 心智一致） |
 | 6 | taint 路径截断策略（超长路径折叠为 `...n steps` 的阈值） | 对标前端展示体验，默认 ≤32 步 |
 
@@ -655,6 +675,7 @@ flowchart LR
 ```jsonc
 // 一个缺陷（defectId）→ 若干条可达路径（BugPathInfoItem[]，前端渲染为折叠面板）
 {
+  "contractVersion": "1",           // 契约版本（v0.2 修订②）：字段变更必须递增，formatter 以快照测试锁定
   "issueId": "issue-uuid",          // 单条路径标识（同缺陷多路径各占一个 panel）
   "message": "Tainted data from req.query reaches innerHTML",  // 路径结论摘要
   "aiGenerated": 1,                  // 引擎来源：1 符号引擎 / 2 AI 引擎 / 3 两者
@@ -672,7 +693,7 @@ flowchart LR
 }
 ```
 
-前端交互依赖（引擎输出必须满足）：点击节点 → 按 `filePath + line + column` 打开代码视图并定位；`isMainTrace` 以缺陷起始行标记 sink 节点高亮——**路径最后一步必须是缺陷报告位置**。
+前端交互依赖（引擎输出必须满足）：点击节点 → 按 `filePath + line + column` 打开代码视图并定位；`isMainTrace` 以缺陷起始行标记 sink 节点高亮——**路径最后一步必须是缺陷报告位置**。注意契约类型（v0.2 修订②）：`line` / `column` / `range` 字段在平台契约中均为**字符串**，formatter 生成时按 C.1 类型转换并以快照测试锁定。
 
 ### C.2 事件分类（对标前端 title 语义常量）
 
@@ -712,9 +733,13 @@ interface TaintFinding {
   message: string;             // 缺陷主消息（= paths 中 sink 步的 title）
   paths: Array<{               // ≥1 条可达路径，每条独立 issueId（引擎生成稳定 ID）
     summary: string;           // → message
+    hasSource: 0 | 1;          // 源文件是否可定位（对齐 C.1 契约，v0.2 修订②）
+    isMainTrace: boolean;      // 主路径标记：sink 所在路径为 true（对齐前端高亮逻辑）
     events: PathEvent[];       // 按 C.2 顺序，sink 事件必须是最后一步
   }>;
 }
+// 序列化约束（v0.2 修订②）：formatter 输出时 line/column/range 一律转字符串，
+// 字段名与嵌套结构以 C.1 平台契约为准，快照测试锁定；contractVersion 随字段变更递增。
 ```
 
 ### C.4 实现要求
@@ -723,4 +748,4 @@ interface TaintFinding {
 2. **跨文件路径**：`call`/`return` 事件天然跨文件，依赖 L4 调用图；文件不可得时 `hasSource=0`，前端禁止跳转但路径仍展示。
 3. **指纹稳定**：`issueId` 与诊断 `fingerprint` 需基于（ruleId, sink 位置, 路径形状哈希）生成，保证重扫后路径可关联历史记录（平台复核流依赖此性质）。
 4. **与 AI 双轨**：引擎输出 `aiGenerated=1`；AI 研判结果 `=2`；两者指纹一致时平台标 `=3`。前端已按此双轨渲染（type.ts 中 AI 证据 traceKey 与引擎 traceKey 双轨不混排）。
-5. **验收**：M2 taint 竖切 = 一条 `security/no-prototype-polluting-merge` 型规则在测试仓库产出完整路径，在平台前端「路径跟踪」tab 可逐节点点击定位。
+5. **验收**：M2 taint 竖切 = 一条 `lintsight/no-prototype-polluting-merge` 型规则在测试仓库产出完整路径，在平台前端「路径跟踪」tab 可逐节点点击定位。

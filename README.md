@@ -33,7 +33,7 @@ flowchart LR
 
 | 文档 | 说明 |
 | --- | --- |
-| [docs/design.md](docs/design.md) | 技术设计文档 v0.2：选型论据、架构、IR 分层、平台契约（附录 C）、常见坑 |
+| [docs/requirements/requirements-v0.2.md](docs/requirements/requirements-v0.2.md) | 技术设计文档 v0.2：选型论据、架构、IR 分层、双报消解（§3.6）、平台契约（附录 C）、常见坑 |
 | [docs/requirements/requirements-v0.1.md](docs/requirements/requirements-v0.1.md) | 需求文档 v0.1：FR/NFR 基线、决策记录 DR-1~6、里程碑验收、P0 规则候选池 |
 | [AGENTS.md](AGENTS.md) | 仓库协作指南（AI Agent 与新成员入口） |
 
@@ -41,9 +41,9 @@ flowchart LR
 
 | 里程碑 | 周期 | 核心交付 |
 | --- | --- | --- |
-| **M0 准备** | ~1 月 | 三项选型 spike（oxc crate / Vue×JSPlugins / tsgolint 兼容性）、语料库 v0、P0 规则 50 条定稿、monorepo 脚手架 |
-| **M1 MVP** | ~3 月 | oxlint 基座全链路 + 自有 50 条规则（JS 轨道）+ Vue script 支持 + JSON 报告 + 指纹 |
-| **M2 可用** | ~4 月 | Rust 深度分析引擎（taint/架构规则）+ tsgolint 类型感知 + SARIF + 平台路径契约 + CI 门禁 |
+| **M0 准备** | ~1 月 | 四项选型 spike（oxc crate / Vue×JSPlugins / tsgolint 实测 / oxlint 诊断字段）、语料库 v0 + 标注规范、差异化规则 25~30 条定稿、monorepo 脚手架 |
+| **M1 MVP** | ~3 月 | oxlint 基座全链路 + 自有差异化规则 ~25~30 条（JS 轨道）+ 内置启用映射 + Vue script 支持 + JSON 报告 + 指纹 |
+| **M2 可用** | ~4 月 | Rust 深度分析引擎（架构规则先行 → taint 竖切 3 条硬门槛）+ oxlint type-aware 类型感知 + SARIF + 平台路径契约 + 双报消解 + CI 门禁 |
 | **M3 企业级** | 持续 | LSP/VS Code、跨文件 taint、远端缓存、AI 研判闭环 |
 
 **技术栈**：TypeScript（Node 20/22，pnpm monorepo）· Rust（oxc crates）· oxlint · tsgolint · Go（类型子进程，可选）
@@ -53,11 +53,13 @@ flowchart LR
 | Skill | 用途 |
 | --- | --- |
 | `belos-street` | 编码/文档/审查/Git 规范总纲（入口） |
+| `oxc-toolchain` | oxc crates API / oxlint 配置与 JS Plugins / tsgolint / 版本升级纪律 |
+| `rule-authoring` | 规则开发流程：检测层选型、用例先行、语料库门禁、误报分析 |
 | `rust-best-practices` | Rust 工程最佳实践（M2 深度引擎） |
 | `superpowers` | 计划/TDD/调试/审查等通用开发工作流 |
 | `grill-me` | 模糊需求澄清 |
 
-计划补充：`oxc-toolchain`（oxc crates / oxlint 插件开发知识，M0）、`rule-authoring`（规则开发 + 语料库门禁流程，M0/M1）、`taint-engine`（source/sanitizer/sink 建模，M2 前）。
+计划补充：`taint-engine`（source/sanitizer/sink 建模 + 附录 C 契约，M1 末编写）。
 
 ## 参与开发
 
