@@ -34,7 +34,7 @@ flowchart LR
 | 文档 | 说明 |
 | --- | --- |
 | [docs/requirements/requirements-v0.2.md](docs/requirements/requirements-v0.2.md) | 技术设计文档 v0.2：选型论据、架构、IR 分层、双报消解（§3.6）、平台契约（附录 C）、常见坑 |
-| [docs/requirements/requirements-v0.1.md](docs/requirements/requirements-v0.1.md) | 需求文档 v0.1：FR/NFR 基线、决策记录 DR-1~6、里程碑验收、P0 规则候选池 |
+| [docs/requirements/requirements-v0.1.md](docs/requirements/requirements-v0.1.md) | 需求文档 v0.1：FR/NFR 基线、决策记录 DR-1~7、里程碑验收、P0 规则候选池 |
 | [docs/todo/todo-v0.1.md](docs/todo/todo-v0.1.md) | 任务清单（分层滚动）：M0 执行级、M1 任务域（spike gate）、M2/M3 占位 |
 | [AGENTS.md](AGENTS.md) | 仓库协作指南（AI Agent 与新成员入口） |
 

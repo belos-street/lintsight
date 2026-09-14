@@ -13,8 +13,9 @@
 | 文档 | 内容 | 什么时候读 |
 | --- | --- | --- |
 | [docs/requirements/requirements-v0.2.md](docs/requirements/requirements-v0.2.md)（v0.2） | 技术选型、架构、IR 分层、双报消解（§3.6）、平台契约（附录 C）、坑清单 | 做任何架构相关决策前 |
-| [docs/requirements/requirements-v0.1.md](docs/requirements/requirements-v0.1.md) | FR/NFR 需求基线、决策记录 DR-1~6、里程碑验收、P0 规则候选池（附录 A） | 排期、验收、写规则前 |
+| [docs/requirements/requirements-v0.1.md](docs/requirements/requirements-v0.1.md) | FR/NFR 需求基线、决策记录 DR-1~7、里程碑验收、P0 规则候选池（附录 A） | 排期、验收、写规则前 |
 | [docs/todo/todo-v0.1.md](docs/todo/todo-v0.1.md) | 分层滚动任务清单：M0 执行级（T0.x 带 DoD）、M1 任务域（spike gate）、M2/M3 占位 | 认领任务、汇报进度、滚动细化前 |
+| [.agents/memory/](.agents/memory/) | 项目决策记忆：DR-1~7 全量沉淀（decisions.md，含上下文/否决项/后果）+ 评审教训（lessons.md） | 质疑选型前、做架构权衡、写文档/评审前 |
 
 ## 3. 技术路线铁律（不得偏离，变更需重新评审）
 
@@ -43,7 +44,7 @@
 
 - 需求以 `FR-`/`NFR-` 编号管理：新增/修改需求必须升文档版本号并写修订记录。
 - 引用需求时用编号（如 FR-302），不要凭记忆复述指标。
-- spike / 评审结论必须落档（写入对应文档或 `docs/` 新增文件），不留只在对话里的决策。
+- spike / 评审结论必须落档（写入对应文档或 `docs/` 新增文件），不留只在对话里的决策；决策的**上下文与理由**同步沉淀到 `.agents/memory/decisions.md`，教训沉淀到 `lessons.md`。
 - 跨文档术语一致：fingerprint（指纹）、confidence、typeRequirement、sidecar 双引擎等以 requirements-v0.2.md / requirements-v0.1.md 术语表定义为准。
 
 ## 6. 本地 skills 路由（.agents/skills/）
