@@ -54,7 +54,7 @@ oxlint -A all -D suspicious,correctness   # 先全放行再精确开
 ## type-aware（tsgolint）
 
 ```bash
-pnpm add -D oxlint oxlint-tsgolint@7
+bun add -d oxlint oxlint-tsgolint@7   # 包管理器为 bun（DR-7）；官方文档示例为 pnpm，等价
 oxlint --type-aware            # 类型感知规则
 oxlint --type-aware --type-check  # 同时替代 tsc --noEmit
 ```

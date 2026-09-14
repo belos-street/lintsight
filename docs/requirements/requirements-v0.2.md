@@ -8,6 +8,7 @@
 > ④ 补充 tsgolint（TypeScript 7）不支持 `baseUrl` 的约束与降级方案。
 > 修订记录（v0.2 修订②，评审定稿，落实第二轮评审 16 条）：
 > ⑤ 规则数口径统一为 865+（2026-09 经 oxc.rs 核实），注明统计日期；⑥ P0 规则账目修正：候选池初审去重后改为「自有差异化 ~25~30 条 + 内置启用映射清单」（§4.1、§8.2）；⑦ 关闭附录 B #1（JS runtime 自建选型随 DR-1 失效），alpha 稳定性转入风险清单；⑧ 新增 §3.6 双引擎诊断重叠消解（规则归属矩阵 + 升级即换宿主）；⑨ M1 指纹锚点修正，新增 spike ④（oxlint JSON 诊断字段完备性）；⑩ rule-sdk 生命周期标注 M1/M2 生效范围（onProgramEnd 为 M2 钩子）；⑪ `program` 级规则直接启用 oxlint --type-aware（不自实现，§2.2）；⑫ Vue processor 补路径上下文与 fix 逆映射职责（§11.2）；⑬ M2 内部排序（架构规则先行 → taint 竖切），风险清单补 4 条外部依赖；⑭ 误报超标改「门禁拦截 + 人工决策」，附录 C 契约补 contractVersion / isMainTrace / hasSource 并锁定字符串类型。
+> 修订记录（v0.2 修订④，2026-09-14）：⑮ 封装层运行时 Node → **Bun 绑死**（DR-7，见需求文档）：bun install/workspaces + bun.lock 提交、全面采用 Bun 专有 API（Bun.file/Bun.Glob 等）、**bun build --compile 单文件二进制**分发（业务侧零依赖安装、内嵌 runtime）、bun test 承载 RuleTester 与 CI；TS 配置文件顾虑消除（§6.4 评估提前至 M2）；兼容矩阵与服务器部署要求同步（§5.3/FR-503）；todo 新增 T0.13 Bun 运行时验证。
 > 读者：引擎研发团队、SAST 平台团队、技术决策者
 > 定位：动手写代码前的准备文档——目标边界、选型决策、架构设计、准备清单。本文档不是 API 手册，接口细节在 M0 阶段冻结。
 
@@ -147,7 +148,8 @@ IR 与 AST 解耦（v0.2 修订）：M1 的 JS 轨道规则经 ESLint 兼容 API
 | **Rust + OXC（内核）** | 唯一能**库级**消费 OXC 的语言：oxc_parser / oxc_semantic / oxc_cfg 进程内直连、arena 零拷贝；oxlint 本身即此架构，生态成熟 | ✅ 定案 |
 | Go + OXC（内核） | ❌ OXC **没有 Go binding**（crate 重度依赖 Rust arena/lifetime，cgo 包装不现实），Go 只能子进程/IPC 调 Rust 二进制——既丢库级集成优势，又多一层序列化边界，两头不占 | 否决 |
 | Go（tsgolint 模式） | OXC 官方同款混合：Rust 内核 + Go 子进程跑 typescript-go 做类型感知（oxlint --type-aware 即此架构） | 🟡 仅类型子进程可选位 |
-| 纯 Node.js | 仅适合快速验证；无法库级消费 OXC | M1 起点即为 oxlint 基座，无自建 Node 内核 |
+| **Bun（封装层运行时，v0.2 修订④）** | bun install/workspaces、原生跑 TS、内置 test/glob/file 替代第三方、`bun build --compile` 单文件分发（内嵌 runtime，业务侧零依赖）；**全面采用 Bun 专有 API，运行时绑死 Bun** | ✅ 定案（DR-7） |
+| 纯 Node.js | 仅适合快速验证；无法库级消费 OXC；已由 Bun 取代 | M1 起点即为 oxlint 基座，无自建 JS 内核 |
 | WASM | 浏览器/Web Demo、LSP web 版 | M3 非主线 |
 
 **规则层双轨（对团队现实的关键让步）：**
@@ -164,7 +166,7 @@ IR 与 AST 解耦（v0.2 修订）：M1 的 JS 轨道规则经 ESLint 兼容 API
 ### 2.5 构建与发布（monorepo）
 
 ```text
-lintsight/                  # pnpm monorepo + changesets 版本策略
+lintsight/                  # Bun monorepo（bun install/workspaces + bun.lock 提交）+ changesets 版本策略
 ├─ packages/
 │  ├─ @lintsight/cli               # CLI 编排：配置加载、oxlint/深度引擎进程编排、exit code
 │  ├─ @lintsight/config-bridge     # lintsight.config → .oxlintrc 翻译、lintsight migrate 迁移工具
@@ -329,7 +331,7 @@ flowchart LR
 
 ### 3.5 并行与性能
 
-- 文件级并行（v0.2 修订②）：**M1 由 oxlint 自身并行调度承担，Node 薄封装不起 worker pool**；M2 深度分析引擎内使用 rayon，默认 min(cpu-1, 8)，`--concurrency` 可调。
+- 文件级并行（v0.2 修订②）：**M1 由 oxlint 自身并行调度承担，Bun 薄封装不起 worker pool**；M2 深度分析引擎内使用 rayon，默认 min(cpu-1, 8)，`--concurrency` 可调。
 - 分片策略：按目录/包分片保持局部性，跨文件规则天然串行不影响单文件规则并行度。
 - 内存：worker 上限 + AST 流式释放（规则跑完即弃，仅诊断与缓存结果留存）；超大文件（>1MB）告警并单线程处理。
 - 性能预算（M2 验收）：≥ 15 万 LOC/s（none 类规则、单 worker 折算）、10 万行项目全量 <60s、增量 <5s。此数字需在 M1 用语料库校准。
@@ -404,7 +406,7 @@ flowchart LR
 | JSX/TSX | ✅ | ✅ |
 | 装饰器 | standard（TS5） | + legacy（NestJS 场景） |
 | Vue SFC | `<script setup>` ✅，template 仅作 processor 抽取 | template 内表达式分析 |
-| Node 版本 | 20.x / 22.x | 同左 |
+| 运行时 | **Bun ≥1.2**（封装层绑死；compile 单文件自带 runtime，业务侧零依赖） | 同左；平台服务器部署标准化 Bun 版本（FR-503） |
 
 ### 5.4 可观测性
 
@@ -441,7 +443,7 @@ flowchart LR
 
 ### 6.4 配置与迁移
 
-- 配置：JSONC + JSON Schema（IDE 补全），TS 配置文件 M3 再议（避免引擎依赖 ts 执行器）。
+- 配置：JSONC + JSON Schema（IDE 补全）；TS 配置文件评估提前至 M2（v0.2 修订④：Bun 原生执行 TS、compile 单文件内嵌 runtime，原「依赖 ts 执行器」顾虑消除）。
 - 迁移路径：`lintsight migrate --from eslint` → 生成初版配置 + 规则等价映射报告（✅ 直接映射 / 🔄 需手写 / ➖ 无对应）。
 - SAST 平台侧：平台调度引擎以服务化模式（长驻 worker 承接扫描任务）优先于每次起进程，节省大仓解析与类型缓存成本。
 
@@ -502,7 +504,7 @@ export default defineRule({
 | --- | --- | --- |
 | 静态分析/编译器工程师 | AST、CFG/DFG、taint、tsconfig 体系（**关键路径**） | 1~2 |
 | Rust 工程师 | 内核：解析适配、并行、缓存、napi 桥接 | 1（M1 可由上兼任） |
-| Node/平台工程师 | CLI、LSP、插件 SDK、CI 集成、SAST 平台对接 | 1~2 |
+| Bun/平台工程师 | CLI、LSP、插件 SDK、CI 集成、SAST 平台对接 | 1~2 |
 | QA/语料库负责人 | 语料库建设、基准、误报标注体系 | 0.5~1 |
 | DevRel/文档（可兼） | 规则文档、迁移指南、内部布道 | 0.5（兼） |
 
@@ -524,6 +526,7 @@ export default defineRule({
 | tsc Program 性能 | 大仓不可用 | typeRequirement 分级 + Program 共享/缓存；`program` 级规则限流 |
 | tsgolint 需 TS7 且不支持 baseUrl | 存量项目类型感知规则不可用 | typeRequirement 自动降级到 local；引擎侧别名解析兜底；推动存量项目迁移 paths-only |
 | oxlint JS Plugins 处于 alpha（v0.2 修订②，承接附录 B #1 关闭） | 自有规则运行时行为随上游变化 | 锁定 oxlint 版本；语料库 diff 门禁；跟踪上游变更日志 |
+| 封装层绑死 Bun（v0.2 修订④/DR-7） | Bun 生态偶发兼容问题；平台服务器需部署 Bun | T0.13 验证兜底（launcher/compile/依赖兼容）；compile 单文件使业务侧无感；服务器标准化 Bun 版本 |
 | 平台复核流程未就位 | taint 误报率 <15% 验收口径空转 | M2 前 1 月与 cleancode 约定复核 SLA 与口径；过渡期双人交叉标注 |
 | 附录 C 契约被动演进 | 平台前端改字段导致引擎返工 | contractVersion 版本化 + formatter 快照测试 + 每里程碑平台联调窗口 |
 | 公司 monorepo 语料库授权 | 语料库 v0 无法建立 | M0 第一周确认授权与脱敏方案；备选开源大仓（Vue / element-plus 级） |
@@ -602,11 +605,11 @@ export default defineRule({
 
 ### 11.1 模块与数据流
 
-> v0.2 修订：M1 定案为 **oxlint 基座 + Node 薄封装**，不自建 engine-core（解析/调度/并行/规则全部复用 oxlint）。原 Node + Babel 自建引擎草图已删除。
+> v0.2 修订：M1 定案为 **oxlint 基座 + Bun 薄封装**（修订④：封装层运行时 Node → Bun，见修订记录④），不自建 engine-core（解析/调度/并行/规则全部复用 oxlint）。原 Node + Babel 自建引擎草图已删除。
 
 ```mermaid
 flowchart LR
-    subgraph CLI["lintsight cli（Node 薄封装，M1）"]
+    subgraph CLI["lintsight cli（Bun 薄封装，M1）"]
         ARG["配置加载<br/>lintsight.config.json"]
         TRANS["ConfigBridge<br/>→ .oxlintrc 翻译"]
         COLLECT["FileCollector<br/>(glob+ignore+git)"]
@@ -633,13 +636,13 @@ flowchart LR
 
 | 模块 | 载体 | 职责 | 明确不做 |
 | --- | --- | --- | --- |
-| cli | Node | 参数、配置加载校验、oxlint/深度引擎进程编排、exit code | 业务逻辑 |
-| config-bridge | Node | lintsight.config → .oxlintrc 翻译、规则等价映射 | 规则逻辑 |
-| vue-processor | Node | SFC 拆块、虚拟文件喂入 oxlint（**就地临时文件约定**：保持原 .vue 路径上下文以正确解析 import、并发写冲突处理、临时文件 gitignore 规则）、诊断位置回映射、safe fix 区间逆映射回写 | template 深度分析 |
-| diagnostic-bridge | Node | oxlint 诊断 → 统一诊断模型（指纹/confidence/平台字段） | 格式化 |
+| cli | Bun | 参数、配置加载校验、oxlint/深度引擎进程编排、exit code | 业务逻辑 |
+| config-bridge | Bun | lintsight.config → .oxlintrc 翻译、规则等价映射 | 规则逻辑 |
+| vue-processor | Bun | SFC 拆块、虚拟文件喂入 oxlint（**就地临时文件约定**：保持原 .vue 路径上下文以正确解析 import、并发写冲突处理、临时文件 gitignore 规则）、诊断位置回映射、safe fix 区间逆映射回写 | template 深度分析 |
+| diagnostic-bridge | Bun | oxlint 诊断 → 统一诊断模型（指纹/confidence/平台字段） | 格式化 |
 | deep-analysis | Rust（M2） | CFG/def-use/DFG/taint、架构规则、附录 C 路径输出 | 语法级规则 |
-| formatter | Node | JSON/文本输出、SARIF（M2） | 消费侧逻辑 |
-| cache | Node | 内容哈希键、增量文件集计算、结果读写 | 依赖图影响域（M2） |
+| formatter | Bun | JSON/文本输出、SARIF（M2） | 消费侧逻辑 |
+| cache | Bun | 内容哈希键、增量文件集计算、结果读写 | 依赖图影响域（M2） |
 
 ### 11.3 首个竖切（走通全链路的验收标准）
 

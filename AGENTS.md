@@ -14,20 +14,22 @@
 | --- | --- | --- |
 | [docs/requirements/requirements-v0.2.md](docs/requirements/requirements-v0.2.md)（v0.2） | 技术选型、架构、IR 分层、双报消解（§3.6）、平台契约（附录 C）、坑清单 | 做任何架构相关决策前 |
 | [docs/requirements/requirements-v0.1.md](docs/requirements/requirements-v0.1.md) | FR/NFR 需求基线、决策记录 DR-1~6、里程碑验收、P0 规则候选池（附录 A） | 排期、验收、写规则前 |
+| [docs/todo/todo-v0.1.md](docs/todo/todo-v0.1.md) | 分层滚动任务清单：M0 执行级（T0.x 带 DoD）、M1 任务域（spike gate）、M2/M3 占位 | 认领任务、汇报进度、滚动细化前 |
 
 ## 3. 技术路线铁律（不得偏离，变更需重新评审）
 
-1. **双引擎**：M1 = oxlint 基座 + Node 薄封装（不自建 Node 内核）；M2 = Rust 深度分析引擎（oxc crates 直连，sidecar 形态）与 oxlint 并行、诊断合并，**不重建 oxlint 规则宿主**。
+1. **双引擎**：M1 = oxlint 基座 + Bun 薄封装（不自建 JS 内核）；M2 = Rust 深度分析引擎（oxc crates 直连，sidecar 形态）与 oxlint 并行、诊断合并，**不重建 oxlint 规则宿主**。
 2. **规则双轨**：语法级规则走 JS 轨道（ESLint 兼容 API，oxlint JS Plugins）；深度规则走 Rust 轨道（引擎 IR API）。规则代码禁止直接依赖任何具体 parser 的 AST 类型。
 3. **类型感知**：tsgolint 首选（要求 TS 7，不支持 `baseUrl`），tsc Program 兜底；存量项目 typeRequirement 自动降级 `local`。type-aware 规则**直接启用 oxlint --type-aware（tsgolint）规则集，深度引擎不自实现**。
 4. **Vue**：自建 VueProcessor（script M1 / template M2），不依赖 vize bridge 作主方案。
 5. **契约先行**：诊断指纹、confidence/severity 解耦、平台路径跟踪契约（requirements-v0.2.md 附录 C，带 contractVersion）先于 taint 引擎冻结。
 6. **M0 四项 spike 未出结论前，不得启动对应模块的正式实现**（oxc crate PoC / Vue×JSPlugins PoC / tsgolint 实测 / oxlint 诊断字段完备性）。
 7. **双报消解**：◆ 规则升级 taint 后 JS 轨道版本默认退役，遵循 §3.6 归属矩阵（FR-407，语料库断言双报率为 0）。
+8. **运行时（DR-7）**：封装层绑死 Bun——bun install/workspaces + bun.lock 提交、Bun 专有 API（Bun.file/Bun.Glob 等）放开用、`bun build --compile` 单文件二进制分发、bun test 承载测试；不追求 Node 兼容（前提：T0.13 验证通过）。
 
 ## 4. 工程约定（写代码后生效）
 
-- **结构**：pnpm monorepo（packages/@lintsight/*）+ `rust/deep-engine` crate workspace（见 requirements-v0.2.md §2.5）。
+- **结构**：Bun monorepo（bun install/workspaces + bun.lock 提交，packages/@lintsight/*）+ `rust/deep-engine` crate workspace（DR-7；见 requirements-v0.2.md §2.5）。
 - **命名**：文件/目录 kebab-case；函数/变量 camelCase；类型 PascalCase；常量 UPPER_SNAKE_CASE。
 - **风格**：单引号、无分号、2 空格、80 列；lint 用 oxlint、format 用 oxfmt。TS 开启 strict 全家桶。
 - **错误处理**：永不静默吞错；typed error；fail-fast；单文件解析失败降级为诊断而非中断（NFR-2）。

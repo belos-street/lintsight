@@ -35,6 +35,7 @@ flowchart LR
 | --- | --- |
 | [docs/requirements/requirements-v0.2.md](docs/requirements/requirements-v0.2.md) | 技术设计文档 v0.2：选型论据、架构、IR 分层、双报消解（§3.6）、平台契约（附录 C）、常见坑 |
 | [docs/requirements/requirements-v0.1.md](docs/requirements/requirements-v0.1.md) | 需求文档 v0.1：FR/NFR 基线、决策记录 DR-1~6、里程碑验收、P0 规则候选池 |
+| [docs/todo/todo-v0.1.md](docs/todo/todo-v0.1.md) | 任务清单（分层滚动）：M0 执行级、M1 任务域（spike gate）、M2/M3 占位 |
 | [AGENTS.md](AGENTS.md) | 仓库协作指南（AI Agent 与新成员入口） |
 
 ## Roadmap
@@ -46,7 +47,7 @@ flowchart LR
 | **M2 可用** | ~4 月 | Rust 深度分析引擎（架构规则先行 → taint 竖切 3 条硬门槛）+ oxlint type-aware 类型感知 + SARIF + 平台路径契约 + 双报消解 + CI 门禁 |
 | **M3 企业级** | 持续 | LSP/VS Code、跨文件 taint、远端缓存、AI 研判闭环 |
 
-**技术栈**：TypeScript（Node 20/22，pnpm monorepo）· Rust（oxc crates）· oxlint · tsgolint · Go（类型子进程，可选）
+**技术栈**：TypeScript（Bun 运行时，`bun build --compile` 单文件分发，DR-7）· Rust（oxc crates）· oxlint · tsgolint · Go（类型子进程，可选）
 
 ## 本地 Skills（.agents/skills/）
 

@@ -20,18 +20,19 @@
 
 | DR | 决策 | 内容 | 关键理由 | 否决/推迟项 |
 | --- | --- | --- | --- | --- |
-| DR-1 | M1 引擎形态 | **oxlint 基座 + Node 薄封装**（配置翻译、Vue processor、诊断桥接），不自建 Node 内核 | 白捡 865+ 内置规则（2026-09 核实），最快可用；自有规则走 ESLint 兼容 API 可迁移 | 自建 Node 引擎（重复造轮子，已从设计中删除） |
+| DR-1 | M1 引擎形态 | **oxlint 基座 + JS 薄封装**（配置翻译、Vue processor、诊断桥接；运行时见 DR-7 = Bun），不自建 JS 内核 | 白捡 865+ 内置规则（2026-09 核实），最快可用；自有规则走 ESLint 兼容 API 可迁移 | 自建 Node/JS 引擎（重复造轮子，已从设计中删除） |
 | DR-2 | M2 深度分析形态 | **Rust 深度分析引擎（sidecar）**，基于 oxc crates 直连，与 oxlint 组成双引擎，诊断在报告层合并；不重建 oxlint 规则宿主 | 聚焦差异化（DFG/taint/架构），维护面最小；避免三个月重建内核的排期风险 | 整体收编 oxlint 重建全功能内核（M3 后按维护成本再评估） |
 | DR-3 | 语言与运行时 | 深度引擎用 Rust（OXC 无其他语言库级 binding）；规则层双轨：JS（ESLint 兼容 API）+ Rust（IR API） | 进程内消费 oxc_parser/semantic/cfg | Go 内核（无 binding）、纯 Node（性能天花板） |
 | DR-4 | 类型感知 | tsgolint（stable v7，59/61 type-aware 规则）首选；tsc Program 兜底；**TS7 不支持 `baseUrl`**，存量项目引擎侧别名解析兜底 + typeRequirement 自动降级 `local` | 性能 12~18x，与 OXC 同生态 | 自建轻量类型推导（覆盖低）作无 tsconfig 场景降级 |
 | DR-5 | Vue 支持 | 自建 VueProcessor：SFC 拆虚拟块喂入 oxlint + 诊断位置回映射；script 块 M1，template 表达式 M2 | oxlint 无 processor 扩展点、JS Plugins 不支持 `.vue`，必须自建 | 依赖 vize bridge 作为主方案（单点依赖上游个人项目，仅作 spike 参考） |
 | DR-6 | 契约先行 | 平台「路径跟踪」输出契约（设计文档附录 C）与诊断指纹模型先于 taint 引擎冻结 | 平台对接零返工，M2 竖切可直接在现有前端渲染 | 先做引擎后补契约 |
+| DR-7 | 封装层运行时与分发（修订③） | **Bun 绑死**：bun install/workspaces + bun.lock 提交；全面采用 Bun 专有 API（Bun.file/Bun.Glob 等）；**bun build --compile 单文件二进制**分发（业务侧零依赖安装、内嵌 runtime）；bun test 承载 RuleTester 与 CI | 启动性能利于本地交互目标；原生跑 TS；单文件消除业务侧环境问题；对齐个人 Bun 工程约定 | 双栈兼容（node: 前缀纪律）；要求业务侧装 Bun；Node 运行时（服务器部署统一 Bun） |
 
 **架构总览**（组件后的里程碑标签为交付时间）：
 
 ```mermaid
 flowchart LR
-    CLI["lintsight cli<br/>配置·编排·exit code（M1）"] --> PRE["VueProcessor<br/>SFC→虚拟块·回映射（M1）"]
+    CLI["lintsight cli（Bun）<br/>配置·编排·exit code（M1）"] --> PRE["VueProcessor<br/>SFC→虚拟块·回映射（M1）"]
     PRE --> OXL["oxlint 基座<br/>865+ native 规则（M1）"]
     PRE --> JSP["JS Plugins<br/>自有 P0 规则（M1）"]
     OXL --> AGG["诊断聚合<br/>指纹·去重·合并（M1）"]
@@ -108,7 +109,7 @@ flowchart LR
 | --- | --- | --- | --- | --- |
 | FR-501 | 配置模型：JSONC 单文件，flat 风格按 glob 分组 + overrides（规则/processor 均可覆盖） | P0 | M1 | 一个配置文件覆盖 monorepo 多 package 场景 |
 | FR-502 | 迁移工具 `lintsight migrate --from eslint`：生成初版配置 + 规则等价映射报告（✅ 直接映射 / 🔄 需手写 / ➖ 无对应） | P1 | M2（可顺延 M3） | 对试点项目 eslint.config 生成可用映射报告 |
-| FR-503 | 长驻 worker 服务模式：承接平台任务队列，复用类型与缓存 | P1 | M2（可顺延 M3） | 平台调度走服务化模式，大仓二次扫描免冷启动 |
+| FR-503 | 长驻 worker 服务模式：承接平台任务队列，复用类型与缓存（部署运行时 = Bun，服务器标准化安装版本） | P1 | M2（可顺延 M3） | 平台调度走服务化模式，大仓二次扫描免冷启动 |
 
 ### 5.6 集成（FR-6xx）
 
@@ -125,7 +126,7 @@ flowchart LR
 | FR-701 | RuleTester SDK：valid/invalid fixture 对，断言诊断位置与 fix 输出；自有规则开发唯一入口 | P0 | M1 | 全部差异化规则用例经它编写（每条 ≥3 bad / ≥2 good） |
 | FR-702 | 语料库与基线：3 个真实仓库（小 zod 级 / 中 dayjs 级 / 大 Vue 级，含 1 个公司 monorepo，先确认授权与脱敏）；基线脚本 + diff 评审流程 + **标注规范 v0（抽样方法、双人交叉标注、仲裁规则）**；发版必跑 | P0 | M0（v0）→ M1（运转） | 规则结果变更必须附语料库 diff 与误报分析；误报率验收以标注规范口径为准 |
 | FR-703 | 基准流水线：hyperfine + codspeed，按 typeRequirement 分档统计 LOC/s；性能回退 >15% 拦截合并 | P1 | M1 | CI 周期跑，回退门禁生效 |
-| FR-704 | monorepo 脚手架：pnpm + changesets + CI（test/lint/bench 门禁）；Rust 深度引擎以 crate workspace 纳入 | P0 | M0 | 新规则包脚手架一条命令生成 |
+| FR-704 | monorepo 脚手架：Bun（bun install/workspaces + bun.lock 提交）+ changesets + CI（bun test/lint/bench 门禁）；Rust 深度引擎以 crate workspace 纳入 | P0 | M0 | 新规则包脚手架一条命令生成 |
 | FR-705 | 差分测试：与 ESLint/SonarJS 同类规则跑同语料，对比召回/误报 | P1 | M2 | 输出季度对比报告，作为规则质量标尺 |
 
 ## 6. 非功能需求（NFR）
@@ -134,7 +135,7 @@ flowchart LR
 | --- | --- | --- |
 | NFR-1 性能 | M1：万行库全量 <10s。M2：10 万行库全量 <60s、增量 <5s、≥15 万 LOC/s（none 类规则、单 worker 折算，M1 用语料库校准后冻结数字） | 基准流水线持续度量，回退 >15% 拦截 |
 | NFR-2 可靠性 | 单文件解析失败降级为诊断；任何规则 crash 不中断整次扫描；crash = P0 bug 修复节奏 | fuzz 语料 0 crash；语料库扫描 0 中断 |
-| NFR-3 兼容性 | TS 5.x（M2 +4.9 尽力而为）、Node 20.x/22.x、ESM+CJS、JSX/TSX、standard 装饰器（M2 +legacy）、Vue 3 SFC | 兼容性矩阵进 CI 抽测 |
+| NFR-3 兼容性 | TS 5.x（M2 +4.9 尽力而为）、**Bun ≥1.2（封装层运行时，绑死；compile 单文件自带 runtime，业务侧零依赖，DR-7）**、ESM+CJS、JSX/TSX、standard 装饰器（M2 +legacy）、Vue 3 SFC | 兼容性矩阵进 CI 抽测 |
 | NFR-4 可观测 | `--log-level` 分级日志；`--profile` 输出 per-phase/per-rule 耗时 JSON；错误上报脱敏 | profile 数据可定位前 10 热点规则 |
 | NFR-5 安全 | 插件仅可访问 SDK 面（禁止引擎内部模块）；扫描默认不外传代码；错误上报含路径脱敏 | 插件沙箱边界有负向测试 |
 | NFR-6 可维护 | `rule-sdk` API 变更走 RFC；低使用率规则进 maintenance 名单治理 | SDK breaking change 数 = 0（M1 冻结后） |
@@ -249,3 +250,4 @@ flowchart LR
 *变更记录：v0.1（2026-09-14）——基于技术设计文档 v0.2 首次成文，技术路线随 DR-1~6 冻结。*
 *v0.1 修订①（2026-09-14，第二轮评审）：规则数口径统一（865+，2026-09 核实）；FR-202 改为差异化 25~30 条 + 内置启用映射；FR-303 改 3 条硬门槛 + stretch；FR-305 改直接启用 oxlint --type-aware；FR-401 指纹锚点修正（spike ④）；新增 FR-407 双报消解；FR-404 补 contractVersion；FR-702 补标注规范；附录 A 去重重写为 v2。*
 *v0.1 修订②（2026-09-14，第三轮评审）：FR-401 指纹改 messageId 口径（messageId 增删/改名视为 breaking）；FR-407 补跨名接管对登记；术语表 fingerprint 同步；FR-502/503/601 里程碑标注「可顺延 M3」。*
+*v0.1 修订③（2026-09-14，技术路线变更）：新增 DR-7 封装层运行时 Node → Bun 绑定（bun install/workspaces、Bun 专有 API、bun build --compile 单文件分发、bun test）；NFR-3/FR-503/FR-704 同步；配套设计文档 v0.2 修订④与 todo T0.13。*
