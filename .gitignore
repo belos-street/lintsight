@@ -1,0 +1,35 @@
+# dependencies
+node_modules/
+.pnpm-store/
+
+# build outputs
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# rust
+target/
+
+# test & coverage
+coverage/
+.nyc_output/
+
+# caches
+.cache/
+.eslintcache
+
+# env & secrets（.env 永不提交；示例文件除外）
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+pnpm-debug.log*
+
+# editor & OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
