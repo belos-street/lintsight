@@ -8,13 +8,13 @@
 ## 总结论
 
 **M1 技术路线可行，可按 §11.3 进入正式竖切开发。**
-1 条自有规则 `lintsight/no-empty-catch` 从 CLI 输入 → .ts / .vue → 规则触发 → 带指纹 JSON 报告 → exit code 全链路走通；报告重跑逐字节一致。1 项降级（指纹 messageId 锚点缺失）+ 2 项待补测（bun compile 单文件分发、tsgolint）。
+1 条自有规则 `lintsight/no-empty-catch` 从 CLI 输入 → .ts / .vue → 规则触发 → 带指纹 JSON 报告 → exit code 全链路走通；报告重跑逐字节一致。1 项降级（指纹 messageId 锚点缺失）、1 项待补测（spike ③ tsgolint）；`bun build --compile` 已追加实测通过（见「追加实测」节）。
 
 ## 结论总表
 
 | # | 验证项 | 对应决策 | 结论 | 说明 |
 | --- | --- | --- | --- | --- |
-| SV1 | Bun monorepo 脚手架 | DR-7 | ✅ 通过 | workspaces / bun.lock / `bun run cli` / bun test / spawn 全部 Bun 原生，零 Node 依赖；**`bun build --compile` 未测，T0.13 继续跟进** |
+| SV1 | Bun monorepo 脚手架 | DR-7 | ✅ 通过 | workspaces / bun.lock / `bun run cli` / bun test / spawn 全部 Bun 原生，零 Node 依赖；`bun build --compile` 追加实测通过（见文末） |
 | SV2 | oxlint 进程编排 | spike ④ | ✅ 通过（含降级） | JSON 诊断可解析，ruleId/span 可得；**无 messageId 字段** → 指纹降级 |
 | SV3 | JS Plugin 自有规则 | DR-1 | ✅ 通过 | alpha 可承载自有规则；ESLint 兼容 API（`create`/visitor/`report`）符合预期；与内置规则同场共存无冲突 |
 | SV4 | bun test 承载 RuleTester | 修订④ | ✅ 通过 | 13/13 全绿；用例即契约（3 bad / 2 good / 边界矩阵） |
@@ -68,6 +68,10 @@
 - `meta.messages` + `context.report({ node, messageId })` 正常工作，但 JSON 只回渲染文本。
 - 不支持 `.vue`（官方 "can't do yet"）——与 DR-5 自建 VueProcessor 路线一致，本次已 PoC。
 
+### 6. ignorePatterns 对显式路径同样生效（工程化初始化时发现）
+
+根配置 `.oxlintrc.json` 加入 `ignorePatterns: [".lintsight-cache"]` 后，pipeline **显式传入**的虚拟 .vue 文件被 oxlint 跳过（诊断静默消失）。结论：`ignorePatterns` 不能用于排除临时产物目录——dev-lint 用「按目录收窄的 scripts」规避，配置中已注释说明。
+
 ## 过程中发现并修复的真实问题（开发摩擦实证）
 
 1. **SFC 内容起始行**：`<script>` 标签后的换行符属于正则捕获内容，起始行需剥离首部换行后再计算。
@@ -77,10 +81,29 @@
 ## 明确未覆盖（后续工作）
 
 - **spike ①**（oxc crate 直连 PoC，M2 路线）与 **spike ③**（tsgolint / `--type-aware`，类型感知策略）不在本闭环。
-- `bun build --compile` 单文件分发（DR-7 收尾项，T0.13）。
 - Vue processor 正式版要求：就地临时文件（保 import 解析上下文，§11.2）、safe fix 逆映射回写、多 script 块/TSX。
 - no-empty-catch 当前语义：注释占位 catch 也告警（零语句即触发）——正式版评审 `allowComments` 选项。
 - 内置规则噪音（如 `eslint/no-unused-vars`）与自有规则的**双报消解**（§3.6）未实现，M1 需注册表。
+
+## 追加实测（2026-09-15 · DR-7 收尾：`bun build --compile`）
+
+### oxlint npm 包分发形态（重要事实，修正心智模型）
+
+oxlint 1.83.0 **不是独立 Rust 二进制**，而是「Node 包装脚本 + napi 原生绑定」：
+
+- `bin/oxlint` = `#!/usr/bin/env node` → `dist/cli.js` → `dist/bindings.js` → `require("./oxlint.darwin-arm64.node")`（回退 `@oxlint/binding-darwin-arm64` 平台包）
+- 实测 **Bun 可直接跑 oxlint 入口**（`bun node_modules/oxlint/bin/oxlint --version` → 1.83.0，napi 绑定在 Bun 下正常加载）→ **FR-503 服务器部署只需 Bun，无需 Node**
+
+### 单文件二进制场景实测（产物 59MB，内嵌 Bun runtime）
+
+| 场景 | 结果 |
+| --- | --- |
+| T1 无仓库上下文 `--version` | ✅ exit 0（业务侧无需 bun/node 即可运行 lintsight 本体） |
+| T2 扫描含本地 oxlint 的项目 | ✅ exit 0/1，cwd 解析链命中，含 .vue 回映射；输出与 `bun run` 逐字节一致 |
+| T3 有代码、无 oxlint | ✅ exit 2 + 明确报错（修复了一个真 bug：`resolveOxlintBin` 异常逃逸导致 exit=1，违反 exit code 契约） |
+| T4 `OXLINT_BIN` 显式指定 | ✅ 引擎正常（目标项目无 lintsight 配置 → 自有规则不装载，佐证 config-bridge 必要性） |
+
+**结论（M1-DR1 分发形态输入）**：compile 单文件可行，但 oxlint 无法一并嵌入（Node wrapper + napi 链路）→ M1 分发定案：**oxlint 作为伴生依赖**（npm 包 deps / worker 镜像预装 / 业务项目 devDep），lintsight 本体按场景选 npm 包或 compile 单文件，解析链 `OXLINT_BIN → cwd/node_modules → monorepo 开发态`（`resolveOxlintBin`）。
 
 ## 对里程碑的影响
 

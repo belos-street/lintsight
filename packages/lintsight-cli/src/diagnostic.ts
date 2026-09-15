@@ -7,37 +7,39 @@
  * M1 指纹降级为 message 文本参与哈希 —— 规则文案变更会导致指纹漂移，
  * 「messageId 变更走显式评审」的纪律同样适用于「message 文案变更」。
  */
-import type { NormalizedDiagnostic } from './oxlint-bridge';
+import type { NormalizedDiagnostic } from './oxlint-bridge'
 
-export const CONTRACT_VERSION = '0';
+export const CONTRACT_VERSION = '0'
 
 export interface LintsightSpan {
-  offset: number;
-  length: number;
-  line: number;
-  column: number;
+  offset: number
+  length: number
+  line: number
+  column: number
 }
 
 export interface LintsightDiagnostic {
-  contractVersion: string;
-  ruleId: string;
-  severity: string;
-  message: string;
+  contractVersion: string
+  ruleId: string
+  severity: string
+  message: string
   /** 相对项目根路径（.vue 诊断已回映射） */
-  file: string;
-  span: LintsightSpan;
-  fingerprint: string;
+  file: string
+  span: LintsightSpan
+  fingerprint: string
 }
 
 export function computeFingerprint(d: NormalizedDiagnostic): string {
-  const hasher = new Bun.CryptoHasher('sha256');
+  const hasher = new Bun.CryptoHasher('sha256')
   hasher.update(
-    `${d.ruleId}\u0000${d.file}\u0000${d.span.offset}:${d.span.length}:${d.span.line}:${d.span.column}\u0000${d.message}`,
-  );
-  return hasher.digest('hex');
+    `${d.ruleId}\u0000${d.file}\u0000${d.span.offset}:${d.span.length}:${d.span.line}:${d.span.column}\u0000${d.message}`
+  )
+  return hasher.digest('hex')
 }
 
-export function toLintsightDiagnostic(d: NormalizedDiagnostic): LintsightDiagnostic {
+export function toLintsightDiagnostic(
+  d: NormalizedDiagnostic
+): LintsightDiagnostic {
   return {
     contractVersion: CONTRACT_VERSION,
     ruleId: d.ruleId,
@@ -45,6 +47,6 @@ export function toLintsightDiagnostic(d: NormalizedDiagnostic): LintsightDiagnos
     message: d.message,
     file: d.file,
     span: d.span,
-    fingerprint: computeFingerprint(d),
-  };
+    fingerprint: computeFingerprint(d)
+  }
 }

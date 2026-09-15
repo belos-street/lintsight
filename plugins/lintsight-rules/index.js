@@ -16,28 +16,32 @@ export default {
         tags: [],
         fixable: undefined,
         messages: {
-          emptyCatch: 'Unexpected empty catch block. Handle the error or rethrow it.',
+          emptyCatch:
+            'Unexpected empty catch block. Handle the error or rethrow it.'
         },
         docs: {
           description: '禁止空的 catch 块',
-          rationale: '空 catch 会静默吞掉错误，掩盖线上故障的根因；应处理、记录或重新抛出。',
+          rationale:
+            '空 catch 会静默吞掉错误，掩盖线上故障的根因；应处理、记录或重新抛出。',
           badExamples: ['try { risky(); } catch (e) {}'],
-          goodExamples: ['try { risky(); } catch (e) { logger.error(e); throw e; }'],
-          falsePositives: [
-            '注释占位的 catch 也会告警（零语句即触发）——正式版可增加 allowComments 选项',
+          goodExamples: [
+            'try { risky(); } catch (e) { logger.error(e); throw e; }'
           ],
-        },
+          falsePositives: [
+            '注释占位的 catch 也会告警（零语句即触发）——正式版可增加 allowComments 选项'
+          ]
+        }
       },
       create(context) {
         return {
           CatchClause(node) {
-            const statements = node.body?.body ?? [];
+            const statements = node.body?.body ?? []
             if (statements.length === 0) {
-              context.report({ node, messageId: 'emptyCatch' });
+              context.report({ node, messageId: 'emptyCatch' })
             }
-          },
-        };
-      },
-    },
-  },
-};
+          }
+        }
+      }
+    }
+  }
+}

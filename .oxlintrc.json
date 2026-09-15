@@ -1,6 +1,25 @@
 {
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
   "jsPlugins": ["./plugins/lintsight-rules/index.js"],
+  "plugins": ["import", "node", "promise", "typescript"],
+  "env": {
+    "browser": false,
+    "node": true,
+    "es2024": true
+  },
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "perf": "warn"
+  },
   "rules": {
-    "lintsight/no-empty-catch": "error"
-  }
+    "lintsight/no-empty-catch": "error",
+    "eqeqeq": "error",
+    "no-debugger": "error",
+    "no-unused-vars": "error"
+  },
+  // 注意：oxlint 的 ignorePatterns 对「显式传入的路径」同样生效（实测）——
+  // 不可加入 .lintsight-cache（pipeline 虚拟 .vue 文件经显式路径扫描会被跳过）；
+  // dev-lint 通过 scripts 按目录收窄（packages plugins）规避缓存噪音。
+  "ignorePatterns": ["node_modules", "dist", "build", "coverage", ".agents"]
 }

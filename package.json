@@ -7,13 +7,19 @@
   ],
   "scripts": {
     "cli": "bun run packages/lintsight-cli/src/cli.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "lint": "oxlint packages plugins",
+    "lint:fix": "oxlint --fix packages plugins",
+    "format": "oxfmt packages plugins",
+    "format:check": "oxfmt --check packages plugins",
+    "build:binary": "bun build --compile packages/lintsight-cli/src/cli.ts --outfile dist/lintsight"
   },
   "engines": {
     "bun": ">=1.2"
   },
   "devDependencies": {
     "@types/bun": "1.4.2",
+    "oxfmt": "0.68.0",
     "oxlint": "1.83.0"
   }
 }

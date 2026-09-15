@@ -2,8 +2,8 @@
   "name": "@lintsight/cli",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "bin": {
     "lintsight": "./src/cli.ts"
-  }
+  },
+  "type": "module"
 }

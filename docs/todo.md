@@ -1,68 +1,60 @@
-# lintsight · 最小化闭环验证 Todo（竖切验证）
+# lintsight · M1 执行 Todo（T1.x）
 
-> 目标：在正式动工前，用最小成本验证 M1 主链路技术可行性。
-> 依据：[requirements-v0.2.md](requirements/requirements-v0.2.md) §11.3 首个竖切 + §8.3 风险清单
-> 状态：**✅ 已完成（2026-09-15）** · 报告：[spikes/vertical-slice-m1.md](spikes/vertical-slice-m1.md)
-> 总结论：M1 技术路线可行；1 项降级（指纹 messageId 锚点缺失）、2 项待补测（bun --compile、tsgolint）
+> 依据：[design-m1-v0.1.md](design/design-m1-v0.1.md) §8 里程碑切片 + §9 风险与开放问题
+> 分级滚动：执行级（当前在做，任务拆到可验收）→ 域级（下一个切片，任务到模块）→ 占位（远期，一行带过）
+> 前序阶段：最小闭环验证（SV1~SV7）✅ 已完成，报告见 [spikes/vertical-slice-m1.md](spikes/vertical-slice-m1.md)
+> 状态：进行中 · 更新：2026-09-15
 
-## 总验收标准（已达成）
+## 门禁任务（不完成对应切片不得开工）
 
-`lintsight/no-empty-catch` 一条规则走通完整链路：
+- [ ] T1.0a **rule-sdk 接口 RFC 评审**：`defineRule` / RuleTester / meta 契约类型面冻结（对外承诺，最难改）——S3 开工前完成
+- [ ] T1.0b **P0 规则清单评审定稿**（M0 交付物）：差异化 25~30 条 + 内置启用映射清单初版——S3 开工前完成
+- [ ] T1.0c spike ③ tsgolint 实测（可并行，不阻塞 S1~S5；M1 验收中 type-aware 相关承诺以其结论为前提）
 
-```
-CLI 输入 → Bun 脚手架 → oxlint（JS Plugin 自有规则 + .vue 虚拟块）
-        → 带指纹的 JSON 诊断 → exit code 语义正确
-```
+## S1 竖切正式化（执行级）
 
-且指纹重跑稳定（实测：报告两次运行逐字节一致）。
+- [ ] T1.1 包结构重组：拆分 `@lintsight/{cli, diagnostic, vue-processor}` workspaces 包，spike 代码迁移（对应设计 §4.1/4.4）
+- [ ] T1.2 diagnostic 正式化：contractVersion 升 `"1"`、`owner` 字段（注册表联动）、防御归一化清单逐项单测（ruleId 归一 / filename 双候选 / 尾斜杠 / stat / 确定性排序）
+- [ ] T1.3 CLI 参数面补全：`--format json|text`、`--log-level`、错误路径禁止异常逃逸（exit 2 契约单测）
+- [ ] T1.4 JSON 报告快照测试落地 + 竖切 13 例迁移全绿
+- 验收：`bun test` 全绿迁移 + 新增防御项单测；快照变更走显式 review
 
-## 依赖链与执行记录
+## S2 config-bridge（执行级）
 
-SV1 → SV2 → SV3 → SV4 / SV5 → SV6 → SV7 · bun test 13/13 全绿
+- [ ] T1.5 `lintsight.config.json` schema + JSONC 解析 + 友好错误（列名 + 期望值）
+- [ ] T1.6 翻译器：rules / overrides / ignore → `.oxlintrc`（写入 `.lintsight-cache/`，spawn 经 `--config` 传入）
+- [ ] T1.7 内置启用映射清单机制（`builtin-mapping.ts`）+ 等价报告（✅/🔄/➖）
+- [ ] T1.8 oxlint overrides 语义实测核对（设计 §9 风险项：不通过则 M1 收窄 overrides 支持；连带拍板通配 severity 开放问题）
+- 验收：翻译单测全覆盖 + overrides 实测记录进设计文档
 
-## 任务清单
+## S3 正确性规则 ~10 条（域级，等 T1.0a/b 门）
 
-### SV1. Bun monorepo 最小脚手架 — 验证 DR-7 ✅
+- [ ] T1.9 rule-sdk 正式化：`defineRule`（meta 契约校验）+ RuleTester 工具化（spawn 批扫 + 按文件断言位置/fix）
+- [ ] T1.10 正确性 P0 规则逐条开发（P0 清单评审后逐条立任务；每条 ≥3 bad / ≥2 good / safe case / 边界矩阵）
+- [ ] T1.11 每条规则注册表登记（ruleId/owner/检测层/状态）+ CI 校验
 
-- [x] bun init + workspaces（`packages/*`）+ bun.lock 提交，全程禁 Node（oxlint 锁 1.83.0）
-- 验收：`bun install && bun run cli` 打印版本号 → 通过
-- 备注：`bun build --compile` 单文件分发未测，T0.13 跟进
+## S4 安全语法级规则 ~14 条（域级，可与 S3 并行）
 
-### SV2. oxlint 进程编排跑通 — 验证 spike ④ ✅
+- [ ] T1.12 安全 P0 规则逐条开发（同 S3 标准，cwe/owasp tags 逐条核定）
+- [ ] T1.13 `no-empty-catch` 的 `allowComments` 选项随批评审定案（spike 遗留开放问题）
 
-- [x] Bun spawn oxlint 扫描 fixture TS 文件，解析 JSON 诊断
-- 验收：ruleId / span 取到；**实测无 messageId 字段** → 指纹降级 message 文本（breaking 评审纪律适用）
+## S5 Vue 正式版（域级）
 
-### SV3. 自有 JS Plugin 规则跑通 — 验证 DR-1 ✅
+- [ ] T1.14 就地临时文件约定落地（保 import 解析上下文，§11.2）+ 多 script 块策略
+- [ ] T1.15 oxlint fix JSON 结构实测 → safe fix 逆映射回写（可行性实测后再承诺，spike 未覆盖）
 
-- [x] `lintsight/no-empty-catch` 以 oxlint JS Plugins（alpha）加载（写规则前已读 rule-authoring skill）
-- 验收：bad fixture 触发诊断，Rule ID `lintsight/no-empty-catch` 命名合规，与内置规则共存
+## S6 缓存 + 性能（占位）
 
-### SV4. bun test 承载 RuleTester — 验证修订④ ✅
+- [ ] T1.16 内容哈希缓存（键 = 文件内容 + 规则集 + 配置 + 引擎版本指纹）
+- [ ] T1.17 hyperfine 基准脚本 + 万行库 <10s 校准 + 回退 >15% 门禁
 
-- [x] no-empty-catch 共 5 组用例（3 bad / 2 good 含边界：可选 binding / 嵌套 / TS 断言共存 / 注释字符串干扰）
-- 验收：bun test 全绿 → 通过
+## S7 试用与基线（占位）
 
-### SV5. Vue SFC 最小回映射 — 验证 spike ② 核心 ✅
+- [ ] T1.18 语料库 v0 接入（zod/dayjs 级）+ 基线脚本 + 双报率 0 断言
+- [ ] T1.19 内部 ≥3 项目接入试用 + 误报标注反哺 confidence
 
-- [x] `.vue` 提取 `<script>` 虚拟块喂 oxlint，1:1 行号对齐，诊断回映射原 .vue（不做 template）
-- 验收：.vue 内空 catch 报告位置正确（line 13 / col 5）→ 通过
-- 备注：同行开标签不支持；正式版须就地临时文件保 import 上下文（§11.2）
+## 远期占位（M2 输入，M1 不做）
 
-### SV6. 指纹 + exit code + JSON 报告闭环 — 验证 §5.4 / §6.3 ✅
-
-- [x] fingerprint = hash(ruleId + file + span + ~~messageId~~ **message 文本**，spike ④ 降级)
-- [x] exit 0（无 error）/ 1（有 error）/ 2（运行错误）——oxlint 自身 exit=1 有歧义（含「输入不存在」），运行错误判定由封装层自建
-- 验收：目录扫描输出统一 JSON，重跑指纹一致 → 通过
-
-### SV7. 竖切验证报告落档 docs/spikes/ ✅
-
-- [x] 逐项技术风险给出 通过 / 失败 / 降级 结论
-- 验收：[spikes/vertical-slice-m1.md](spikes/vertical-slice-m1.md) 已可评审
-
-## 明确不在本次闭环（后续）
-
-- spike ① oxc crate 直连（M2 路线）
-- spike ③ tsgolint / `--type-aware`（M2 类型感知）
-- `bun build --compile` 单文件分发（DR-7 收尾，T0.13）
-- template 深度分析、safe fix 逆映射、SARIF、缓存、双报消解注册表
+- spike ① oxc crate 直连 PoC（M2 路线，可提前并行）
+- SARIF / 平台路径契约（附录 C）/ `lintsight migrate --from eslint`
+- LSP（M3）
