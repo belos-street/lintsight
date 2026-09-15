@@ -1,0 +1,6 @@
+{
+  "jsPlugins": ["./plugins/lintsight-rules/index.js"],
+  "rules": {
+    "lintsight/no-empty-catch": "error"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "lintsight",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "cli": "bun run packages/lintsight-cli/src/cli.ts",
+    "test": "bun test"
+  },
+  "engines": {
+    "bun": ">=1.2"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.2",
+    "oxlint": "1.83.0"
+  }
+}

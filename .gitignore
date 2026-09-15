@@ -18,6 +18,7 @@ coverage/
 # caches
 .cache/
 .eslintcache
+.lintsight-cache/
 
 # env & secrets（.env 永不提交；示例文件除外）
 .env
