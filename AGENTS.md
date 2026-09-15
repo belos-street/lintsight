@@ -20,20 +20,25 @@
 
 ```
 lintsight/
-├─ packages/
-│  └─ lintsight-cli/        # CLI 编排 + oxlint 桥接 + Vue 虚拟块 + 指纹（M1 正式化中将拆分为 §4.1~4.4 的包结构）
-│     ├─ src/               #   cli.ts / pipeline.ts / oxlint-bridge.ts / vue-processor.ts / diagnostic.ts
-│     └─ test/              #   RuleTester + 闭环测试（bun test）
+├─ packages/                      # Bun workspaces（Bun 按 member 依赖把 @lintsight/* 链接在各包 node_modules 下）
+│  ├─ lintsight-cli/              # @lintsight/cli：CLI 参数面 + pipeline 编排 + oxlint spawn 桥接
+│  │  └─ test/                    #   闭环测试 / RuleTester / exit 2 契约 / golden 报告
+│  ├─ lintsight-config-bridge/    # @lintsight/config-bridge：lintsight.config.json(JSONC) → .oxlintrc + 内置映射清单
+│  ├─ lintsight-diagnostic/       # @lintsight/diagnostic：统一诊断模型 / 归一化 / 指纹 / 规则注册表
+│  ├─ lintsight-formatter/        # @lintsight/formatter：json / text 报告器
+│  ├─ lintsight-shared/           # @lintsight/shared：logger
+│  └─ lintsight-vue-processor/    # @lintsight/vue-processor：SFC 虚拟块 + 位置回映射
 ├─ plugins/
-│  └─ lintsight-rules/      # 自有规则集（JS Plugin，跑在 oxlint 嵌入式 runtime，禁 Node/Bun API）
-├─ fixtures/                # 规则用例契约（断言依赖行/列布局——禁止格式化此目录）
+│  └─ lintsight-rules/            # 自有规则集（JS Plugin，跑在 oxlint 嵌入式 runtime，禁 Node/Bun API）
+├─ fixtures/                      # 规则用例契约（断言依赖行/列布局——禁止格式化此目录）
+├─ lintsight.config.json          # 引擎自身 dogfood 配置（config-bridge 消费）
 ├─ docs/
-│  ├─ requirements/         # 需求与总体技术设计（v0.x 版本化）
-│  ├─ design/               # 里程碑设计文档（design-m1-v0.1.md）
-│  ├─ spikes/               # spike/竖切验证报告（可验证证据）
-│  └─ todo.md               # 当前执行 Todo（滚动更新）
-├─ corpus/                  # 回归语料库（M0 交付物，暂未建）
-└─ .agents/skills/          # 工程技能（oxc-toolchain / rule-authoring / belos-street）
+│  ├─ requirements/               # 需求与总体技术设计（v0.x 版本化）
+│  ├─ design/                     # 里程碑设计文档（design-m1-v0.1.md）
+│  ├─ spikes/                     # spike/竖切验证报告（可验证证据）
+│  └─ todo.md                     # 当前执行 Todo（滚动更新）
+├─ corpus/                        # 回归语料库（M0 交付物，暂未建）
+└─ .agents/skills/                # 工程技能（oxc-toolchain / rule-authoring / belos-street）
 ```
 
 ## 常用命令
@@ -64,6 +69,7 @@ bun run build:binary        # bun build --compile 单文件（产物 59MB，dist
 - spike 任务必须产出可验证证据（`docs/spikes/` 报告）才算完成。
 - 文档版本化：requirements-v0.x.md / design-*-v0.x.md 带修订记录；决策记录（DR）必须含备选与否决理由。
 - fixtures 是规则的用例契约：改实现不改用例 = 没改对；放宽断言必须在 PR 说明。
+- 报告 golden file：`packages/lintsight-cli/test/__golden__/`——报告 schema 或规则面变化的 diff 即评审信号；重新生成：删除该文件重跑 `bun test`。
 - 提交前：`bun run format && bun run lint && bun test` 全绿。
 
 ## 文档索引

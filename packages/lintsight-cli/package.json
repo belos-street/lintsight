@@ -5,5 +5,12 @@
   "bin": {
     "lintsight": "./src/cli.ts"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@lintsight/config-bridge": "workspace:*",
+    "@lintsight/diagnostic": "workspace:*",
+    "@lintsight/formatter": "workspace:*",
+    "@lintsight/shared": "workspace:*",
+    "@lintsight/vue-processor": "workspace:*"
+  }
 }

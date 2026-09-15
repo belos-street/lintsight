@@ -1,0 +1,10 @@
+{
+  // lintsight 仓库自身配置（dogfood）——schema 校验由 @lintsight/config-bridge 提供
+  "rules": {
+    "lintsight/no-empty-catch": "error"
+  },
+  "ignore": [],
+  "overrides": [
+    { "files": ["**/*.vue"], "processor": "@lintsight/vue" }
+  ]
+}

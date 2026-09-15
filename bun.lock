@@ -16,10 +16,47 @@
       "bin": {
         "lintsight": "./src/cli.ts",
       },
+      "dependencies": {
+        "@lintsight/config-bridge": "workspace:*",
+        "@lintsight/diagnostic": "workspace:*",
+        "@lintsight/formatter": "workspace:*",
+        "@lintsight/shared": "workspace:*",
+        "@lintsight/vue-processor": "workspace:*",
+      },
+    },
+    "packages/lintsight-config-bridge": {
+      "name": "@lintsight/config-bridge",
+      "version": "0.0.1",
+    },
+    "packages/lintsight-diagnostic": {
+      "name": "@lintsight/diagnostic",
+      "version": "0.0.1",
+    },
+    "packages/lintsight-formatter": {
+      "name": "@lintsight/formatter",
+      "version": "0.0.1",
+    },
+    "packages/lintsight-shared": {
+      "name": "@lintsight/shared",
+      "version": "0.0.1",
+    },
+    "packages/lintsight-vue-processor": {
+      "name": "@lintsight/vue-processor",
+      "version": "0.0.1",
     },
   },
   "packages": {
     "@lintsight/cli": ["@lintsight/cli@workspace:packages/lintsight-cli"],
+
+    "@lintsight/config-bridge": ["@lintsight/config-bridge@workspace:packages/lintsight-config-bridge"],
+
+    "@lintsight/diagnostic": ["@lintsight/diagnostic@workspace:packages/lintsight-diagnostic"],
+
+    "@lintsight/formatter": ["@lintsight/formatter@workspace:packages/lintsight-formatter"],
+
+    "@lintsight/shared": ["@lintsight/shared@workspace:packages/lintsight-shared"],
+
+    "@lintsight/vue-processor": ["@lintsight/vue-processor@workspace:packages/lintsight-vue-processor"],
 
     "@oxfmt/binding-android-arm-eabi": ["@oxfmt/binding-android-arm-eabi@0.68.0", "https://registry.npmmirror.com/@oxfmt/binding-android-arm-eabi/-/binding-android-arm-eabi-0.68.0.tgz", { "os": "android", "cpu": "arm" }, "sha512-dhfYPbzv/h9JgHjNkl2R6sOjUfxDyLGOZVb3g8/ScaTNwwJcYgmHh8kcYFDUhinuy1QAoANCWUvw1jlk+z6gAg=="],
 

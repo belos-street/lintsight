@@ -6,6 +6,7 @@
 > 定位：M1 动工前的实现设计——把 v0.2 总体设计收窄为 M1 可执行边界，冻结 M1 接口形状与关键决策。非 API 手册。
 > 修订记录：
 > - v0.1（2026-09-15）：初稿。吸收竖切验证结论（SV1~SV7 + compile 追加实测），全部 M1-DR 决策均附实测证据链接。
+> - v0.1①（2026-09-15）：S1/S2 实施落定 + T1.8 实测补充——oxlint overrides（`files`+`rules` 覆盖）**实测有效**，§9 风险项关闭；规则值为 `allow/error/warn`（`off` 由 config-bridge 翻译为 `allow`）；规则选项数组 `["error", {...}]` 有效；jsPlugins 支持绝对路径（生成的 .oxlintrc 写入 `.lintsight-cache/`）。开放问题 1 拍板：**M1 不支持通配 severity**（oxlint 规则键无通配语义，config-bridge 校验显式拒绝，须逐条列举）。包结构按 §4 拆分为 6 个 workspaces 包并迁移测试。
 
 ---
 
@@ -210,12 +211,12 @@ interface LintsightDiagnostic {
 | --- | --- |
 | JS Plugins alpha 行为漂移 | M1-DR6：锁版本 + 语料库 diff + 升级重跑竖切套件 |
 | 内置规则噪音污染报告（correctness 基线全开） | 映射清单灰度；`dedupGroup` 预留；试用项目反馈驱动降级 |
-| overrides/glob 语义与预期不符 | S2 首个实测任务，不通过则 M1 收窄 overrides 支持 |
+| ~~overrides/glob 语义与预期不符~~ | **已关闭（v0.1①）**：overrides `files+rules` 实测有效 |
 | 万行 <10s 不达标 | 缓存 + spawn 开销剖析（必要时进程内 require 评估提前，见 M1-DR1 备选②） |
 
 **开放问题**（评审拍板）：
 
-1. §6 通配 severity 覆盖是否进 M1？
+1. ~~§6 通配 severity 覆盖是否进 M1？~~ **已拍板（v0.1①）**：不支持——oxlint 规则键无通配语义，config-bridge 校验显式拒绝通配 key，规则须逐条列举。
 2. 内置启用映射清单的默认集范围（correctness only vs +suspicious 试点）？
 3. `OXLINT_BIN` 之外是否需要 `LINTSIGHT_NO_FIX` 之类安全开关（CI 场景防误修）？
 4. no-empty-catch `allowComments` 选项（spike 遗留）随 S3 评审定案。

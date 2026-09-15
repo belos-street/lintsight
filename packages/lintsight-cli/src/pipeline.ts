@@ -1,19 +1,20 @@
 /**
- * 分析流水线（SV6）：收集 → Vue 虚拟块 → oxlint → 回映射 → 统一诊断 → exit code。
- * exit code 语义（§6.3）：0 无 error / 1 有 error / 2 运行错误（与诊断退出码严格区分）。
- * oxlint 自身 exit=1 同时表示「有 error」和「输入不存在」（实测），
- * 因此运行错误判定由本层负责：输入不存在 / 无可扫文件 / 进程失败 / JSON 不可解析。
+ * 分析流水线（design-m1 §4.1）：配置解析 → 收集 → Vue 虚拟块 → oxlint → 回映射 → 统一诊断 → exit code。
+ * exit code 语义（M1-DR3）：0 无 error / 1 有 error / 2 运行错误（与诊断退出码严格区分），
+ * 运行错误路径禁止异常逃逸（compile 实测抓到过该 bug）。
  */
 import path from 'node:path'
-import { rm } from 'node:fs/promises'
-import { stat } from 'node:fs/promises'
+import { rm, stat } from 'node:fs/promises'
 import { runOxlint } from './oxlint-bridge'
-import { inverseVirtualPath, virtualizeVue } from './vue-processor'
 import {
-  CONTRACT_VERSION,
+  normalizeDiagnostics,
+  sortDiagnostics,
   toLintsightDiagnostic,
   type LintsightDiagnostic
-} from './diagnostic'
+} from '@lintsight/diagnostic'
+import { inverseVirtualPath, virtualizeVue } from '@lintsight/vue-processor'
+import { generateOxlintrc, resolveConfigFile } from '@lintsight/config-bridge'
+import { createLogger, type Logger } from '@lintsight/shared'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
 const CACHE_PREFIX = `${CACHE_DIR_NAME}/`
@@ -76,11 +77,33 @@ async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
 
 export async function runPipeline(
   inputs: string[],
-  opts: { cwd?: string; config?: string } = {}
+  opts: {
+    cwd?: string
+    config?: string
+    logLevel?: 'debug' | 'info' | 'warn' | 'error'
+  } = {}
 ): Promise<PipelineResult> {
   const cwd = opts.cwd ?? process.cwd()
+  const logger: Logger = createLogger(opts.logLevel ?? 'error')
   const cacheDir = path.resolve(cwd, CACHE_DIR_NAME)
   await rm(cacheDir, { recursive: true, force: true })
+
+  // 配置解析：lintsight.config.json → 生成 .oxlintrc（--config 显式传入，避免自动发现歧义）
+  let oxlintrcPath: string | undefined
+  try {
+    const configFile = resolveConfigFile(cwd, opts.config)
+    if (configFile) {
+      const generated = await generateOxlintrc(cwd, configFile, cacheDir)
+      oxlintrcPath = generated.oxlintrcPath
+      logger.info(`config: ${configFile} → ${oxlintrcPath}`)
+    } else {
+      logger.info(
+        'no lintsight.config.json found, falling back to oxlint config discovery'
+      )
+    }
+  } catch (e) {
+    return { exitCode: 2, report: null, error: (e as Error).message }
+  }
 
   let files: string[]
   try {
@@ -105,9 +128,9 @@ export async function runPipeline(
 
   let result
   try {
-    result = await runOxlint(targets, { cwd, config: opts.config })
+    result = await runOxlint(targets, { cwd, config: oxlintrcPath })
   } catch (e) {
-    // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2，不允许异常逃逸破坏 exit code 语义
+    // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2
     return { exitCode: 2, report: null, error: (e as Error).message }
   }
   if (!result.ok || !result.output) {
@@ -118,19 +141,13 @@ export async function runPipeline(
     }
   }
 
-  // 回映射 → 统一模型 → 确定性排序（并行扫描下保证 JSON 与指纹跨运行稳定）
-  const diagnostics = result.normalized
-    .map((d) => {
+  // 回映射 → 统一模型 → 确定性排序（M1-DR4）
+  const diagnostics = sortDiagnostics(
+    normalizeDiagnostics(result.output, cwd).map((d) => {
       const original = inverseVirtualPath(d.file, CACHE_PREFIX)
-      return original ? { ...d, file: original } : d
+      return toLintsightDiagnostic(original ? { ...d, file: original } : d)
     })
-    .map(toLintsightDiagnostic)
-    .sort(
-      (a, b) =>
-        a.file.localeCompare(b.file) ||
-        a.span.offset - b.span.offset ||
-        a.ruleId.localeCompare(b.ruleId)
-    )
+  )
 
   const summary = { error: 0, warning: 0, info: 0 }
   for (const d of diagnostics) {
@@ -139,10 +156,14 @@ export async function runPipeline(
     else summary.info++
   }
 
+  logger.info(
+    `scanned ${result.output.number_of_files} file(s), ${diagnostics.length} diagnostic(s)`
+  )
+
   return {
     exitCode: summary.error > 0 ? 1 : 0,
     report: {
-      contractVersion: CONTRACT_VERSION,
+      contractVersion: diagnostics[0]?.contractVersion ?? '1',
       files: result.output.number_of_files,
       summary,
       diagnostics

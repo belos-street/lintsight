@@ -1,0 +1,131 @@
+{
+  "contractVersion": "1",
+  "files": 6,
+  "summary": {
+    "error": 8,
+    "warning": 0,
+    "info": 0
+  },
+  "diagnostics": [
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-catch",
+      "severity": "error",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "file": "fixtures/ts/no-empty-catch.bad-1.ts",
+      "span": {
+        "offset": 162,
+        "length": 11,
+        "line": 5,
+        "column": 5
+      },
+      "fingerprint": "4e51fbe7222005bee429dffc215a998fcfe4a109cdf557f06b55d2d86df6e398",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-catch",
+      "severity": "error",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "file": "fixtures/ts/no-empty-catch.bad-2.ts",
+      "span": {
+        "offset": 136,
+        "length": 15,
+        "line": 5,
+        "column": 5
+      },
+      "fingerprint": "ebc3418e72fb537296b9c4afe3fa9cd03391284d6db216b655336ac264780ecd",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Catch parameter 'e' is caught but never used.",
+      "file": "fixtures/ts/no-empty-catch.bad-2.ts",
+      "span": {
+        "offset": 143,
+        "length": 1,
+        "line": 5,
+        "column": 12
+      },
+      "fingerprint": "d1e00c5c30fb3f0189bacfb48efcc6b6c2184ec7ebb1d6952f56653ca51d428f",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-catch",
+      "severity": "error",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "file": "fixtures/ts/no-empty-catch.bad-3.ts",
+      "span": {
+        "offset": 236,
+        "length": 13,
+        "line": 8,
+        "column": 7
+      },
+      "fingerprint": "4e85256ea8a3865656ed59bc07bad127278bb1bd70301947ed1cd8b2ac5b234c",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-catch",
+      "severity": "error",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "file": "fixtures/ts/no-empty-catch.bad-3.ts",
+      "span": {
+        "offset": 254,
+        "length": 15,
+        "line": 10,
+        "column": 5
+      },
+      "fingerprint": "a761cf9f25c0206fb154a22639a866dbd5730f5357ba3204810589c962d13756",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Catch parameter 'e' is caught but never used.",
+      "file": "fixtures/ts/no-empty-catch.bad-3.ts",
+      "span": {
+        "offset": 261,
+        "length": 1,
+        "line": 10,
+        "column": 12
+      },
+      "fingerprint": "12f795ff29138150ce1add44fdb6742a729998d8fd55326d5776a33fe284fd67",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Function 'load' is declared but never used.",
+      "file": "fixtures/vue/no-empty-catch.vue",
+      "span": {
+        "offset": 77,
+        "length": 4,
+        "line": 10,
+        "column": 16
+      },
+      "fingerprint": "e931a192c8ae687b35aa7c00de363e27453fbba4e5d9c574f804ac90104f2307",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-catch",
+      "severity": "error",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "file": "fixtures/vue/no-empty-catch.vue",
+      "span": {
+        "offset": 143,
+        "length": 11,
+        "line": 13,
+        "column": 5
+      },
+      "fingerprint": "f5af91b55c7fef1750e40e2fcc13f7301921c6dca936cf8820921f7ca4b7d049",
+      "owner": "lintsight-js"
+    }
+  ]
+}

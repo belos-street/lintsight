@@ -1,10 +1,12 @@
 /**
- * RuleTester（SV4）：bun test 承载，用例即契约（rule-authoring skill · testing-and-gating）。
+ * RuleTester（用例即契约，rule-authoring skill）：bun test 承载。
  * no-empty-catch：3 invalid + 2 valid，覆盖边界矩阵（可选 binding / 嵌套 / TS 断言共存 / 注释字符串干扰）。
- * 断言只看 lintsight/* 诊断——内置规则（如 eslint/no-unused-vars）的噪音不进本契约。
+ * 断言只看 lintsight/* 诊断——内置规则的噪音不进本契约。
+ * 注：本测试走 oxlint 自动发现根 .oxlintrc.json（dev 配置含 jsPlugins）。
  */
 import { describe, expect, test } from 'bun:test'
-import { runOxlint, type NormalizedDiagnostic } from '../src/oxlint-bridge'
+import { runOxlint } from '../src/oxlint-bridge'
+import { normalizeDiagnostics } from '@lintsight/diagnostic'
 
 const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
 
@@ -34,14 +36,17 @@ const cases: TestCase[] = [
   { file: 'fixtures/ts/no-empty-catch.good-2.ts', expected: [] }
 ]
 
-const byFile = new Map<string, NormalizedDiagnostic[]>()
+const byFile = new Map<
+  string,
+  { ruleId: string; severity: string; span: { line: number; column: number } }[]
+>()
 
 // 一次 spawn 扫全部 fixture，按文件分组
 const scan = await runOxlint(
   cases.map((c) => `${PROJECT_ROOT}${c.file}`),
   { cwd: PROJECT_ROOT }
 )
-for (const d of scan.normalized) {
+for (const d of normalizeDiagnostics(scan.output!, PROJECT_ROOT)) {
   const list = byFile.get(d.file) ?? []
   list.push(d)
   byFile.set(d.file, list)
@@ -54,7 +59,7 @@ const lint = (file: string) =>
 
 describe('lintsight/no-empty-catch (oxlint JS Plugin · alpha)', () => {
   for (const c of cases) {
-    test(`${c.file}`, () => {
+    test(c.file, () => {
       const diags = lint(c.file)
       expect(diags).toHaveLength(c.expected.length)
       for (const [i, pos] of c.expected.entries()) {

@@ -11,21 +11,21 @@
 - [ ] T1.0b **P0 规则清单评审定稿**（M0 交付物）：差异化 25~30 条 + 内置启用映射清单初版——S3 开工前完成
 - [ ] T1.0c spike ③ tsgolint 实测（可并行，不阻塞 S1~S5；M1 验收中 type-aware 相关承诺以其结论为前提）
 
-## S1 竖切正式化（执行级）
+## S1 竖切正式化（执行级）✅ 2026-09-15
 
-- [ ] T1.1 包结构重组：拆分 `@lintsight/{cli, diagnostic, vue-processor}` workspaces 包，spike 代码迁移（对应设计 §4.1/4.4）
-- [ ] T1.2 diagnostic 正式化：contractVersion 升 `"1"`、`owner` 字段（注册表联动）、防御归一化清单逐项单测（ruleId 归一 / filename 双候选 / 尾斜杠 / stat / 确定性排序）
-- [ ] T1.3 CLI 参数面补全：`--format json|text`、`--log-level`、错误路径禁止异常逃逸（exit 2 契约单测）
-- [ ] T1.4 JSON 报告快照测试落地 + 竖切 13 例迁移全绿
-- 验收：`bun test` 全绿迁移 + 新增防御项单测；快照变更走显式 review
+- [x] T1.1 包结构重组：拆分 `@lintsight/{cli, config-bridge, diagnostic, formatter, shared, vue-processor}` workspaces 包，spike 代码迁移（测试随包迁移）
+- [x] T1.2 diagnostic 正式化：contractVersion 升 `"1"`、`owner` 字段（注册表联动）、防御归一化清单逐项单测（ruleId 归一 / filename 双候选 / 尾斜杠 / stat / 确定性排序）
+- [x] T1.3 CLI 参数面补全：`--format json|text`、`--log-level`（shared logger）、错误路径禁止异常逃逸（exit 2 契约单测 ×5）
+- [x] T1.4 JSON 报告 golden file 落地（CI 环境禁用 bun snapshot，改手工 golden：`test/__golden__/report-v1.json`）+ 竖切用例迁移全绿
+- 验收：`bun test` 48/48 全绿；lint 0 警告；单文件二进制回归通过
 
-## S2 config-bridge（执行级）
+## S2 config-bridge（执行级）✅ 2026-09-15
 
-- [ ] T1.5 `lintsight.config.json` schema + JSONC 解析 + 友好错误（列名 + 期望值）
-- [ ] T1.6 翻译器：rules / overrides / ignore → `.oxlintrc`（写入 `.lintsight-cache/`，spawn 经 `--config` 传入）
-- [ ] T1.7 内置启用映射清单机制（`builtin-mapping.ts`）+ 等价报告（✅/🔄/➖）
-- [ ] T1.8 oxlint overrides 语义实测核对（设计 §9 风险项：不通过则 M1 收窄 overrides 支持；连带拍板通配 severity 开放问题）
-- 验收：翻译单测全覆盖 + overrides 实测记录进设计文档
+- [x] T1.5 `lintsight.config.json` schema + JSONC 解析（注释/尾逗号状态机）+ 友好错误（字段路径 + 期望值）
+- [x] T1.6 翻译器：rules（`off`→`allow`、选项数组）/ overrides / ignore → `.oxlintrc`（写入 `.lintsight-cache/oxlintrc.json`，spawn 经 `--config` 传入）；pipeline 已集成（有 lintsight.config.json → 显式 config；无 → 回落 oxlint 自动发现）
+- [x] T1.7 内置启用映射清单机制（`builtin-mapping.ts`，v0 = correctness 基线）+ 等价报告（✅/🔄/➖）
+- [x] T1.8 oxlint overrides 语义实测：`files+rules` 覆盖**有效**、jsPlugins 绝对路径有效、规则值 `allow/error/warn`、选项数组有效 → 结论回写设计文档 v0.1①；开放问题 1 拍板「不支持通配 severity」并在 config-bridge 显式拒绝
+- 验收：翻译单测全覆盖（12 例）+ overrides 实测记录进设计文档 §9
 
 ## S3 正确性规则 ~10 条（域级，等 T1.0a/b 门）
 

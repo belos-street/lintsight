@@ -1,12 +1,12 @@
 /**
- * Vue SFC processor（SV5 · spike ② 最小版）：
+ * Vue SFC processor（design-m1 §4.3 / M1-DR5）：
  * .vue → 提取 <script> 虚拟块 → 生成与原文件行号 1:1 对齐的虚拟 .ts/.js 文件 → 喂 oxlint。
  * 位置回映射：虚拟文件行号 == 原 .vue 行号，只需把文件路径映射回 .vue。
  *
- * 明确不做（spike 范围外）：
- *   - template 深度分析；同一行开头闭合/单行 script（列偏移无法 1:1）；
- *   - src 外链 script；safe fix 逆映射回写（M1 正式版职责）；
- *   - 就地临时文件约定（M1 正式版须保 .vue 路径上下文，§11.2）——spike 写入 .lintsight-cache/。
+ * 明确不做（M1 边界）：
+ *   - template 深度分析；同一行开标签（列偏移无法 1:1）→ 显式跳过；
+ *   - src 外链 script；多 script 块（取首个，S5 再议策略）；
+ *   - safe fix 逆映射回写（S5，依赖 oxlint fix JSON 结构实测）。
  */
 
 export interface VirtualVueFile {
@@ -14,7 +14,6 @@ export interface VirtualVueFile {
   originalRel: string
   /** 虚拟文件绝对路径（cache 内） */
   virtualAbs: string
-  content: string
 }
 
 const SCRIPT_RE = /<script([^>]*)>([\s\S]*?)<\/script>/
@@ -30,7 +29,7 @@ export function extractScriptBlock(
   const openTagLine = source.slice(0, m.index ?? 0).split('\n').length // <script> 所在行（1-based）
 
   // 内容紧跟开标签换行开始（标准 SFC 格式）→ 剥离首部换行，内容行 = 开标签行 + 1；
-  // 内容与开标签同行 → 列映射无法 1:1，spike 明确不支持
+  // 内容与开标签同行 → 列映射无法 1:1，显式不支持
   let content = m[2]
   if (content.startsWith('\r\n')) content = content.slice(2)
   else if (content.startsWith('\n')) content = content.slice(1)
@@ -83,9 +82,8 @@ export async function virtualizeVue(
   const originalRel = vueAbsPath.startsWith(`${root}/`)
     ? vueAbsPath.slice(root.length + 1)
     : vueAbsPath
-  const ext = block.lang
-  const virtualAbs = `${cacheDir}/${originalRel}.${ext}`
+  const virtualAbs = `${cacheDir}/${originalRel}.${block.lang}`
 
   await Bun.write(virtualAbs, buildVirtualContent(source, block))
-  return { originalRel, virtualAbs, content: '' }
+  return { originalRel, virtualAbs }
 }
