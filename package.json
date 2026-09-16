@@ -7,11 +7,12 @@
   ],
   "scripts": {
     "cli": "bun run packages/lintsight-cli/src/cli.ts",
-    "test": "bun test",
+    "test": "bun run build:rules && bun test",
     "lint": "oxlint packages plugins",
     "lint:fix": "oxlint --fix packages plugins",
     "format": "oxfmt packages plugins",
     "format:check": "oxfmt --check packages plugins",
+    "build:rules": "bun run scripts/build-rules.ts",
     "build:binary": "bun build --compile packages/lintsight-cli/src/cli.ts --outfile dist/lintsight"
   },
   "engines": {

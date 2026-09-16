@@ -132,3 +132,4 @@ describe('lintsight/no-empty-catch', () => {
 3. `createOnce`（per-program 单次 create）采用时机：M1 默认不用，`--debug timings` 前 10 热点再迁。
 4. `fixable` 类型启用节奏：与 T1.15 fix JSON 结构实测联动，M1 末补齐。
 5. defineRule 运行时的物理形态：插件文件必须自包含（嵌入 runtime 无 npm 解析）——候选：a) 构建期 bundle（rolldown/esbuild 把 SDK 内联进 index.js）；b) 规则文件手写裸对象 + SDK 仅做类型面。倾向 a（契约校验必须真实执行）。
+   **已拍板（2026-09-16，提前实施）**：源码拆分 `packages/rules-core/src/rules/*.js`（每规则一文件，纯 JS）→ `bun run build:rules` 聚合为自包含产物 `plugins/lintsight-rules/index.js`（提交 git，`bun test` 自动重建）；meta 契约校验由测试期 `definePlugin` 对**产物**执行（产物即真实加载物）；产物禁止手改。相对 import 实测不可用（探针：动态规则名未出现在 `--rules`）。规则源 TS 化随 M1.5 评估。

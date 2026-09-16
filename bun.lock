@@ -56,6 +56,10 @@
       "name": "@lintsight/vue-processor",
       "version": "0.0.1",
     },
+    "packages/rules-core": {
+      "name": "@lintsight/rules-core",
+      "version": "0.0.1",
+    },
   },
   "packages": {
     "@lintsight/cli": ["@lintsight/cli@workspace:packages/lintsight-cli"],
@@ -67,6 +71,8 @@
     "@lintsight/formatter": ["@lintsight/formatter@workspace:packages/lintsight-formatter"],
 
     "@lintsight/rule-sdk": ["@lintsight/rule-sdk@workspace:packages/lintsight-rule-sdk"],
+
+    "@lintsight/rules-core": ["@lintsight/rules-core@workspace:packages/rules-core"],
 
     "@lintsight/shared": ["@lintsight/shared@workspace:packages/lintsight-shared"],
 

@@ -26,10 +26,12 @@ lintsight/
 │  ├─ lintsight-config-bridge/    # @lintsight/config-bridge：lintsight.config.json(JSONC) → .oxlintrc + 内置映射清单
 │  ├─ lintsight-diagnostic/       # @lintsight/diagnostic：统一诊断模型 / 归一化 / 指纹 / 规则注册表
 │  ├─ lintsight-formatter/        # @lintsight/formatter：json / text 报告器
+│  ├─ lintsight-rule-sdk/         # @lintsight/rule-sdk：defineRule / definePlugin 契约校验 + RuleTester
 │  ├─ lintsight-shared/           # @lintsight/shared：logger
-│  └─ lintsight-vue-processor/    # @lintsight/vue-processor：SFC 虚拟块 + 位置回映射
+│  ├─ lintsight-vue-processor/    # @lintsight/vue-processor：SFC 虚拟块 + 位置回映射
+│  └─ rules-core/                 # @lintsight/rules-core：自有规则源码（每规则一文件，纯 JS）
 ├─ plugins/
-│  └─ lintsight-rules/            # 自有规则集（JS Plugin，跑在 oxlint 嵌入式 runtime，禁 Node/Bun API）
+│  └─ lintsight-rules/            # 规则集构建产物（bun build 聚合，自包含单文件，提交 git）——oxlint 嵌入式 runtime 不支持相对 import，禁止手改此文件
 ├─ fixtures/                      # 规则用例契约（断言依赖行/列布局——禁止格式化此目录）
 ├─ lintsight.config.json          # 引擎自身 dogfood 配置（config-bridge 消费）
 ├─ docs/
@@ -45,11 +47,12 @@ lintsight/
 
 ```bash
 bun install                 # 安装（bun.lock 提交，禁 npm/pnpm/yarn）
-bun test                    # 全部测试（13 例竖切套件 + RuleTester）
+bun test                    # 全部测试（先自动构建规则集产物，再跑 74 例套件）
 bun run cli -- <paths>      # 扫描（exit: 0 无 error / 1 有 error / 2 运行错误）
 bun run lint                # dev-lint（按目录收窄到 packages+plugins，勿全仓扫——fixtures 是故意的坏代码）
 bun run lint:fix
 bun run format              # oxfmt（fixtures 已排除）
+bun run build:rules         # 规则源（packages/rules-core）聚合为自包含产物（bun test 已自动执行）
 bun run build:binary        # bun build --compile 单文件（产物 59MB，dist/ 已 gitignore）
 ```
 
