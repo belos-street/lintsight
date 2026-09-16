@@ -17,14 +17,8 @@ interface TestCase {
 }
 
 const cases: TestCase[] = [
-  {
-    file: 'fixtures/ts/no-empty-catch.bad-1.ts',
-    expected: [{ line: 5, column: 5 }]
-  },
-  {
-    file: 'fixtures/ts/no-empty-catch.bad-2.ts',
-    expected: [{ line: 5, column: 5 }]
-  },
+  { file: 'fixtures/ts/no-empty-catch.bad-1.ts', expected: [{ line: 5, column: 5 }] },
+  { file: 'fixtures/ts/no-empty-catch.bad-2.ts', expected: [{ line: 5, column: 5 }] },
   {
     file: 'fixtures/ts/no-empty-catch.bad-3.ts',
     expected: [
@@ -36,16 +30,10 @@ const cases: TestCase[] = [
   { file: 'fixtures/ts/no-empty-catch.good-2.ts', expected: [] }
 ]
 
-const byFile = new Map<
-  string,
-  { ruleId: string; severity: string; span: { line: number; column: number } }[]
->()
+const byFile = new Map<string, { ruleId: string; severity: string; span: { line: number; column: number } }[]>()
 
 // 一次 spawn 扫全部 fixture，按文件分组
-const scan = await runOxlint(
-  cases.map((c) => `${PROJECT_ROOT}${c.file}`),
-  { cwd: PROJECT_ROOT }
-)
+const scan = await runOxlint(cases.map((c) => `${PROJECT_ROOT}${c.file}`), { cwd: PROJECT_ROOT })
 for (const d of normalizeDiagnostics(scan.output!, PROJECT_ROOT)) {
   const list = byFile.get(d.file) ?? []
   list.push(d)
@@ -53,9 +41,7 @@ for (const d of normalizeDiagnostics(scan.output!, PROJECT_ROOT)) {
 }
 
 const lint = (file: string) =>
-  (byFile.get(file) ?? []).filter(
-    (d) => d.ruleId === 'lintsight/no-empty-catch'
-  )
+  (byFile.get(file) ?? []).filter((d) => d.ruleId === 'lintsight/no-empty-catch')
 
 describe('lintsight/no-empty-catch (oxlint JS Plugin · alpha)', () => {
   for (const c of cases) {

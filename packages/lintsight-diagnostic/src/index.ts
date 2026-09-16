@@ -72,13 +72,8 @@ export function normalizeRuleId(code: string): string {
  * 实测（oxlint 1.83.0）：相对输入 → 相对路径；绝对输入 → 去掉开头 '/' 的路径。两种都要兜住。
  * 候选顺序：先试 '/'+filename（还原被剥的绝对路径），再试 root+filename（相对路径）——
  * 顺序反了会让 root+『被剥路径』的拼接产生虚假前缀匹配。 */
-export function normalizeFilePath(
-  filename: string,
-  projectRoot: string
-): string {
-  const root = projectRoot.endsWith('/')
-    ? projectRoot.slice(0, -1)
-    : projectRoot
+export function normalizeFilePath(filename: string, projectRoot: string): string {
+  const root = projectRoot.endsWith('/') ? projectRoot.slice(0, -1) : projectRoot
   const candidates = filename.startsWith('/')
     ? [filename]
     : [`/${filename}`, `${root}/${filename}`]
@@ -90,14 +85,14 @@ export function normalizeFilePath(
 
 export function normalizeDiagnostics(
   output: OxlintJsonOutput,
-  projectRoot: string
+  projectRoot: string,
 ): NormalizedDiagnostic[] {
   return output.diagnostics.map((d) => ({
     ruleId: normalizeRuleId(d.code),
     severity: d.severity,
     message: d.message,
     file: normalizeFilePath(d.filename, projectRoot),
-    span: d.labels[0]?.span ?? { offset: 0, length: 0, line: 0, column: 0 }
+    span: d.labels[0]?.span ?? { offset: 0, length: 0, line: 0, column: 0 },
   }))
 }
 
@@ -109,7 +104,7 @@ export function normalizeDiagnostics(
 export function computeFingerprint(d: NormalizedDiagnostic): string {
   const hasher = new Bun.CryptoHasher('sha256')
   hasher.update(
-    `${d.ruleId}\u0000${d.file}\u0000${d.span.offset}:${d.span.length}:${d.span.line}:${d.span.column}\u0000${d.message}`
+    `${d.ruleId}\u0000${d.file}\u0000${d.span.offset}:${d.span.length}:${d.span.line}:${d.span.column}\u0000${d.message}`,
   )
   return hasher.digest('hex')
 }
@@ -118,9 +113,7 @@ export function deriveOwner(ruleId: string): Owner {
   return ruleId.startsWith('lintsight/') ? 'lintsight-js' : 'oxlint-native'
 }
 
-export function toLintsightDiagnostic(
-  d: NormalizedDiagnostic
-): LintsightDiagnostic {
+export function toLintsightDiagnostic(d: NormalizedDiagnostic): LintsightDiagnostic {
   return {
     contractVersion: CONTRACT_VERSION,
     ruleId: d.ruleId,
@@ -129,19 +122,17 @@ export function toLintsightDiagnostic(
     file: d.file,
     span: d.span,
     fingerprint: computeFingerprint(d),
-    owner: deriveOwner(d.ruleId)
+    owner: deriveOwner(d.ruleId),
   }
 }
 
 // —— 确定性排序（M1-DR4：并行扫描下保证报告与指纹跨运行稳定） ——
 
-export function sortDiagnostics<T extends LintsightDiagnostic>(
-  diagnostics: T[]
-): T[] {
+export function sortDiagnostics<T extends LintsightDiagnostic>(diagnostics: T[]): T[] {
   return diagnostics.sort(
     (a, b) =>
       a.file.localeCompare(b.file) ||
       a.span.offset - b.span.offset ||
-      a.ruleId.localeCompare(b.ruleId)
+      a.ruleId.localeCompare(b.ruleId),
   )
 }

@@ -21,23 +21,14 @@ describe('竖切闭环（§11.3）', () => {
     // contractVersion 契约
     expect(r1.report!.contractVersion).toBe('1')
 
-    const own = r1.report!.diagnostics.filter(
-      (d) => d.ruleId === 'lintsight/no-empty-catch'
-    )
+    const own = r1.report!.diagnostics.filter((d) => d.ruleId === 'lintsight/no-empty-catch')
     expect(own).toHaveLength(5) // bad-1 / bad-2 / bad-3(×2) / .vue(×1)
 
     // TS 轨道
-    expect(
-      own.some(
-        (d) =>
-          d.file === 'fixtures/ts/no-empty-catch.bad-1.ts' && d.span.line === 5
-      )
-    ).toBeTrue()
+    expect(own.some((d) => d.file === 'fixtures/ts/no-empty-catch.bad-1.ts' && d.span.line === 5)).toBeTrue()
 
     // Vue 竖切：诊断已映射回原 .vue 路径
-    const vueDiag = own.find(
-      (d) => d.file === 'fixtures/vue/no-empty-catch.vue'
-    )
+    const vueDiag = own.find((d) => d.file === 'fixtures/vue/no-empty-catch.vue')
     expect(vueDiag).toBeDefined()
     expect(vueDiag!.span.line).toBe(13)
     expect(vueDiag!.span.column).toBe(5)
@@ -46,26 +37,17 @@ describe('竖切闭环（§11.3）', () => {
     expect(vueDiag!.fingerprint).toMatch(/^[0-9a-f]{64}$/)
     expect(
       r2.report!.diagnostics.find(
-        (d) =>
-          d.ruleId === 'lintsight/no-empty-catch' &&
-          d.file === 'fixtures/vue/no-empty-catch.vue'
+        (d) => d.ruleId === 'lintsight/no-empty-catch' && d.file === 'fixtures/vue/no-empty-catch.vue'
       )!.fingerprint
     ).toBe(vueDiag!.fingerprint)
 
     // owner 字段（注册表联动，§4.6）
     expect(vueDiag!.owner).toBe('lintsight-js')
-    expect(
-      r1.report!.diagnostics.some(
-        (d) =>
-          d.ruleId === 'eslint/no-unused-vars' && d.owner === 'oxlint-native'
-      )
-    ).toBeTrue()
+    expect(r1.report!.diagnostics.some((d) => d.ruleId === 'eslint/no-unused-vars' && d.owner === 'oxlint-native')).toBeTrue()
   })
 
   test('exit=0：无 error 级诊断（warning 不拦截 CI）', async () => {
-    const r = await runPipeline(['fixtures/ts/no-empty-catch.good-1.ts'], {
-      cwd: PROJECT_ROOT
-    })
+    const r = await runPipeline(['fixtures/ts/no-empty-catch.good-1.ts'], { cwd: PROJECT_ROOT })
     expect(r.exitCode).toBe(0)
   })
 

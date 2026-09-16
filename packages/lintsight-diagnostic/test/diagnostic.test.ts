@@ -18,14 +18,10 @@ const ROOT = '/Users/dev/repo'
 describe('normalizeRuleId', () => {
   test('plugin(rule) → plugin/rule', () => {
     expect(normalizeRuleId('eslint(no-debugger)')).toBe('eslint/no-debugger')
-    expect(normalizeRuleId('lintsight(no-empty-catch)')).toBe(
-      'lintsight/no-empty-catch'
-    )
+    expect(normalizeRuleId('lintsight(no-empty-catch)')).toBe('lintsight/no-empty-catch')
   })
   test('已含 / 或非标准格式原样返回', () => {
-    expect(normalizeRuleId('lintsight/no-empty-catch')).toBe(
-      'lintsight/no-empty-catch'
-    )
+    expect(normalizeRuleId('lintsight/no-empty-catch')).toBe('lintsight/no-empty-catch')
     expect(normalizeRuleId('weird')).toBe('weird')
   })
 })
@@ -35,27 +31,17 @@ describe('normalizeFilePath（双候选兜底）', () => {
     expect(normalizeFilePath('fixtures/a.ts', ROOT)).toBe('fixtures/a.ts')
   })
   test('绝对路径 → 相对项目根', () => {
-    expect(normalizeFilePath('/Users/dev/repo/fixtures/a.ts', ROOT)).toBe(
-      'fixtures/a.ts'
-    )
+    expect(normalizeFilePath('/Users/dev/repo/fixtures/a.ts', ROOT)).toBe('fixtures/a.ts')
   })
   test('oxlint 剥掉开头 / 的绝对路径（实测怪癖）', () => {
-    expect(normalizeFilePath('Users/dev/repo/fixtures/a.ts', ROOT)).toBe(
-      'fixtures/a.ts'
-    )
+    expect(normalizeFilePath('Users/dev/repo/fixtures/a.ts', ROOT)).toBe('fixtures/a.ts')
   })
   test('项目根带尾斜杠不影响判断', () => {
-    expect(normalizeFilePath('fixtures/a.ts', '/Users/dev/repo/')).toBe(
-      'fixtures/a.ts'
-    )
-    expect(
-      normalizeFilePath('/Users/dev/repo/fixtures/a.ts', '/Users/dev/repo/')
-    ).toBe('fixtures/a.ts')
+    expect(normalizeFilePath('fixtures/a.ts', '/Users/dev/repo/')).toBe('fixtures/a.ts')
+    expect(normalizeFilePath('/Users/dev/repo/fixtures/a.ts', '/Users/dev/repo/')).toBe('fixtures/a.ts')
   })
   test('项目外路径原样返回', () => {
-    expect(normalizeFilePath('/somewhere/else/a.ts', ROOT)).toBe(
-      '/somewhere/else/a.ts'
-    )
+    expect(normalizeFilePath('/somewhere/else/a.ts', ROOT)).toBe('/somewhere/else/a.ts')
     expect(normalizeFilePath('elsewhere/a.ts', ROOT)).toBe('elsewhere/a.ts')
   })
 })
@@ -73,14 +59,14 @@ describe('fingerprint（M1-DR2）', () => {
     expect(computeFingerprint(base)).toMatch(/^[0-9a-f]{64}$/)
   })
   test('message 文本变化 → 指纹漂移（文案变更为 breaking 的依据）', () => {
-    expect(
-      computeFingerprint({ ...base, message: 'Different copy.' })
-    ).not.toBe(computeFingerprint(base))
+    expect(computeFingerprint({ ...base, message: 'Different copy.' })).not.toBe(
+      computeFingerprint(base)
+    )
   })
   test('span 变化 → 指纹漂移', () => {
-    expect(
-      computeFingerprint({ ...base, span: { ...base.span, line: 4 } })
-    ).not.toBe(computeFingerprint(base))
+    expect(computeFingerprint({ ...base, span: { ...base.span, line: 4 } })).not.toBe(
+      computeFingerprint(base)
+    )
   })
 })
 
@@ -118,12 +104,7 @@ describe('确定性排序（M1-DR4）', () => {
         file,
         span: { offset, length: 1, line: 1, column: 1 }
       })
-    const input = [
-      mk('b.ts', 1, 'z/rule'),
-      mk('a.ts', 9, 'a/rule'),
-      mk('a.ts', 2, 'z/rule'),
-      mk('a.ts', 2, 'a/rule')
-    ]
+    const input = [mk('b.ts', 1, 'z/rule'), mk('a.ts', 9, 'a/rule'), mk('a.ts', 2, 'z/rule'), mk('a.ts', 2, 'a/rule')]
     const out = sortDiagnostics([...input])
     expect(out.map((d) => `${d.file}:${d.span.offset}:${d.ruleId}`)).toEqual([
       'a.ts:2:a/rule',

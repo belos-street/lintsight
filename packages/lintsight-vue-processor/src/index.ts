@@ -57,10 +57,7 @@ export function buildVirtualContent(
 }
 
 /** 虚拟路径 → 原 .vue 相对路径；非虚拟路径返回 null */
-export function inverseVirtualPath(
-  relPath: string,
-  cachePrefix: string
-): string | null {
+export function inverseVirtualPath(relPath: string, cachePrefix: string): string | null {
   if (!relPath.startsWith(cachePrefix)) return null
   const stripped = relPath.slice(cachePrefix.length)
   const m = stripped.match(/^(.+\.vue)\.(ts|tsx|js|jsx)$/)
@@ -76,9 +73,7 @@ export async function virtualizeVue(
   const block = extractScriptBlock(source)
   if (!block) return null
 
-  const root = projectRoot.endsWith('/')
-    ? projectRoot.slice(0, -1)
-    : projectRoot
+  const root = projectRoot.endsWith('/') ? projectRoot.slice(0, -1) : projectRoot
   const originalRel = vueAbsPath.startsWith(`${root}/`)
     ? vueAbsPath.slice(root.length + 1)
     : vueAbsPath

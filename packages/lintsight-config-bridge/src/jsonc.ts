@@ -35,8 +35,7 @@ export function stripJsonComments(input: string): string {
     }
     if (ch === '/' && next === '*') {
       i += 2
-      while (i < input.length && !(input[i] === '*' && input[i + 1] === '/'))
-        i++
+      while (i < input.length && !(input[i] === '*' && input[i + 1] === '/')) i++
       i += 2
       continue
     }

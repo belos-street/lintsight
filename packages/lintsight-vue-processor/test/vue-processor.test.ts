@@ -59,11 +59,7 @@ describe('vue-processor: SFC 虚拟块', () => {
   test('inverseVirtualPath：非虚拟路径返回 null', () => {
     const PREFIX = '.lintsight-cache/'
     expect(inverseVirtualPath('src/App.vue.ts', PREFIX)).toBeNull()
-    expect(inverseVirtualPath('.lintsight-cache/src/App.vue.ts', PREFIX)).toBe(
-      'src/App.vue'
-    )
-    expect(
-      inverseVirtualPath('.lintsight-cache/src/util.ts', PREFIX)
-    ).toBeNull()
+    expect(inverseVirtualPath('.lintsight-cache/src/App.vue.ts', PREFIX)).toBe('src/App.vue')
+    expect(inverseVirtualPath('.lintsight-cache/src/util.ts', PREFIX)).toBeNull()
   })
 })

@@ -16,9 +16,7 @@ afterAll(async () => {
 
 describe('exit code 2 契约（运行错误）', () => {
   test('输入路径不存在', async () => {
-    const r = await runPipeline(['definitely/not/here.ts'], {
-      cwd: PROJECT_ROOT
-    })
+    const r = await runPipeline(['definitely/not/here.ts'], { cwd: PROJECT_ROOT })
     expect(r.exitCode).toBe(2)
     expect(r.report).toBeNull()
     expect(r.error).toContain('input path not found')
@@ -56,14 +54,8 @@ describe('exit code 2 契约（运行错误）', () => {
 
   test('配置无效 → exit 2 且错误信息含字段路径', async () => {
     await mkdir(TMP, { recursive: true })
-    await writeFile(
-      `${TMP}/bad.config.json`,
-      '{ "rules": { "lintsight/x": "fatal" } }'
-    )
-    const r = await runPipeline(['docs'], {
-      cwd: PROJECT_ROOT,
-      config: `${TMP}/bad.config.json`
-    })
+    await writeFile(`${TMP}/bad.config.json`, '{ "rules": { "lintsight/x": "fatal" } }')
+    const r = await runPipeline(['docs'], { cwd: PROJECT_ROOT, config: `${TMP}/bad.config.json` })
     expect(r.exitCode).toBe(2)
     expect(r.error).toContain('rules["lintsight/x"]')
   })
