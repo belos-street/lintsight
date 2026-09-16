@@ -1,12 +1,57 @@
 {
   "contractVersion": "1",
-  "files": 11,
+  "files": 57,
   "summary": {
-    "error": 11,
-    "warning": 0,
+    "error": 40,
+    "warning": 13,
     "info": 0
   },
   "diagnostics": [
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-array-map-side-effect",
+      "severity": "warning",
+      "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
+      "file": "fixtures/ts/no-array-map-side-effect.bad-1.ts",
+      "span": {
+        "offset": 100,
+        "length": 25,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "1136740d69139116bb8662fbda193ed3232ac6f8064dbb2b274bf18e07fe2cf1",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-array-map-side-effect",
+      "severity": "warning",
+      "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
+      "file": "fixtures/ts/no-array-map-side-effect.bad-2.ts",
+      "span": {
+        "offset": 103,
+        "length": 68,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "724400732a75c88be47c3d124efccc380f2fba2f6d209ea6c88f8be1e5ca234a",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-array-map-side-effect",
+      "severity": "warning",
+      "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
+      "file": "fixtures/ts/no-array-map-side-effect.bad-3.ts",
+      "span": {
+        "offset": 120,
+        "length": 56,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "e94f4baab2c506f65cce00ca05d8d038e7ca39ce9a905714aea5b6ef146c61ae",
+      "owner": "lintsight-js"
+    },
     {
       "contractVersion": "1",
       "ruleId": "lintsight/no-async-array-method",
@@ -54,9 +99,219 @@
     },
     {
       "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Class 'Client' is declared but never used.",
+      "file": "fixtures/ts/no-async-constructor-call.bad-1.ts",
+      "span": {
+        "offset": 62,
+        "length": 6,
+        "line": 2,
+        "column": 7
+      },
+      "fingerprint": "6bc8db939b5a540a3af1a8edf3032f90caea280f3ff02a813e51871098144aa0",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-async-constructor-call",
+      "severity": "warning",
+      "message": "Async method \"connect\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
+      "file": "fixtures/ts/no-async-constructor-call.bad-1.ts",
+      "span": {
+        "offset": 114,
+        "length": 14,
+        "line": 6,
+        "column": 5
+      },
+      "fingerprint": "4c839cab2b5a4f114d625f1b7d1c2300b785a4b903d1fa483f589166f6b3c7db",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-floating-promise",
+      "severity": "error",
+      "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
+      "file": "fixtures/ts/no-async-constructor-call.bad-1.ts",
+      "span": {
+        "offset": 114,
+        "length": 14,
+        "line": 6,
+        "column": 5
+      },
+      "fingerprint": "4c0913227b9bef865012b5091715464f39b46bb7d72053582c41f55be4f034c2",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Class 'Pool' is declared but never used.",
+      "file": "fixtures/ts/no-async-constructor-call.bad-2.ts",
+      "span": {
+        "offset": 75,
+        "length": 4,
+        "line": 2,
+        "column": 7
+      },
+      "fingerprint": "c2864b1ad0a17dea24d27d0a70dc31332fd3a8424a5bb3fcb3be7b3709c17d18",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-async-constructor-call",
+      "severity": "warning",
+      "message": "Async method \"open\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
+      "file": "fixtures/ts/no-async-constructor-call.bad-2.ts",
+      "span": {
+        "offset": 142,
+        "length": 11,
+        "line": 7,
+        "column": 5
+      },
+      "fingerprint": "e94792714d67cd2808cf0ae3770a1e142bada80ea5edc0e2075372fe750a308f",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-floating-promise",
+      "severity": "error",
+      "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
+      "file": "fixtures/ts/no-async-constructor-call.bad-2.ts",
+      "span": {
+        "offset": 142,
+        "length": 11,
+        "line": 7,
+        "column": 5
+      },
+      "fingerprint": "2fd912792c1c8dc20994bc64d03d630dc75021958aff9bf5f4437b97171b4527",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Class 'Cache' is declared but never used.",
+      "file": "fixtures/ts/no-async-constructor-call.bad-3.ts",
+      "span": {
+        "offset": 43,
+        "length": 5,
+        "line": 2,
+        "column": 7
+      },
+      "fingerprint": "e13b7419c6dfb4362cf3f9e745386da43124d2db7a00f9e0855dcd4f4720f88e",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-async-constructor-call",
+      "severity": "warning",
+      "message": "Async method \"load\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
+      "file": "fixtures/ts/no-async-constructor-call.bad-3.ts",
+      "span": {
+        "offset": 91,
+        "length": 11,
+        "line": 6,
+        "column": 5
+      },
+      "fingerprint": "3f92b597b693c4a88b77c12aa28bddbc78525c8936c96fb8a1a11d42f055ffa9",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-floating-promise",
+      "severity": "error",
+      "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
+      "file": "fixtures/ts/no-async-constructor-call.bad-3.ts",
+      "span": {
+        "offset": 91,
+        "length": 56,
+        "line": 6,
+        "column": 5
+      },
+      "fingerprint": "721a79c5262a0a32c8baf8efdcf7e56150dafeaa75c00596b5ef1ea6a416a592",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Class 'Client2' is declared but never used.",
+      "file": "fixtures/ts/no-async-constructor-call.good-1.ts",
+      "span": {
+        "offset": 75,
+        "length": 7,
+        "line": 2,
+        "column": 7
+      },
+      "fingerprint": "c4851cf3d8c0f8b69c53a6be72bf15dbe699de8458594b95e033c2debab3bc30",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Class 'Pool2' is declared but never used.",
+      "file": "fixtures/ts/no-async-constructor-call.good-2.ts",
+      "span": {
+        "offset": 47,
+        "length": 5,
+        "line": 2,
+        "column": 7
+      },
+      "fingerprint": "4d53c65da1814f1e835edd4d7d1f21bc64398d77b728b874744f80dcc8136c13",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-closure-loop-var",
+      "severity": "error",
+      "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
+      "file": "fixtures/ts/no-closure-loop-var.bad-1.ts",
+      "span": {
+        "offset": 116,
+        "length": 107,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "9de33205ce3511bbf62c5f35b6d214d2a2531be1ea91eaecfb2650acc136ea30",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-closure-loop-var",
+      "severity": "error",
+      "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
+      "file": "fixtures/ts/no-closure-loop-var.bad-2.ts",
+      "span": {
+        "offset": 107,
+        "length": 128,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "21f5429c294fc443ed4d1d3a6b26253b649efcc0e7d2d8eae1f6d564b8a35b09",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-closure-loop-var",
+      "severity": "error",
+      "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
+      "file": "fixtures/ts/no-closure-loop-var.bad-3.ts",
+      "span": {
+        "offset": 108,
+        "length": 92,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "4aa41d5b214e2184882bea4cf8be3e3de6544516326c522f98701b774b185b36",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
-      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-1.ts",
       "span": {
         "offset": 162,
@@ -64,14 +319,14 @@
         "line": 5,
         "column": 5
       },
-      "fingerprint": "4e51fbe7222005bee429dffc215a998fcfe4a109cdf557f06b55d2d86df6e398",
+      "fingerprint": "86e9490c18ca0d1e76cada4e0c5ddfb26450fc2c7a3c826292efa445c684c2d8",
       "owner": "lintsight-js"
     },
     {
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
-      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-2.ts",
       "span": {
         "offset": 136,
@@ -79,7 +334,22 @@
         "line": 5,
         "column": 5
       },
-      "fingerprint": "ebc3418e72fb537296b9c4afe3fa9cd03391284d6db216b655336ac264780ecd",
+      "fingerprint": "d82bbad8e04216ccac014d0aed09e83ae546d60a01fb0899bd35650841bb3839",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-swallowed-promise-error",
+      "severity": "error",
+      "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
+      "file": "fixtures/ts/no-empty-catch.bad-2.ts",
+      "span": {
+        "offset": 136,
+        "length": 15,
+        "line": 5,
+        "column": 5
+      },
+      "fingerprint": "35f34bc20cd068805a545873b8737d6f484e4c2de34fef10a03909e015af6dd7",
       "owner": "lintsight-js"
     },
     {
@@ -101,7 +371,7 @@
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
-      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-3.ts",
       "span": {
         "offset": 236,
@@ -109,14 +379,14 @@
         "line": 8,
         "column": 7
       },
-      "fingerprint": "4e85256ea8a3865656ed59bc07bad127278bb1bd70301947ed1cd8b2ac5b234c",
+      "fingerprint": "09f39d91ed744f3964a8a92467cf666a7e24f7772672ae11cf43805798328fcb",
       "owner": "lintsight-js"
     },
     {
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
-      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-3.ts",
       "span": {
         "offset": 254,
@@ -124,7 +394,22 @@
         "line": 10,
         "column": 5
       },
-      "fingerprint": "a761cf9f25c0206fb154a22639a866dbd5730f5357ba3204810589c962d13756",
+      "fingerprint": "137ad1b883bc27e15462d8b0f8bec599aae4fdf55c6527fd6d23f0d7b9134212",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-swallowed-promise-error",
+      "severity": "error",
+      "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
+      "file": "fixtures/ts/no-empty-catch.bad-3.ts",
+      "span": {
+        "offset": 254,
+        "length": 15,
+        "line": 10,
+        "column": 5
+      },
+      "fingerprint": "a0e09f8dba992c99d1fc007e66bed0336f4d32481805a05a93cc3a3807ba7f1c",
       "owner": "lintsight-js"
     },
     {
@@ -141,6 +426,351 @@
       },
       "fingerprint": "12f795ff29138150ce1add44fdb6742a729998d8fd55326d5776a33fe284fd67",
       "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-promise-catch",
+      "severity": "error",
+      "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
+      "file": "fixtures/ts/no-empty-promise-catch.bad-1.ts",
+      "span": {
+        "offset": 82,
+        "length": 26,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "f84f2ace7f6eb3ad1919786873b486025b7a199b38facbb8c73d2a7b3a802f7f",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-promise-catch",
+      "severity": "error",
+      "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
+      "file": "fixtures/ts/no-empty-promise-catch.bad-2.ts",
+      "span": {
+        "offset": 84,
+        "length": 33,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "153ce13e311b65cc2aa798d6b7222bc2a46180cf077747fc2393ff588e551e0e",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-empty-promise-catch",
+      "severity": "error",
+      "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
+      "file": "fixtures/ts/no-empty-promise-catch.bad-3.ts",
+      "span": {
+        "offset": 86,
+        "length": 32,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "be0238265762944e4b5430f06a3920937b8e5b52bb20332458640e1b2634aaf5",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-floating-promise",
+      "severity": "error",
+      "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
+      "file": "fixtures/ts/no-floating-promise.bad-1.ts",
+      "span": {
+        "offset": 135,
+        "length": 8,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "b95c327cd3a38fdc3b894c8690d68c9adb7157e598fb79d331bcc81a04029ec9",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-floating-promise",
+      "severity": "error",
+      "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
+      "file": "fixtures/ts/no-floating-promise.bad-2.ts",
+      "span": {
+        "offset": 97,
+        "length": 37,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "ddca5eff7321600a7bbe203bf1370228464b4d946d0569918be07ea53c75dabe",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-floating-promise",
+      "severity": "error",
+      "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
+      "file": "fixtures/ts/no-floating-promise.bad-3.ts",
+      "span": {
+        "offset": 113,
+        "length": 12,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "c5caf14e7f589e620e6490a7df58957eae2e3ed987207d628971f74b5f93f594",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-ignored-reduce-result",
+      "severity": "error",
+      "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
+      "file": "fixtures/ts/no-ignored-reduce-result.bad-1.ts",
+      "span": {
+        "offset": 84,
+        "length": 36,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "cb7fdd00abcf85c8a78ec47815a6074f0dccfe02399c0781530790cbff080d75",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-ignored-reduce-result",
+      "severity": "error",
+      "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
+      "file": "fixtures/ts/no-ignored-reduce-result.bad-2.ts",
+      "span": {
+        "offset": 82,
+        "length": 38,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "f3971eca857f8161df0911399ac7ba2db34c51abe78bbd8ea3117e945e88602e",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-ignored-reduce-result",
+      "severity": "error",
+      "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
+      "file": "fixtures/ts/no-ignored-reduce-result.bad-3.ts",
+      "span": {
+        "offset": 104,
+        "length": 53,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "8417d90ae325752d0a91d706e8c3b5707a9f51aee772c6d89d158196f96e6e11",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-json-structured-clone",
+      "severity": "warning",
+      "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
+      "file": "fixtures/ts/no-json-structured-clone.bad-1.ts",
+      "span": {
+        "offset": 143,
+        "length": 31,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "71eb03e63b95a4b9d03134cbc8c663fdefc5743cbd2354e88a3f5dee67c8122d",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-json-structured-clone",
+      "severity": "warning",
+      "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
+      "file": "fixtures/ts/no-json-structured-clone.bad-2.ts",
+      "span": {
+        "offset": 141,
+        "length": 33,
+        "line": 3,
+        "column": 47
+      },
+      "fingerprint": "6e15823be6170ed89acd275f5b1e0ed97b6bf6c7b6378009f8471b1e530de67d",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-json-structured-clone",
+      "severity": "warning",
+      "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
+      "file": "fixtures/ts/no-json-structured-clone.bad-3.ts",
+      "span": {
+        "offset": 100,
+        "length": 33,
+        "line": 3,
+        "column": 18
+      },
+      "fingerprint": "f880d0d61017df613dfaccb906d658dfa578bd2c6dcaf06dfaf1c25523cf46fd",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-swallowed-promise-error",
+      "severity": "error",
+      "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
+      "file": "fixtures/ts/no-swallowed-promise-error.bad-1.ts",
+      "span": {
+        "offset": 148,
+        "length": 49,
+        "line": 5,
+        "column": 5
+      },
+      "fingerprint": "dcfc051cfe0ab4f529bf5db7173b81e10dc8e893ca3e5d6e069816021d9e9d2d",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Catch parameter 'e' is caught but never used.",
+      "file": "fixtures/ts/no-swallowed-promise-error.bad-1.ts",
+      "span": {
+        "offset": 155,
+        "length": 1,
+        "line": 5,
+        "column": 12
+      },
+      "fingerprint": "f8f904c64343111f10803338aa2a8fe8c83bb8f060e994e5b5acf509baf1ce3f",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-swallowed-promise-error",
+      "severity": "error",
+      "message": "Caught error \"err\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
+      "file": "fixtures/ts/no-swallowed-promise-error.bad-2.ts",
+      "span": {
+        "offset": 119,
+        "length": 33,
+        "line": 5,
+        "column": 5
+      },
+      "fingerprint": "3c0515bfae5b323dd60c0596d9158f8ce917572dcc3aa6bb8453c69df1dc5b2f",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Catch parameter 'err' is caught but never used.",
+      "file": "fixtures/ts/no-swallowed-promise-error.bad-2.ts",
+      "span": {
+        "offset": 126,
+        "length": 3,
+        "line": 5,
+        "column": 12
+      },
+      "fingerprint": "85443eccba21f3756dc2ae19dc8cb69f9760e2557a2a36da59c90f5a65332d2e",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-swallowed-promise-error",
+      "severity": "error",
+      "message": "Caught error \"error\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
+      "file": "fixtures/ts/no-swallowed-promise-error.bad-3.ts",
+      "span": {
+        "offset": 118,
+        "length": 75,
+        "line": 5,
+        "column": 5
+      },
+      "fingerprint": "100755e55a70528b554dcfcfee034e6583dc3e71ec071ed39f75a6a423109b6f",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Catch parameter 'error' is caught but never used.",
+      "file": "fixtures/ts/no-swallowed-promise-error.bad-3.ts",
+      "span": {
+        "offset": 125,
+        "length": 5,
+        "line": 5,
+        "column": 12
+      },
+      "fingerprint": "d11d68ab4bbe4eb751c84c0452812d9ba3cf941fed450f593ec643c15fcdb36e",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-useless-catch",
+      "severity": "error",
+      "message": "Unnecessary try/catch wrapper",
+      "file": "fixtures/ts/no-swallowed-promise-error.good-2.ts",
+      "span": {
+        "offset": 274,
+        "length": 1,
+        "line": 13,
+        "column": 12
+      },
+      "fingerprint": "cf370cd602d5ea44844852a924d3744054524c6d836d82699c74ee5dc8cbf887",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sync-io-in-async",
+      "severity": "warning",
+      "message": "\"readFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
+      "file": "fixtures/ts/no-sync-io-in-async.bad-1.ts",
+      "span": {
+        "offset": 166,
+        "length": 26,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "1b8ed2615670e9cf5f7704c0b35cc5842ffff4fe706da25d12649cfe57fce24c",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sync-io-in-async",
+      "severity": "warning",
+      "message": "\"writeFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
+      "file": "fixtures/ts/no-sync-io-in-async.bad-2.ts",
+      "span": {
+        "offset": 133,
+        "length": 28,
+        "line": 5,
+        "column": 3
+      },
+      "fingerprint": "63f1e771e4b5d4c864636df2dbb68a4767e87eab26dc4f2e208f7e46fe275b1f",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sync-io-in-async",
+      "severity": "warning",
+      "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
+      "file": "fixtures/ts/no-sync-io-in-async.bad-3.ts",
+      "span": {
+        "offset": 153,
+        "length": 16,
+        "line": 5,
+        "column": 8
+      },
+      "fingerprint": "c5ebe8412779b014a921dd5e60af06f346326c84a7317da98ce23b5487641af6",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sync-io-in-async",
+      "severity": "warning",
+      "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
+      "file": "fixtures/ts/no-sync-io-in-async.bad-3.ts",
+      "span": {
+        "offset": 177,
+        "length": 25,
+        "line": 6,
+        "column": 5
+      },
+      "fingerprint": "b6c606fe1830f22a985487546d4dcf58cebf549e7aaff2aed58a2495a4bd6a14",
+      "owner": "lintsight-js"
     },
     {
       "contractVersion": "1",
@@ -161,7 +791,7 @@
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
-      "message": "Unexpected empty catch block. Handle the error or rethrow it.",
+      "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/vue/no-empty-catch.vue",
       "span": {
         "offset": 143,
@@ -169,7 +799,7 @@
         "line": 13,
         "column": 5
       },
-      "fingerprint": "f5af91b55c7fef1750e40e2fcc13f7301921c6dca936cf8820921f7ca4b7d049",
+      "fingerprint": "9c39bee2e77ff06dae4908708fa8139f04d863316ebc26ef87dee4721d361d18",
       "owner": "lintsight-js"
     }
   ]

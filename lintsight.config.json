@@ -2,7 +2,16 @@
   // lintsight 仓库自身配置（dogfood）——schema 校验由 @lintsight/config-bridge 提供
   "rules": {
     "lintsight/no-empty-catch": "error",
-    "lintsight/no-async-array-method": "error"
+    "lintsight/no-async-array-method": "error",
+    "lintsight/no-floating-promise": "error",
+    "lintsight/no-swallowed-promise-error": "error",
+    "lintsight/no-closure-loop-var": "error",
+    "lintsight/no-array-map-side-effect": "warn",
+    "lintsight/no-json-structured-clone": "warn",
+    "lintsight/no-ignored-reduce-result": "error",
+    "lintsight/no-empty-promise-catch": "error",
+    "lintsight/no-async-constructor-call": "warn",
+    "lintsight/no-sync-io-in-async": "warn"
   },
   "ignore": [],
   "overrides": [

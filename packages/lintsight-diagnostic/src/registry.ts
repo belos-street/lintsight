@@ -1,6 +1,6 @@
 /**
  * 规则注册表 v0（design-m1 §4.6）：四元组登记，双报消解的前置。
- * CI 校验（rules-core 每条规则必须在册）随 S3 rules-core 包落地后接入。
+ * CI 校验见 test/registry.test.ts——新增规则必须同步登记，漏登记测试即红。
  */
 
 import type { Owner } from './index'
@@ -24,6 +24,60 @@ export const registry: RegistryEntry[] = [
   },
   {
     ruleId: 'lintsight/no-async-array-method',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-floating-promise',
+    owner: 'lintsight-js',
+    detection: 'local',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-swallowed-promise-error',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-closure-loop-var',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-array-map-side-effect',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-json-structured-clone',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-ignored-reduce-result',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-empty-promise-catch',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-async-constructor-call',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-sync-io-in-async',
     owner: 'lintsight-js',
     detection: 'syntax',
     status: 'active'

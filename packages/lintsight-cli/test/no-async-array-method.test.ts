@@ -20,7 +20,9 @@ const cases = [
     expect: [{ line: 3, column: 10 }]
   },
   { file: 'fixtures/ts/no-async-array-method.good-1.ts', expect: [] },
-  { file: 'fixtures/ts/no-async-array-method.good-2.ts', expect: [] }
+  { file: 'fixtures/ts/no-async-array-method.good-2.ts', expect: [] },
+  // Promise.all 消费 async map 回调是标准写法（v0.1① dogfood 误报修正）
+  { file: 'fixtures/ts/no-async-array-method.good-3.ts', expect: [] }
 ]
 
 const tester = defineRuleTester({ ruleId: 'lintsight/no-async-array-method' })

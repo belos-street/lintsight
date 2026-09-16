@@ -47,7 +47,7 @@ export function buildVirtualContent(
   block: { startLine: number; content: string }
 ): string {
   const totalLines = source.split('\n').length
-  const lines: string[] = new Array(totalLines).fill('')
+  const lines: string[] = Array.from({ length: totalLines }, () => '')
   const contentLines = block.content.split('\n')
   for (let i = 0; i < contentLines.length; i++) {
     const target = block.startLine - 1 + i

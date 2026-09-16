@@ -30,8 +30,8 @@
 ## S3 正确性规则（域级，门禁已过 → 执行中）
 
 - [x] T1.9 rule-sdk 正式化 ✅ 2026-09-16：`@lintsight/rule-sdk`（defineRule/definePlugin meta 契约校验 + messageId 运行时一致性 + RuleTester 工具化）；RuleTester 与 pipeline 同款 config 链路（dogfood）；现有插件全部规则经 definePlugin 校验通过
-- [x] T1.10 首条规则 `lintsight/no-async-array-method` ✅ 2026-09-16：用例先行 3 bad / 2 good（forEach/map/reduce 变体 + Promise.all 替代 + 字符串干扰）、golden 重生成、CLI 端到端验证；其余 9 条逐条开发中
-- [ ] T1.11 每条规则注册表登记（ruleId/owner/检测层/状态）+ CI 校验（已手工登记 2 条；CI 自动校验随 rules-core 包落地）
+- [x] T1.10 正确性规则全量完成 ✅ 2026-09-16：`no-async-array-method` + 剩余 9 条（floating-promise [local 预扫描启发] / swallowed-promise-error / closure-loop-var / array-map-side-effect / json-structured-clone / ignored-reduce-result / empty-promise-catch / async-constructor-call / sync-io-in-async）；每条 3 bad / 2 good 用例先行，期望位置探测校准后固化；契约测试 9 组全绿（73/73），golden 重生成；dogfood 配置启用全部 11 条
+- [x] T1.11 注册表登记 + CI 校验 ✅ 2026-09-16：`lintsight-diagnostic/test/registry.test.ts` 四项校验（插件规则必须登记 / detection 与 typeRequirement 映射一致 / 防陈旧条目 / 命名空间契约）；M1 校验载体 = bun test 套件；已登记 11 条，负向验证可拦漏登记
 
 ## S4 安全语法级规则 ~14 条（域级，可与 S3 并行）
 
