@@ -28,15 +28,15 @@ if (!(format in formatters)) {
 }
 const logLevel = readOption('--log-level') ?? 'error'
 if (!['debug', 'info', 'warn', 'error'].includes(logLevel)) {
-  console.error(`lintsight: --log-level 期望 debug|info|warn|error，得到 '${logLevel}'`)
+  console.error(
+    `lintsight: --log-level 期望 debug|info|warn|error，得到 '${logLevel}'`
+  )
   process.exit(2)
 }
 
 const optionNames = ['--format', '--log-level', '--config']
 const paths = args.filter(
-  (a, i) =>
-    !a.startsWith('-') &&
-    !optionNames.includes(args[i - 1]) // 前一个是选项名 → 当前是选项值
+  (a, i) => !a.startsWith('-') && !optionNames.includes(args[i - 1]) // 前一个是选项名 → 当前是选项值
 )
 
 if (paths.length === 0) {

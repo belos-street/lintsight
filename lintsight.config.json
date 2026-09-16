@@ -1,7 +1,8 @@
 {
   // lintsight 仓库自身配置（dogfood）——schema 校验由 @lintsight/config-bridge 提供
   "rules": {
-    "lintsight/no-empty-catch": "error"
+    "lintsight/no-empty-catch": "error",
+    "lintsight/no-async-array-method": "error"
   },
   "ignore": [],
   "overrides": [

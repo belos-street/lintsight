@@ -15,12 +15,14 @@ export function resolveOxlintBin(cwd: string = process.cwd()): string {
   if (process.env.OXLINT_BIN) return process.env.OXLINT_BIN
   const candidates = [
     `${cwd}/node_modules/.bin/oxlint`,
-    new URL('../../../node_modules/.bin/oxlint', import.meta.url).pathname,
+    new URL('../../../node_modules/.bin/oxlint', import.meta.url).pathname
   ]
   for (const c of candidates) {
     if (existsSync(c)) return c
   }
-  throw new Error('oxlint not found: install oxlint (npm/bun) or set OXLINT_BIN')
+  throw new Error(
+    'oxlint not found: install oxlint (npm/bun) or set OXLINT_BIN'
+  )
 }
 
 export interface OxlintRunResult {
@@ -43,11 +45,11 @@ export async function runOxlint(
   const proc = Bun.spawn([resolveOxlintBin(cwd), ...args], {
     cwd,
     stdout: 'pipe',
-    stderr: 'pipe',
+    stderr: 'pipe'
   })
   const [stdout, stderr] = await Promise.all([
     new Response(proc.stdout).text(),
-    new Response(proc.stderr).text(),
+    new Response(proc.stderr).text()
   ])
   const exitCode = await proc.exited
 

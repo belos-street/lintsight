@@ -2,7 +2,12 @@
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error'
 
-const ORDER: Record<LogLevel, number> = { debug: 10, info: 20, warn: 30, error: 40 }
+const ORDER: Record<LogLevel, number> = {
+  debug: 10,
+  info: 20,
+  warn: 30,
+  error: 40
+}
 
 export interface Logger {
   debug(message: string): void
@@ -17,5 +22,10 @@ export function createLogger(level: LogLevel = 'error'): Logger {
     if (ORDER[lvl] < min) return
     console.error(`[lintsight:${lvl}] ${message}`)
   }
-  return { debug: emit('debug'), info: emit('info'), warn: emit('warn'), error: emit('error') }
+  return {
+    debug: emit('debug'),
+    info: emit('info'),
+    warn: emit('warn'),
+    error: emit('error')
+  }
 }

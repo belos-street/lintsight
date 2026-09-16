@@ -23,6 +23,9 @@
         "@lintsight/shared": "workspace:*",
         "@lintsight/vue-processor": "workspace:*",
       },
+      "devDependencies": {
+        "@lintsight/rule-sdk": "workspace:*",
+      },
     },
     "packages/lintsight-config-bridge": {
       "name": "@lintsight/config-bridge",
@@ -35,6 +38,15 @@
     "packages/lintsight-formatter": {
       "name": "@lintsight/formatter",
       "version": "0.0.1",
+    },
+    "packages/lintsight-rule-sdk": {
+      "name": "@lintsight/rule-sdk",
+      "version": "0.1.0",
+      "dependencies": {
+        "@lintsight/cli": "workspace:*",
+        "@lintsight/config-bridge": "workspace:*",
+        "@lintsight/diagnostic": "workspace:*",
+      },
     },
     "packages/lintsight-shared": {
       "name": "@lintsight/shared",
@@ -53,6 +65,8 @@
     "@lintsight/diagnostic": ["@lintsight/diagnostic@workspace:packages/lintsight-diagnostic"],
 
     "@lintsight/formatter": ["@lintsight/formatter@workspace:packages/lintsight-formatter"],
+
+    "@lintsight/rule-sdk": ["@lintsight/rule-sdk@workspace:packages/lintsight-rule-sdk"],
 
     "@lintsight/shared": ["@lintsight/shared@workspace:packages/lintsight-shared"],
 

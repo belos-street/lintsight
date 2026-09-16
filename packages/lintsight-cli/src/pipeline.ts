@@ -10,7 +10,7 @@ import {
   normalizeDiagnostics,
   sortDiagnostics,
   toLintsightDiagnostic,
-  type LintsightDiagnostic,
+  type LintsightDiagnostic
 } from '@lintsight/diagnostic'
 import { inverseVirtualPath, virtualizeVue } from '@lintsight/vue-processor'
 import { generateOxlintrc, resolveConfigFile } from '@lintsight/config-bridge'
@@ -18,8 +18,24 @@ import { createLogger, type Logger } from '@lintsight/shared'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
 const CACHE_PREFIX = `${CACHE_DIR_NAME}/`
-const SCAN_EXTS = new Set(['.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.vue'])
-const IGNORED_DIRS = new Set(['node_modules', '.git', CACHE_DIR_NAME, 'dist', 'build', 'out', 'coverage'])
+const SCAN_EXTS = new Set([
+  '.ts',
+  '.tsx',
+  '.js',
+  '.jsx',
+  '.mjs',
+  '.cjs',
+  '.vue'
+])
+const IGNORED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  CACHE_DIR_NAME,
+  'dist',
+  'build',
+  'out',
+  'coverage'
+])
 
 export interface LintsightReport {
   contractVersion: string
@@ -50,7 +66,8 @@ async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
       const matched: string[] = []
       for (const rel of glob.scanSync({ cwd: abs, onlyFiles: true })) {
         if (rel.split('/').some((seg) => IGNORED_DIRS.has(seg))) continue
-        if (SCAN_EXTS.has(path.extname(rel))) matched.push(path.resolve(abs, rel))
+        if (SCAN_EXTS.has(path.extname(rel)))
+          matched.push(path.resolve(abs, rel))
       }
       return matched
     })
@@ -60,7 +77,11 @@ async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
 
 export async function runPipeline(
   inputs: string[],
-  opts: { cwd?: string; config?: string; logLevel?: 'debug' | 'info' | 'warn' | 'error' } = {}
+  opts: {
+    cwd?: string
+    config?: string
+    logLevel?: 'debug' | 'info' | 'warn' | 'error'
+  } = {}
 ): Promise<PipelineResult> {
   const cwd = opts.cwd ?? process.cwd()
   const logger: Logger = createLogger(opts.logLevel ?? 'error')
@@ -76,7 +97,9 @@ export async function runPipeline(
       oxlintrcPath = generated.oxlintrcPath
       logger.info(`config: ${configFile} → ${oxlintrcPath}`)
     } else {
-      logger.info('no lintsight.config.json found, falling back to oxlint config discovery')
+      logger.info(
+        'no lintsight.config.json found, falling back to oxlint config discovery'
+      )
     }
   } catch (e) {
     return { exitCode: 2, report: null, error: (e as Error).message }
@@ -95,8 +118,13 @@ export async function runPipeline(
   // .vue → 虚拟块（行号 1:1 对齐，回映射只改路径）；各文件互相独立，并行虚拟化
   const vueFiles = files.filter((f) => f.endsWith('.vue'))
   const passthrough = files.filter((f) => !f.endsWith('.vue'))
-  const virtualized = await Promise.all(vueFiles.map((f) => virtualizeVue(f, cwd, cacheDir)))
-  const targets = [...passthrough, ...virtualized.filter((v) => v !== null).map((v) => v!.virtualAbs)]
+  const virtualized = await Promise.all(
+    vueFiles.map((f) => virtualizeVue(f, cwd, cacheDir))
+  )
+  const targets = [
+    ...passthrough,
+    ...virtualized.filter((v) => v !== null).map((v) => v!.virtualAbs)
+  ]
 
   let result
   try {
@@ -128,7 +156,9 @@ export async function runPipeline(
     else summary.info++
   }
 
-  logger.info(`scanned ${result.output.number_of_files} file(s), ${diagnostics.length} diagnostic(s)`)
+  logger.info(
+    `scanned ${result.output.number_of_files} file(s), ${diagnostics.length} diagnostic(s)`
+  )
 
   return {
     exitCode: summary.error > 0 ? 1 : 0,

@@ -70,6 +70,7 @@ bun run build:binary        # bun build --compile 单文件（产物 59MB，dist
 - 文档版本化：requirements-v0.x.md / design-*-v0.x.md 带修订记录；决策记录（DR）必须含备选与否决理由。
 - fixtures 是规则的用例契约：改实现不改用例 = 没改对；放宽断言必须在 PR 说明。
 - 报告 golden file：`packages/lintsight-cli/test/__golden__/`——报告 schema 或规则面变化的 diff 即评审信号；重新生成：删除该文件重跑 `bun test`。
+- ⚠️ **Bun workspaces 链接坑**：member 的 package.json 依赖变更后 `bun install` 可能不重建链接（报 no changes 但模块找不到）——删除该 member 的 `node_modules/` 再 `bun install`。
 - 提交前：`bun run format && bun run lint && bun test` 全绿。
 
 ## 文档索引
@@ -78,5 +79,7 @@ bun run build:binary        # bun build --compile 单文件（产物 59MB，dist
 | --- | --- |
 | [docs/requirements/requirements-v0.2.md](docs/requirements/requirements-v0.2.md) | 总体技术设计（选型/架构/里程碑/风险） |
 | [docs/design/design-m1-v0.1.md](docs/design/design-m1-v0.1.md) | M1 实现设计（M1-DR1~7 决策、S1~S7 切片） |
+| [docs/design/p0-rules-proposal-v0.1.md](docs/design/p0-rules-proposal-v0.1.md) | P0 规则清单提案（差异化 24+1 条，CWE/OWASP 映射，待评审） |
+| [docs/design/rule-sdk-rfc-v0.1.md](docs/design/rule-sdk-rfc-v0.1.md) | rule-sdk 接口 RFC（T1.0a，待评审） |
 | [docs/spikes/vertical-slice-m1.md](docs/spikes/vertical-slice-m1.md) | 竖切验证报告（技术可行性实证 + oxlint 行为实测） |
 | [docs/todo.md](docs/todo.md) | 当前执行 Todo |

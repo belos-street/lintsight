@@ -5,11 +5,11 @@
 > 前序阶段：最小闭环验证（SV1~SV7）✅ 已完成，报告见 [spikes/vertical-slice-m1.md](spikes/vertical-slice-m1.md)
 > 状态：进行中 · 更新：2026-09-15
 
-## 门禁任务（不完成对应切片不得开工）
+## 门禁任务（不完成对应切片不得开工）✅ 2026-09-16
 
-- [ ] T1.0a **rule-sdk 接口 RFC 评审**：`defineRule` / RuleTester / meta 契约类型面冻结（对外承诺，最难改）——S3 开工前完成
-- [ ] T1.0b **P0 规则清单评审定稿**（M0 交付物）：差异化 25~30 条 + 内置启用映射清单初版——S3 开工前完成
-- [ ] T1.0c spike ③ tsgolint 实测（可并行，不阻塞 S1~S5；M1 验收中 type-aware 相关承诺以其结论为前提）
+- [x] T1.0a **rule-sdk 接口 RFC 评审**：[rule-sdk-rfc-v0.1.md](design/rule-sdk-rfc-v0.1.md)——用户评审通过；开放问题 5 拍板 M1 形态 = 裸对象 + 测试期 definePlugin 校验（bundle 方案 M1.5）；M1 冻结面 = create + visitor
+- [x] T1.0b **P0 规则清单定稿**：[p0-rules-proposal-v0.1.md](design/p0-rules-proposal-v0.1.md) v0.1①——用户评审 6 点全部实证成立并吸收（no-then-without-catch 移入映射清单；innerhtml 单 severity；4 处边界注记；sync-io 转正），定稿 26 条
+- [ ] T1.0c spike ③ tsgolint 实测（可并行，不阻塞 S1~S5；M1 验收中 type-aware 相关承诺以其结论为前提；连带确认 typescript/no-misused-promises 生效性）
 
 ## S1 竖切正式化（执行级）✅ 2026-09-15
 
@@ -27,11 +27,11 @@
 - [x] T1.8 oxlint overrides 语义实测：`files+rules` 覆盖**有效**、jsPlugins 绝对路径有效、规则值 `allow/error/warn`、选项数组有效 → 结论回写设计文档 v0.1①；开放问题 1 拍板「不支持通配 severity」并在 config-bridge 显式拒绝
 - 验收：翻译单测全覆盖（12 例）+ overrides 实测记录进设计文档 §9
 
-## S3 正确性规则 ~10 条（域级，等 T1.0a/b 门）
+## S3 正确性规则（域级，门禁已过 → 执行中）
 
-- [ ] T1.9 rule-sdk 正式化：`defineRule`（meta 契约校验）+ RuleTester 工具化（spawn 批扫 + 按文件断言位置/fix）
-- [ ] T1.10 正确性 P0 规则逐条开发（P0 清单评审后逐条立任务；每条 ≥3 bad / ≥2 good / safe case / 边界矩阵）
-- [ ] T1.11 每条规则注册表登记（ruleId/owner/检测层/状态）+ CI 校验
+- [x] T1.9 rule-sdk 正式化 ✅ 2026-09-16：`@lintsight/rule-sdk`（defineRule/definePlugin meta 契约校验 + messageId 运行时一致性 + RuleTester 工具化）；RuleTester 与 pipeline 同款 config 链路（dogfood）；现有插件全部规则经 definePlugin 校验通过
+- [x] T1.10 首条规则 `lintsight/no-async-array-method` ✅ 2026-09-16：用例先行 3 bad / 2 good（forEach/map/reduce 变体 + Promise.all 替代 + 字符串干扰）、golden 重生成、CLI 端到端验证；其余 9 条逐条开发中
+- [ ] T1.11 每条规则注册表登记（ruleId/owner/检测层/状态）+ CI 校验（已手工登记 2 条；CI 自动校验随 rules-core 包落地）
 
 ## S4 安全语法级规则 ~14 条（域级，可与 S3 并行）
 

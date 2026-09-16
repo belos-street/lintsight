@@ -1,12 +1,57 @@
 {
   "contractVersion": "1",
-  "files": 6,
+  "files": 11,
   "summary": {
-    "error": 8,
+    "error": 11,
     "warning": 0,
     "info": 0
   },
   "diagnostics": [
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-async-array-method",
+      "severity": "error",
+      "message": "Array.prototype.forEach does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
+      "file": "fixtures/ts/no-async-array-method.bad-1.ts",
+      "span": {
+        "offset": 136,
+        "length": 62,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "f38dc197378c6887216819f28e1d30d236bfae0f35d5aca81dfd220bf3ea94af",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-async-array-method",
+      "severity": "error",
+      "message": "Array.prototype.map does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
+      "file": "fixtures/ts/no-async-array-method.bad-2.ts",
+      "span": {
+        "offset": 127,
+        "length": 88,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "2a0d9548a39a10e90484136d545b0ad77337eb0a7b8540d80aaef6effc1391aa",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-async-array-method",
+      "severity": "error",
+      "message": "Array.prototype.reduce does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
+      "file": "fixtures/ts/no-async-array-method.bad-3.ts",
+      "span": {
+        "offset": 157,
+        "length": 99,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "c5f217f911ff637ba3c53d112b480239b45f596b64552c718cd27d8fc5a4f6c9",
+      "owner": "lintsight-js"
+    },
     {
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-catch",

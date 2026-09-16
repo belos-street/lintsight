@@ -2,9 +2,14 @@
   "name": "@lintsight/cli",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "bin": {
     "lintsight": "./src/cli.ts"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/cli.ts",
+    "./oxlint-bridge": "./src/oxlint-bridge.ts",
+    "./pipeline": "./src/pipeline.ts"
   },
   "dependencies": {
     "@lintsight/config-bridge": "workspace:*",
@@ -12,5 +17,8 @@
     "@lintsight/formatter": "workspace:*",
     "@lintsight/shared": "workspace:*",
     "@lintsight/vue-processor": "workspace:*"
+  },
+  "devDependencies": {
+    "@lintsight/rule-sdk": "workspace:*"
   }
 }

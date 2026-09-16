@@ -8,12 +8,15 @@
 export interface BuiltinMapping {
   categories: Record<string, 'allow' | 'error' | 'warn'>
   /** 显式启用的内置规则（内置名，无命名空间），值为 oxlint 规则配置 */
-  rules: Record<string, 'allow' | 'error' | 'warn' | ['error' | 'warn', Record<string, unknown>]>
+  rules: Record<
+    string,
+    'allow' | 'error' | 'warn' | ['error' | 'warn', Record<string, unknown>]
+  >
   ignorePatterns: string[]
 }
 
 export const builtinMapping: BuiltinMapping = {
   categories: { correctness: 'error' },
   rules: {},
-  ignorePatterns: [],
+  ignorePatterns: []
 }

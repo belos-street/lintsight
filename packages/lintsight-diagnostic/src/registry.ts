@@ -20,8 +20,14 @@ export const registry: RegistryEntry[] = [
     ruleId: 'lintsight/no-empty-catch',
     owner: 'lintsight-js',
     detection: 'syntax',
-    status: 'active',
+    status: 'active'
   },
+  {
+    ruleId: 'lintsight/no-async-array-method',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  }
 ]
 
 export function getRegistryEntry(ruleId: string): RegistryEntry | undefined {
