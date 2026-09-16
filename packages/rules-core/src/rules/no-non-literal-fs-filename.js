@@ -1,0 +1,80 @@
+/** no-non-literal-fs-filename —— P0 安全（v0.1① #5，CWE-22 / OWASP A01，low 禁入门禁）。 */
+export default {
+  meta: {
+    category: 'security',
+    severity: 'warning',
+    confidence: 'low',
+    typeRequirement: 'none',
+    tags: ['cwe-22', 'owasp-a01'],
+    fixable: undefined,
+    messages: {
+      nonLiteralPath:
+        'fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)'
+    },
+    docs: {
+      description: 'fs 文件 API 路径参数为非字面量时提示路径穿越风险',
+      rationale:
+        '用户可控路径未经规范化即可用 ../ 逃逸基目录。confidence=low：仅报告供复核，禁止进入 CI 门禁。',
+      badExamples: ['fs.readFile(userPath, cb)'],
+      goodExamples: [
+        'fs.readFile("config.json", cb)',
+        'fs.readFile(path.join(BASE, safeName), cb)'
+      ],
+      falsePositives: [
+        '命名启发（path/file/dir）与 fs 对象识别都很宽；low confidence 仅供人工复核'
+      ]
+    }
+  },
+  create(context) {
+    const FS_FUNCS = new Set([
+      'readFile',
+      'readFileSync',
+      'writeFile',
+      'writeFileSync',
+      'appendFile',
+      'appendFileSync',
+      'unlink',
+      'unlinkSync',
+      'stat',
+      'statSync',
+      'readdir',
+      'readdirSync',
+      'access',
+      'accessSync',
+      'open',
+      'openSync'
+    ])
+
+    return {
+      CallExpression(node) {
+        const callee = node.callee
+        if (callee?.type !== 'MemberExpression') return
+        if (
+          callee.property?.type !== 'Identifier' ||
+          !FS_FUNCS.has(callee.property.name)
+        )
+          return
+        // 对象需形如 fs / fsp / fsPromises
+        const obj = callee.object
+        const objName =
+          obj?.type === 'Identifier'
+            ? obj.name
+            : obj?.object?.type === 'Identifier'
+              ? obj.object.name
+              : null
+        if (!objName || !/^fs/i.test(objName)) return
+        const arg0 = node.arguments?.[0]
+        if (!arg0) return
+        if (arg0.type === 'Literal' && typeof arg0.value === 'string') return
+        if (arg0.type === 'TemplateLiteral' && arg0.expressions.length === 0)
+          return
+        // 收窄启发：路径参数标识符名含 path/file/dir 才报
+        const named =
+          arg0.type === 'Identifier' && /path|file|dir/i.test(arg0.name)
+        if (named) {
+          context.report({ node, messageId: 'nonLiteralPath' })
+        }
+      }
+    }
+  }
+}

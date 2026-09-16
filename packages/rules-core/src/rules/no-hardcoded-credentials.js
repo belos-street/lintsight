@@ -1,0 +1,84 @@
+/** no-hardcoded-credentials —— P0 安全（v0.1① #1，CWE-798 / OWASP A07·A02）。 */
+export default {
+  meta: {
+    category: 'security',
+    severity: 'error',
+    confidence: 'medium',
+    typeRequirement: 'none',
+    tags: ['cwe-798', 'owasp-a07'],
+    fixable: undefined,
+    messages: {
+      hardcoded:
+        'Possible hardcoded credential for "{{name}}": move it to environment variables or a secret manager. (no-hardcoded-credentials)'
+    },
+    docs: {
+      description:
+        '禁止硬编码凭证（password/secret/token/api_key 等命名 + 字符串字面量）',
+      rationale:
+        '硬编码凭证会随代码进仓库与构建产物，泄露后难以轮换；应走环境变量或密钥管理服务。',
+      badExamples: [
+        "const apiKey = 'sk-live-9af83c2e7b'",
+        "db.password = 'sup3r-s3cret'"
+      ],
+      goodExamples: ['const apiKey = process.env.API_KEY'],
+      falsePositives: [
+        '键名命中但值为占位/空/非凭证语义（长度 < 6 的字符串不触发）',
+        '测试文件的样例凭证（后续可加 test 目录豁免选项）'
+      ]
+    }
+  },
+  create(context) {
+    const NAME =
+      /(password|passwd|pwd|secret|token|api[_-]?key|apikey|private[_-]?key|access[_-]?key)/i
+
+    function isSuspectName(name) {
+      return typeof name === 'string' && NAME.test(name)
+    }
+    function isCredentialLiteral(value) {
+      return (
+        value?.type === 'Literal' &&
+        typeof value.value === 'string' &&
+        value.value.length >= 6
+      )
+    }
+    function report(node, name) {
+      context.report({ node, messageId: 'hardcoded', data: { name } })
+    }
+
+    return {
+      VariableDeclarator(node) {
+        if (
+          node.id?.type === 'Identifier' &&
+          isSuspectName(node.id.name) &&
+          isCredentialLiteral(node.init)
+        ) {
+          report(node, node.id.name)
+        }
+      },
+      Property(node) {
+        const keyName =
+          node.key?.type === 'Identifier' ? node.key.name : node.key?.value
+        if (
+          node.kind === 'init' &&
+          isSuspectName(keyName) &&
+          isCredentialLiteral(node.value)
+        ) {
+          report(node, keyName)
+        }
+      },
+      AssignmentExpression(node) {
+        const target = node.left
+        const name =
+          target?.type === 'Identifier'
+            ? target.name
+            : target?.type === 'MemberExpression' &&
+                target.property?.type === 'Identifier'
+              ? target.property.name
+              : null
+        if (isSuspectName(name) && isCredentialLiteral(node.right)) {
+          report(node, name)
+        }
+      }
+    }
+  }
+}

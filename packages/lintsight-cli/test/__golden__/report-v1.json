@@ -1,9 +1,9 @@
 {
   "contractVersion": "1",
-  "files": 57,
+  "files": 127,
   "summary": {
-    "error": 40,
-    "warning": 13,
+    "error": 68,
+    "warning": 29,
     "info": 0
   },
   "diagnostics": [
@@ -264,6 +264,51 @@
     },
     {
       "contractVersion": "1",
+      "ruleId": "lintsight/no-child-process-nonliteral",
+      "severity": "error",
+      "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
+      "file": "fixtures/ts/no-child-process-nonliteral.bad-1.ts",
+      "span": {
+        "offset": 134,
+        "length": 12,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "4d5d86d70d7719dec17bad97fd7f0efed5243e4aad6770d71d37248f98775740",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-child-process-nonliteral",
+      "severity": "error",
+      "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
+      "file": "fixtures/ts/no-child-process-nonliteral.bad-2.ts",
+      "span": {
+        "offset": 142,
+        "length": 23,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "3b69f850adc05ccc4e55bbb854662fab37292892a679a8aea9eadd0e701148d4",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-child-process-nonliteral",
+      "severity": "error",
+      "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
+      "file": "fixtures/ts/no-child-process-nonliteral.bad-3.ts",
+      "span": {
+        "offset": 101,
+        "length": 44,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "5ec8711f7428044db574b9d4f7d01c7fb5c45e35bb59466ea53efb7c82110834",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
       "ruleId": "lintsight/no-closure-loop-var",
       "severity": "error",
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
@@ -305,6 +350,51 @@
         "column": 3
       },
       "fingerprint": "4aa41d5b214e2184882bea4cf8be3e3de6544516326c522f98701b774b185b36",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-cors-wildcard",
+      "severity": "warning",
+      "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
+      "file": "fixtures/ts/no-cors-wildcard.bad-1.ts",
+      "span": {
+        "offset": 116,
+        "length": 49,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "67a46c949c4a99e95f242ff115138cb64d7eb869fc75f943e44440fb547dd7d5",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-cors-wildcard",
+      "severity": "warning",
+      "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
+      "file": "fixtures/ts/no-cors-wildcard.bad-2.ts",
+      "span": {
+        "offset": 84,
+        "length": 34,
+        "line": 4,
+        "column": 5
+      },
+      "fingerprint": "3a641789043045b03846be3891c7bdc584fb6a90b795f90ba3f0e160ba9f33b8",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-cors-wildcard",
+      "severity": "warning",
+      "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
+      "file": "fixtures/ts/no-cors-wildcard.bad-3.ts",
+      "span": {
+        "offset": 119,
+        "length": 22,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "8e20c283a693bc06e67003980be2329bd4beedae9d9e86bd5fee3132252af045",
       "owner": "lintsight-js"
     },
     {
@@ -519,6 +609,51 @@
     },
     {
       "contractVersion": "1",
+      "ruleId": "lintsight/no-hardcoded-credentials",
+      "severity": "error",
+      "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
+      "file": "fixtures/ts/no-hardcoded-credentials.bad-1.ts",
+      "span": {
+        "offset": 105,
+        "length": 20,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "59e2e97918abc1d4b5ac9e198f8ef3a89b3ac988366c2384cc61388c05087b40",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-hardcoded-credentials",
+      "severity": "error",
+      "message": "Possible hardcoded credential for \"apiKey\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
+      "file": "fixtures/ts/no-hardcoded-credentials.bad-2.ts",
+      "span": {
+        "offset": 60,
+        "length": 29,
+        "line": 2,
+        "column": 14
+      },
+      "fingerprint": "d5d64ab5513980131ba8f7550efaba1e81b4c9c5539a52da28b5de8a76532fa7",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-hardcoded-credentials",
+      "severity": "error",
+      "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
+      "file": "fixtures/ts/no-hardcoded-credentials.bad-3.ts",
+      "span": {
+        "offset": 94,
+        "length": 34,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "32d542a3840c3702a88f8977730dd0d363dae714cd5601d5cc990bb9a7c9136d",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
       "ruleId": "lintsight/no-ignored-reduce-result",
       "severity": "error",
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
@@ -564,6 +699,96 @@
     },
     {
       "contractVersion": "1",
+      "ruleId": "lintsight/no-innerhtml-assignment",
+      "severity": "error",
+      "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
+      "file": "fixtures/ts/no-innerhtml-assignment.bad-1.ts",
+      "span": {
+        "offset": 117,
+        "length": 24,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "3a1f81c8e8caab354b4b716ba9b08295d6945071aad718127d8666b4153c2f04",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-innerhtml-assignment",
+      "severity": "error",
+      "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
+      "file": "fixtures/ts/no-innerhtml-assignment.bad-2.ts",
+      "span": {
+        "offset": 102,
+        "length": 48,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "501222bc0804a36cc07d3b0cc1ac0b2d0dda69eca22f60bc89055e8be95e0dcb",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-innerhtml-assignment",
+      "severity": "error",
+      "message": "Assigning non-literal content to \"document.write\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
+      "file": "fixtures/ts/no-innerhtml-assignment.bad-3.ts",
+      "span": {
+        "offset": 99,
+        "length": 27,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "1855aa60b3d1afb4b196b5cf7d5c3af1446fb6ebb04b8af5095d3d30aff02253",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-insecure-cookie",
+      "severity": "warning",
+      "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
+      "file": "fixtures/ts/no-insecure-cookie.bad-1.ts",
+      "span": {
+        "offset": 125,
+        "length": 50,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "8f073bb35468ad01676bea6acdb201fdea52c27f610500a301338975a42c1067",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-insecure-cookie",
+      "severity": "warning",
+      "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
+      "file": "fixtures/ts/no-insecure-cookie.bad-2.ts",
+      "span": {
+        "offset": 162,
+        "length": 21,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "b0a0f1c0affbdb9acee02cdaa0bc6004131f6c25d5e75f09972960473fa7f06b",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-insecure-cookie",
+      "severity": "warning",
+      "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
+      "file": "fixtures/ts/no-insecure-cookie.bad-3.ts",
+      "span": {
+        "offset": 136,
+        "length": 41,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "c001d5e2c43ef2eea31fd1bbbba5b3f9a682108adf48c97e0ff30657b21af736",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
       "ruleId": "lintsight/no-json-structured-clone",
       "severity": "warning",
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
@@ -605,6 +830,276 @@
         "column": 18
       },
       "fingerprint": "f880d0d61017df613dfaccb906d658dfa578bd2c6dcaf06dfaf1c25523cf46fd",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-math-random-secret",
+      "severity": "error",
+      "message": "\"token\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
+      "file": "fixtures/ts/no-math-random-secret.bad-1.ts",
+      "span": {
+        "offset": 98,
+        "length": 21,
+        "line": 3,
+        "column": 9
+      },
+      "fingerprint": "64d52966b135d4abdda99ea00b297ff5de282b9e25751fd963220522e9cb466a",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-math-random-secret",
+      "severity": "error",
+      "message": "\"otpSeed\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
+      "file": "fixtures/ts/no-math-random-secret.bad-2.ts",
+      "span": {
+        "offset": 101,
+        "length": 30,
+        "line": 3,
+        "column": 9
+      },
+      "fingerprint": "a1ff9a2df29202b9ab5ef84ee51a2871d233ac12f2dda11613041e0e7bc668cf",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-math-random-secret",
+      "severity": "error",
+      "message": "\"nonce\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
+      "file": "fixtures/ts/no-math-random-secret.bad-3.ts",
+      "span": {
+        "offset": 112,
+        "length": 29,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "48b8956783d49d8c49a22fe760f00e7fa83f9cd294def0015760cd548eb97753",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-fs-filename",
+      "severity": "warning",
+      "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
+      "file": "fixtures/ts/no-non-literal-fs-filename.bad-1.ts",
+      "span": {
+        "offset": 194,
+        "length": 25,
+        "line": 5,
+        "column": 3
+      },
+      "fingerprint": "1dbe8c65f47819995f97b40439c6a06192467f6f2b0fb2f6c078f25e48310fa5",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-fs-filename",
+      "severity": "warning",
+      "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
+      "file": "fixtures/ts/no-non-literal-fs-filename.bad-2.ts",
+      "span": {
+        "offset": 119,
+        "length": 33,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "d17b4294f14230f3b9e4a671215c9fd6664d24bd730eb1e02f4ed3d65c0c1329",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-fs-filename",
+      "severity": "warning",
+      "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
+      "file": "fixtures/ts/no-non-literal-fs-filename.bad-3.ts",
+      "span": {
+        "offset": 106,
+        "length": 30,
+        "line": 5,
+        "column": 3
+      },
+      "fingerprint": "8d2f980c557b654ec3cc57954e1c87b2b8e201dad715576012b9e3d34c5eaf24",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-require",
+      "severity": "error",
+      "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
+      "file": "fixtures/ts/no-non-literal-require.bad-1.ts",
+      "span": {
+        "offset": 102,
+        "length": 19,
+        "line": 3,
+        "column": 15
+      },
+      "fingerprint": "612dd8c5ddd23b86da10196d646c427ff239e27e16aa02b371c7fdc4162533b7",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-require",
+      "severity": "error",
+      "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
+      "file": "fixtures/ts/no-non-literal-require.bad-2.ts",
+      "span": {
+        "offset": 109,
+        "length": 28,
+        "line": 3,
+        "column": 18
+      },
+      "fingerprint": "8a8b0df4690bb0e0252799041151fa21e82a80859cdadef6d5e3335280823b3f",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-require",
+      "severity": "error",
+      "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
+      "file": "fixtures/ts/no-non-literal-require.bad-3.ts",
+      "span": {
+        "offset": 114,
+        "length": 17,
+        "line": 3,
+        "column": 19
+      },
+      "fingerprint": "4f4e1d800c00659891b4894de36c2cd07333e3c9aa39745ec68aea5d4a850107",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-prototype-pollution-syntax",
+      "severity": "error",
+      "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
+      "file": "fixtures/ts/no-prototype-pollution-syntax.bad-1.ts",
+      "span": {
+        "offset": 119,
+        "length": 16,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "6a5f0799bf63c692ea54be62831b2d85a5cbe8831e3662eae3ca82758470d792",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-prototype-pollution-syntax",
+      "severity": "error",
+      "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
+      "file": "fixtures/ts/no-prototype-pollution-syntax.bad-2.ts",
+      "span": {
+        "offset": 112,
+        "length": 32,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "18948a3a29476e7742b63eba0acd2c3b016607aaa22bf0b341d23af4f409b1d8",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-prototype-pollution-syntax",
+      "severity": "error",
+      "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
+      "file": "fixtures/ts/no-prototype-pollution-syntax.bad-3.ts",
+      "span": {
+        "offset": 130,
+        "length": 20,
+        "line": 3,
+        "column": 12
+      },
+      "fingerprint": "9494a128ba3b11ab38340cde92ae97e8de15db2a5f46a8148395c001204bae27",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sensitive-storage",
+      "severity": "error",
+      "message": "Storing sensitive data (\"token\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
+      "file": "fixtures/ts/no-sensitive-storage.bad-1.ts",
+      "span": {
+        "offset": 86,
+        "length": 34,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "1e0ff6db962913eedd96f0c9924e925c1d8e0d3fc10ebe6491a2a8d2d294f3a8",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sensitive-storage",
+      "severity": "error",
+      "message": "Storing sensitive data (\"userPassword\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
+      "file": "fixtures/ts/no-sensitive-storage.bad-2.ts",
+      "span": {
+        "offset": 108,
+        "length": 43,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "ab49391148fff5ff553029df79a68877c4a1ba58c699bbb1e3c5fa6e06f9f074",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sensitive-storage",
+      "severity": "error",
+      "message": "Storing sensitive data (\"STORED_JWT\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
+      "file": "fixtures/ts/no-sensitive-storage.bad-3.ts",
+      "span": {
+        "offset": 127,
+        "length": 39,
+        "line": 5,
+        "column": 3
+      },
+      "fingerprint": "e54c24661d63bce7433791aacac8dd4e80bb9381c2204c014a8557a7344f4ee6",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sql-concat",
+      "severity": "error",
+      "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
+      "file": "fixtures/ts/no-sql-concat.bad-1.ts",
+      "span": {
+        "offset": 111,
+        "length": 38,
+        "line": 3,
+        "column": 13
+      },
+      "fingerprint": "6b0a4ff9da44ce3a91800ef951e3d7ff923d14d3093cd9f92c90955d12639b14",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sql-concat",
+      "severity": "error",
+      "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
+      "file": "fixtures/ts/no-sql-concat.bad-2.ts",
+      "span": {
+        "offset": 98,
+        "length": 42,
+        "line": 3,
+        "column": 13
+      },
+      "fingerprint": "378d69942af38bb3ad7c503b2eda334696f78381920f660d359ac39615ac8663",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-sql-concat",
+      "severity": "error",
+      "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
+      "file": "fixtures/ts/no-sql-concat.bad-3.ts",
+      "span": {
+        "offset": 84,
+        "length": 36,
+        "line": 3,
+        "column": 13
+      },
+      "fingerprint": "01eb8b631692f1ca6b3d1f7e937d670b5e380f8a3330b28d7c5fac9a86046840",
       "owner": "lintsight-js"
     },
     {
@@ -729,6 +1224,21 @@
     },
     {
       "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-fs-filename",
+      "severity": "warning",
+      "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
+      "file": "fixtures/ts/no-sync-io-in-async.bad-2.ts",
+      "span": {
+        "offset": 133,
+        "length": 28,
+        "line": 5,
+        "column": 3
+      },
+      "fingerprint": "f5291d54d98cf56a5b1b10217069aaae397aa3c5f490525d617d484faaabfe7c",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"writeFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -770,6 +1280,156 @@
         "column": 5
       },
       "fingerprint": "b6c606fe1830f22a985487546d4dcf58cebf549e7aaff2aed58a2495a4bd6a14",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-unsafe-regex",
+      "severity": "warning",
+      "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
+      "file": "fixtures/ts/no-unsafe-regex.bad-1.ts",
+      "span": {
+        "offset": 118,
+        "length": 8,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "6bece8e5cf86db841045205987ff266b1e97202cd9c4c862abb9be2536ea342d",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-unsafe-regex",
+      "severity": "warning",
+      "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
+      "file": "fixtures/ts/no-unsafe-regex.bad-2.ts",
+      "span": {
+        "offset": 82,
+        "length": 20,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "5e11f99f7bccc293fb688a6f48366c16b6d6251f5e66b5e8f6ebd594b60a76ca",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-unsafe-regex",
+      "severity": "warning",
+      "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
+      "file": "fixtures/ts/no-unsafe-regex.bad-3.ts",
+      "span": {
+        "offset": 106,
+        "length": 10,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "1a5bd8503a650c703cd7e13c4a33c61295f9896a72f0f717653f6d10ddb239f3",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-vm-dynamic-code",
+      "severity": "error",
+      "message": "\"runInContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
+      "file": "fixtures/ts/no-vm-dynamic-code.bad-1.ts",
+      "span": {
+        "offset": 140,
+        "length": 26,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "14b3fb7c9958ee5ed883c01c9b0ca105168cacd60145626f164be75bebe3a588",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-vm-dynamic-code",
+      "severity": "error",
+      "message": "\"runInNewContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
+      "file": "fixtures/ts/no-vm-dynamic-code.bad-2.ts",
+      "span": {
+        "offset": 106,
+        "length": 44,
+        "line": 3,
+        "column": 10
+      },
+      "fingerprint": "d99e8af49a5ff036630cc3caf9d9b21117e4b2d5c79ebc788c2332f49106ce4b",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-vm-dynamic-code",
+      "severity": "error",
+      "message": "\"runInThisContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
+      "file": "fixtures/ts/no-vm-dynamic-code.bad-3.ts",
+      "span": {
+        "offset": 126,
+        "length": 34,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "5621cec5a5e6f2d23585944474b5df754771f1e95195600990ab48260e514fe3",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Parameter 'body' is declared but never used. Unused parameters should start with a '_'.",
+      "file": "fixtures/ts/no-vm-dynamic-code.good-2.ts",
+      "span": {
+        "offset": 93,
+        "length": 4,
+        "line": 4,
+        "column": 25
+      },
+      "fingerprint": "66d278a77300094b90d951e62ca175c8cdc059a2f87595e7a6495f76f881e337",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-weak-hash",
+      "severity": "warning",
+      "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
+      "file": "fixtures/ts/no-weak-hash.bad-1.ts",
+      "span": {
+        "offset": 106,
+        "length": 24,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "9dd90f058d882aa60cf20b7d979ea8923f8b01eba2399abb7e316611c7dd655e",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-weak-hash",
+      "severity": "warning",
+      "message": "\"sha1\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
+      "file": "fixtures/ts/no-weak-hash.bad-2.ts",
+      "span": {
+        "offset": 101,
+        "length": 25,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "12e70501215c9a9f342d1c7de49456742e63c4e648dcc43f55fed5dc1e403776",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-weak-hash",
+      "severity": "warning",
+      "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
+      "file": "fixtures/ts/no-weak-hash.bad-3.ts",
+      "span": {
+        "offset": 116,
+        "length": 24,
+        "line": 5,
+        "column": 10
+      },
+      "fingerprint": "9688e9c83c80e16b76230e48b3787e3dad4627118bbc5edf9c4e66c027383981",
       "owner": "lintsight-js"
     },
     {

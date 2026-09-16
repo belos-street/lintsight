@@ -11,7 +11,21 @@
     "lintsight/no-ignored-reduce-result": "error",
     "lintsight/no-empty-promise-catch": "error",
     "lintsight/no-async-constructor-call": "warn",
-    "lintsight/no-sync-io-in-async": "warn"
+    "lintsight/no-sync-io-in-async": "warn",
+    "lintsight/no-hardcoded-credentials": "error",
+    "lintsight/no-unsafe-regex": "warn",
+    "lintsight/no-prototype-pollution-syntax": "error",
+    "lintsight/no-child-process-nonliteral": "error",
+    "lintsight/no-non-literal-fs-filename": "warn",
+    "lintsight/no-non-literal-require": "error",
+    "lintsight/no-weak-hash": "warn",
+    "lintsight/no-math-random-secret": "error",
+    "lintsight/no-sensitive-storage": "error",
+    "lintsight/no-innerhtml-assignment": "error",
+    "lintsight/no-sql-concat": "error",
+    "lintsight/no-cors-wildcard": "warn",
+    "lintsight/no-vm-dynamic-code": "error",
+    "lintsight/no-insecure-cookie": "warn"
   },
   "ignore": [],
   "overrides": [

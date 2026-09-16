@@ -81,6 +81,90 @@ export const registry: RegistryEntry[] = [
     owner: 'lintsight-js',
     detection: 'syntax',
     status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-hardcoded-credentials',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-unsafe-regex',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-prototype-pollution-syntax',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-child-process-nonliteral',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-non-literal-fs-filename',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-non-literal-require',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-weak-hash',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-math-random-secret',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-sensitive-storage',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-innerhtml-assignment',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-sql-concat',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-cors-wildcard',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-vm-dynamic-code',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
+  },
+  {
+    ruleId: 'lintsight/no-insecure-cookie',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active'
   }
 ]
 
