@@ -32,7 +32,7 @@ lintsight/
 │  └─ rules-core/                 # @lintsight/rules-core：自有规则源码（每规则一文件，纯 JS）
 ├─ plugins/
 │  └─ lintsight-rules/            # 规则集构建产物（bun build 聚合，自包含单文件，提交 git）——oxlint 嵌入式 runtime 不支持相对 import，禁止手改此文件
-├─ fixtures/                      # 规则用例契约（断言依赖行/列布局——禁止格式化此目录）
+├─ fixtures/                      # 规则用例契约（断言依赖行/列布局——禁止格式化此目录；首行 // @ts-nocheck 是 IDE 对故意坏代码的静音标记，勿删）
 ├─ lintsight.config.json          # 引擎自身 dogfood 配置（config-bridge 消费）
 ├─ docs/
 │  ├─ requirements/               # 需求与总体技术设计（v0.x 版本化）

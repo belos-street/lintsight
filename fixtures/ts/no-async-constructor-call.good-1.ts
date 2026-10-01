@@ -1,4 +1,4 @@
-// valid-1：constructor 中的 async 调用必须 void 显式标注
+// @ts-nocheck valid-1：constructor 中的 async 调用必须 void 显式标注
 class Client2 {
   connected = false
 

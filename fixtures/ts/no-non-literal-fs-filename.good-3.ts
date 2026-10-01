@@ -1,4 +1,4 @@
-// valid-3：未导出 helper 的路径参数——来源在调用侧，helper 内部不点名（T1.19 #1 反哺）
+// @ts-nocheck valid-3：未导出 helper 的路径参数——来源在调用侧，helper 内部不点名（T1.19 #1 反哺）
 import fs from 'node:fs'
 
 function readMdFile(filePath: string): string {

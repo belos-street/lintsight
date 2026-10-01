@@ -1,4 +1,4 @@
-// invalid-1：constructor 调用 async 方法未 await
+// @ts-nocheck invalid-1：constructor 调用 async 方法未 await
 class Client {
   connected = false
 

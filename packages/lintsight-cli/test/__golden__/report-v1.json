@@ -14,12 +14,12 @@
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
       "file": "fixtures/ts/no-array-map-side-effect.bad-1.ts",
       "span": {
-        "offset": 100,
+        "offset": 112,
         "length": 25,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "1136740d69139116bb8662fbda193ed3232ac6f8064dbb2b274bf18e07fe2cf1",
+      "fingerprint": "3f0e18a6e3b8d5e689f1aa3f65e02f9d53861739e8df309d059b12fa754ca844",
       "owner": "lintsight-js"
     },
     {
@@ -29,12 +29,12 @@
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
       "file": "fixtures/ts/no-array-map-side-effect.bad-2.ts",
       "span": {
-        "offset": 103,
+        "offset": 115,
         "length": 68,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "724400732a75c88be47c3d124efccc380f2fba2f6d209ea6c88f8be1e5ca234a",
+      "fingerprint": "f383f52416f30ffd3339bddc43279a645e47e268ce9bed57896231d0e3d7b8f2",
       "owner": "lintsight-js"
     },
     {
@@ -44,12 +44,12 @@
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
       "file": "fixtures/ts/no-array-map-side-effect.bad-3.ts",
       "span": {
-        "offset": 120,
+        "offset": 132,
         "length": 56,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "e94f4baab2c506f65cce00ca05d8d038e7ca39ce9a905714aea5b6ef146c61ae",
+      "fingerprint": "78acf27e333571ef6efc946bc25f1c2eb04915132570d8cf4d153230a4536e51",
       "owner": "lintsight-js"
     },
     {
@@ -59,12 +59,12 @@
       "message": "Array.prototype.forEach does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
       "file": "fixtures/ts/no-async-array-method.bad-1.ts",
       "span": {
-        "offset": 136,
+        "offset": 148,
         "length": 62,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "f38dc197378c6887216819f28e1d30d236bfae0f35d5aca81dfd220bf3ea94af",
+      "fingerprint": "c14ae7005f2c4a2c62409b039a88d1861f3b089841ba7fe9fe15a382c4eeb5ee",
       "owner": "lintsight-js"
     },
     {
@@ -74,12 +74,12 @@
       "message": "Array.prototype.map does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
       "file": "fixtures/ts/no-async-array-method.bad-2.ts",
       "span": {
-        "offset": 127,
+        "offset": 139,
         "length": 88,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "2a0d9548a39a10e90484136d545b0ad77337eb0a7b8540d80aaef6effc1391aa",
+      "fingerprint": "909c73c140c9bed184e0556a32edfca0d9e640481756a96ed7f3267ad8225a19",
       "owner": "lintsight-js"
     },
     {
@@ -89,12 +89,12 @@
       "message": "Array.prototype.reduce does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
       "file": "fixtures/ts/no-async-array-method.bad-3.ts",
       "span": {
-        "offset": 157,
+        "offset": 169,
         "length": 99,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "c5f217f911ff637ba3c53d112b480239b45f596b64552c718cd27d8fc5a4f6c9",
+      "fingerprint": "5bf76dabe39dd9057cc5a09ead02fe6f0dd3f026e22a2a7e852651c34991ffae",
       "owner": "lintsight-js"
     },
     {
@@ -104,12 +104,12 @@
       "message": "Class 'Client' is declared but never used.",
       "file": "fixtures/ts/no-async-constructor-call.bad-1.ts",
       "span": {
-        "offset": 62,
+        "offset": 74,
         "length": 6,
         "line": 2,
         "column": 7
       },
-      "fingerprint": "6bc8db939b5a540a3af1a8edf3032f90caea280f3ff02a813e51871098144aa0",
+      "fingerprint": "d5cdfb10c8a6dad34234b2eea07037cc14e3a212f534f1e01dfd82abcd44cfc3",
       "owner": "oxlint-native"
     },
     {
@@ -119,12 +119,12 @@
       "message": "Async method \"connect\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
       "file": "fixtures/ts/no-async-constructor-call.bad-1.ts",
       "span": {
-        "offset": 114,
+        "offset": 126,
         "length": 14,
         "line": 6,
         "column": 5
       },
-      "fingerprint": "4c839cab2b5a4f114d625f1b7d1c2300b785a4b903d1fa483f589166f6b3c7db",
+      "fingerprint": "0d4e582233d7e82888ad2895ff20573e7e13c47fcc823071c77df213d2f47c21",
       "owner": "lintsight-js"
     },
     {
@@ -134,12 +134,12 @@
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
       "file": "fixtures/ts/no-async-constructor-call.bad-1.ts",
       "span": {
-        "offset": 114,
+        "offset": 126,
         "length": 14,
         "line": 6,
         "column": 5
       },
-      "fingerprint": "4c0913227b9bef865012b5091715464f39b46bb7d72053582c41f55be4f034c2",
+      "fingerprint": "517181dd7fdabb5133d4ffdb979ffafdd18a986e3ecdd8d745d818ce55fdd477",
       "owner": "lintsight-js"
     },
     {
@@ -149,12 +149,12 @@
       "message": "Class 'Pool' is declared but never used.",
       "file": "fixtures/ts/no-async-constructor-call.bad-2.ts",
       "span": {
-        "offset": 75,
+        "offset": 87,
         "length": 4,
         "line": 2,
         "column": 7
       },
-      "fingerprint": "c2864b1ad0a17dea24d27d0a70dc31332fd3a8424a5bb3fcb3be7b3709c17d18",
+      "fingerprint": "c1cf90ffc402cbf4af6e4c64c6c906c039d297ef12284b1232e79033e4598f24",
       "owner": "oxlint-native"
     },
     {
@@ -164,12 +164,12 @@
       "message": "Async method \"open\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
       "file": "fixtures/ts/no-async-constructor-call.bad-2.ts",
       "span": {
-        "offset": 142,
+        "offset": 154,
         "length": 11,
         "line": 7,
         "column": 5
       },
-      "fingerprint": "e94792714d67cd2808cf0ae3770a1e142bada80ea5edc0e2075372fe750a308f",
+      "fingerprint": "172bc67561be04f0b16a9f1f412ea398b56959ce407b07533e65bd1316873cda",
       "owner": "lintsight-js"
     },
     {
@@ -179,12 +179,12 @@
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
       "file": "fixtures/ts/no-async-constructor-call.bad-2.ts",
       "span": {
-        "offset": 142,
+        "offset": 154,
         "length": 11,
         "line": 7,
         "column": 5
       },
-      "fingerprint": "2fd912792c1c8dc20994bc64d03d630dc75021958aff9bf5f4437b97171b4527",
+      "fingerprint": "2efb83f83c72462d9720fda56d97429f2294becbb8c9e816d734504ee05b25b3",
       "owner": "lintsight-js"
     },
     {
@@ -194,12 +194,12 @@
       "message": "Class 'Cache' is declared but never used.",
       "file": "fixtures/ts/no-async-constructor-call.bad-3.ts",
       "span": {
-        "offset": 43,
+        "offset": 55,
         "length": 5,
         "line": 2,
         "column": 7
       },
-      "fingerprint": "e13b7419c6dfb4362cf3f9e745386da43124d2db7a00f9e0855dcd4f4720f88e",
+      "fingerprint": "39ce3bb1d76fb6a909f73ebb709c58d8b842cbb0fcf775517d5f56bd911070c4",
       "owner": "oxlint-native"
     },
     {
@@ -209,12 +209,12 @@
       "message": "Async method \"load\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
       "file": "fixtures/ts/no-async-constructor-call.bad-3.ts",
       "span": {
-        "offset": 91,
+        "offset": 103,
         "length": 11,
         "line": 6,
         "column": 5
       },
-      "fingerprint": "3f92b597b693c4a88b77c12aa28bddbc78525c8936c96fb8a1a11d42f055ffa9",
+      "fingerprint": "03a8875582bbb49e28ae160476bef397c2b1a443630c582500128f16b4b260c8",
       "owner": "lintsight-js"
     },
     {
@@ -224,12 +224,12 @@
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
       "file": "fixtures/ts/no-async-constructor-call.bad-3.ts",
       "span": {
-        "offset": 91,
+        "offset": 103,
         "length": 56,
         "line": 6,
         "column": 5
       },
-      "fingerprint": "721a79c5262a0a32c8baf8efdcf7e56150dafeaa75c00596b5ef1ea6a416a592",
+      "fingerprint": "852bd814bc463fe351d239f0b9721a26d38616369605e4ec7ca48f48e2f3afb1",
       "owner": "lintsight-js"
     },
     {
@@ -239,12 +239,12 @@
       "message": "Class 'Client2' is declared but never used.",
       "file": "fixtures/ts/no-async-constructor-call.good-1.ts",
       "span": {
-        "offset": 75,
+        "offset": 87,
         "length": 7,
         "line": 2,
         "column": 7
       },
-      "fingerprint": "c4851cf3d8c0f8b69c53a6be72bf15dbe699de8458594b95e033c2debab3bc30",
+      "fingerprint": "8eed0feb78df804d24c7b2955e54b9daee3cde5a28081ad8dfaafd4e6cae046c",
       "owner": "oxlint-native"
     },
     {
@@ -254,12 +254,12 @@
       "message": "Class 'Pool2' is declared but never used.",
       "file": "fixtures/ts/no-async-constructor-call.good-2.ts",
       "span": {
-        "offset": 47,
+        "offset": 59,
         "length": 5,
         "line": 2,
         "column": 7
       },
-      "fingerprint": "4d53c65da1814f1e835edd4d7d1f21bc64398d77b728b874744f80dcc8136c13",
+      "fingerprint": "34f595289db1f93e6dc59aaaa72c6348e84622c35f998bdf2cdb714a54032b18",
       "owner": "oxlint-native"
     },
     {
@@ -269,12 +269,12 @@
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
       "file": "fixtures/ts/no-child-process-nonliteral.bad-1.ts",
       "span": {
-        "offset": 134,
+        "offset": 146,
         "length": 12,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "4d5d86d70d7719dec17bad97fd7f0efed5243e4aad6770d71d37248f98775740",
+      "fingerprint": "3fc1c336f594915d40a6c8b7b3df66ec35fc010274e6f93ea43aec73507f8f02",
       "owner": "lintsight-js"
     },
     {
@@ -284,12 +284,12 @@
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
       "file": "fixtures/ts/no-child-process-nonliteral.bad-2.ts",
       "span": {
-        "offset": 142,
+        "offset": 154,
         "length": 23,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "3b69f850adc05ccc4e55bbb854662fab37292892a679a8aea9eadd0e701148d4",
+      "fingerprint": "d76749cd225ff2975db630368e01bb67aff9e094ccf308eca64b2b5f75b67bb4",
       "owner": "lintsight-js"
     },
     {
@@ -299,12 +299,12 @@
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
       "file": "fixtures/ts/no-child-process-nonliteral.bad-3.ts",
       "span": {
-        "offset": 101,
+        "offset": 113,
         "length": 44,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "5ec8711f7428044db574b9d4f7d01c7fb5c45e35bb59466ea53efb7c82110834",
+      "fingerprint": "50e29cd716715a8e8d20fcfa46526600ae99d6705de6ebe11037417202755fad",
       "owner": "lintsight-js"
     },
     {
@@ -314,12 +314,12 @@
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
       "file": "fixtures/ts/no-closure-loop-var.bad-1.ts",
       "span": {
-        "offset": 116,
+        "offset": 128,
         "length": 107,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "9de33205ce3511bbf62c5f35b6d214d2a2531be1ea91eaecfb2650acc136ea30",
+      "fingerprint": "a9a23a750d7577a593f37277ea86adf2b25badd36f50e711446d8cfd768ff5dc",
       "owner": "lintsight-js"
     },
     {
@@ -329,12 +329,12 @@
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
       "file": "fixtures/ts/no-closure-loop-var.bad-2.ts",
       "span": {
-        "offset": 107,
+        "offset": 119,
         "length": 128,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "21f5429c294fc443ed4d1d3a6b26253b649efcc0e7d2d8eae1f6d564b8a35b09",
+      "fingerprint": "0e9568729ea93c4b3b68978d3b71958d22781eebf1ec448e309eeec7687c7ccd",
       "owner": "lintsight-js"
     },
     {
@@ -344,12 +344,12 @@
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
       "file": "fixtures/ts/no-closure-loop-var.bad-3.ts",
       "span": {
-        "offset": 108,
+        "offset": 120,
         "length": 92,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "4aa41d5b214e2184882bea4cf8be3e3de6544516326c522f98701b774b185b36",
+      "fingerprint": "41eb8061f6efa2d0d75f3fcf0b7d73a06ddec4adfc14385b7dc5fa6391221342",
       "owner": "lintsight-js"
     },
     {
@@ -359,12 +359,12 @@
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
       "file": "fixtures/ts/no-cors-wildcard.bad-1.ts",
       "span": {
-        "offset": 116,
+        "offset": 128,
         "length": 49,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "67a46c949c4a99e95f242ff115138cb64d7eb869fc75f943e44440fb547dd7d5",
+      "fingerprint": "c34b7371ac892e7d35c05a704b93af94a2e684ea8baff26c1628341423ab0741",
       "owner": "lintsight-js"
     },
     {
@@ -374,12 +374,12 @@
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
       "file": "fixtures/ts/no-cors-wildcard.bad-2.ts",
       "span": {
-        "offset": 84,
+        "offset": 96,
         "length": 34,
         "line": 4,
         "column": 5
       },
-      "fingerprint": "3a641789043045b03846be3891c7bdc584fb6a90b795f90ba3f0e160ba9f33b8",
+      "fingerprint": "aef9871b669228ffd7cea0a91810c64e31d5484567472d8b8979c8a1f884af67",
       "owner": "lintsight-js"
     },
     {
@@ -389,12 +389,12 @@
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
       "file": "fixtures/ts/no-cors-wildcard.bad-3.ts",
       "span": {
-        "offset": 119,
+        "offset": 131,
         "length": 22,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "8e20c283a693bc06e67003980be2329bd4beedae9d9e86bd5fee3132252af045",
+      "fingerprint": "4d22bd2b82ad9841cd48b3185e608790a281ac37b78916cd3532e58dc42ca39a",
       "owner": "lintsight-js"
     },
     {
@@ -404,12 +404,12 @@
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-1.ts",
       "span": {
-        "offset": 162,
+        "offset": 174,
         "length": 11,
         "line": 5,
         "column": 5
       },
-      "fingerprint": "86e9490c18ca0d1e76cada4e0c5ddfb26450fc2c7a3c826292efa445c684c2d8",
+      "fingerprint": "2d7030d56dc6a3f665d3af1ab3125e5bc2e303a15d3a814af8cd7f31da9601df",
       "owner": "lintsight-js"
     },
     {
@@ -419,12 +419,12 @@
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-2.ts",
       "span": {
-        "offset": 136,
+        "offset": 148,
         "length": 15,
         "line": 5,
         "column": 5
       },
-      "fingerprint": "d82bbad8e04216ccac014d0aed09e83ae546d60a01fb0899bd35650841bb3839",
+      "fingerprint": "cd07eef57510bac0ece83f8a12d369aa5ac7c15fa63511f8879e889a0d1d0988",
       "owner": "lintsight-js"
     },
     {
@@ -434,12 +434,12 @@
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
       "file": "fixtures/ts/no-empty-catch.bad-2.ts",
       "span": {
-        "offset": 136,
+        "offset": 148,
         "length": 15,
         "line": 5,
         "column": 5
       },
-      "fingerprint": "35f34bc20cd068805a545873b8737d6f484e4c2de34fef10a03909e015af6dd7",
+      "fingerprint": "1d795cae523f979f09932777ae612ea575e0f67a0f883b979a038cba373b6181",
       "owner": "lintsight-js"
     },
     {
@@ -449,12 +449,12 @@
       "message": "Catch parameter 'e' is caught but never used.",
       "file": "fixtures/ts/no-empty-catch.bad-2.ts",
       "span": {
-        "offset": 143,
+        "offset": 155,
         "length": 1,
         "line": 5,
         "column": 12
       },
-      "fingerprint": "d1e00c5c30fb3f0189bacfb48efcc6b6c2184ec7ebb1d6952f56653ca51d428f",
+      "fingerprint": "f770a4c31ac0ab0e9c0a0a092f3d2eb7aeef957354971026ceff66fd12a492d1",
       "owner": "oxlint-native"
     },
     {
@@ -464,12 +464,12 @@
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-3.ts",
       "span": {
-        "offset": 236,
+        "offset": 248,
         "length": 13,
         "line": 8,
         "column": 7
       },
-      "fingerprint": "09f39d91ed744f3964a8a92467cf666a7e24f7772672ae11cf43805798328fcb",
+      "fingerprint": "b54370b54658f4345f479055968ce7401ee34c991d9dc8ae9817c02fc276c338",
       "owner": "lintsight-js"
     },
     {
@@ -479,12 +479,12 @@
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
       "file": "fixtures/ts/no-empty-catch.bad-3.ts",
       "span": {
-        "offset": 254,
+        "offset": 266,
         "length": 15,
         "line": 10,
         "column": 5
       },
-      "fingerprint": "137ad1b883bc27e15462d8b0f8bec599aae4fdf55c6527fd6d23f0d7b9134212",
+      "fingerprint": "7281e5e84c8613e5cabe11404fe26bafec0e961f7263ac6a2589bdd55292ba44",
       "owner": "lintsight-js"
     },
     {
@@ -494,12 +494,12 @@
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
       "file": "fixtures/ts/no-empty-catch.bad-3.ts",
       "span": {
-        "offset": 254,
+        "offset": 266,
         "length": 15,
         "line": 10,
         "column": 5
       },
-      "fingerprint": "a0e09f8dba992c99d1fc007e66bed0336f4d32481805a05a93cc3a3807ba7f1c",
+      "fingerprint": "25dbf016ef2ee7970abd576d7788cdb2d89326898eeac1df727e002fe5eaca5a",
       "owner": "lintsight-js"
     },
     {
@@ -509,12 +509,12 @@
       "message": "Catch parameter 'e' is caught but never used.",
       "file": "fixtures/ts/no-empty-catch.bad-3.ts",
       "span": {
-        "offset": 261,
+        "offset": 273,
         "length": 1,
         "line": 10,
         "column": 12
       },
-      "fingerprint": "12f795ff29138150ce1add44fdb6742a729998d8fd55326d5776a33fe284fd67",
+      "fingerprint": "f4d902583ea4b64b652b834baf9cfa5605b543aefdaca5958d94bb88e5c5ba77",
       "owner": "oxlint-native"
     },
     {
@@ -524,12 +524,12 @@
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
       "file": "fixtures/ts/no-empty-promise-catch.bad-1.ts",
       "span": {
-        "offset": 82,
+        "offset": 94,
         "length": 26,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "f84f2ace7f6eb3ad1919786873b486025b7a199b38facbb8c73d2a7b3a802f7f",
+      "fingerprint": "eac37104a70cc1ac41e052b11242b5163f8209cba04a7a4618105be2d5f45680",
       "owner": "lintsight-js"
     },
     {
@@ -539,12 +539,12 @@
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
       "file": "fixtures/ts/no-empty-promise-catch.bad-2.ts",
       "span": {
-        "offset": 84,
+        "offset": 96,
         "length": 33,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "153ce13e311b65cc2aa798d6b7222bc2a46180cf077747fc2393ff588e551e0e",
+      "fingerprint": "019caaa6e0e4e373931d268d688d087c4bcf98f6c84b93ae514cf290ed496d03",
       "owner": "lintsight-js"
     },
     {
@@ -554,12 +554,12 @@
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
       "file": "fixtures/ts/no-empty-promise-catch.bad-3.ts",
       "span": {
-        "offset": 86,
+        "offset": 98,
         "length": 32,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "be0238265762944e4b5430f06a3920937b8e5b52bb20332458640e1b2634aaf5",
+      "fingerprint": "01e9794a45bd785030296635786e2be40e84b0f73fe4a178ed7c3b24db9e26f0",
       "owner": "lintsight-js"
     },
     {
@@ -569,12 +569,12 @@
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
       "file": "fixtures/ts/no-floating-promise.bad-1.ts",
       "span": {
-        "offset": 135,
+        "offset": 147,
         "length": 8,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "b95c327cd3a38fdc3b894c8690d68c9adb7157e598fb79d331bcc81a04029ec9",
+      "fingerprint": "166786cc4c37dbb7bf55ae151daa95c9a69bbe192611a4a1d25fe7dac910aa7c",
       "owner": "lintsight-js"
     },
     {
@@ -584,12 +584,12 @@
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
       "file": "fixtures/ts/no-floating-promise.bad-2.ts",
       "span": {
-        "offset": 97,
+        "offset": 109,
         "length": 37,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "ddca5eff7321600a7bbe203bf1370228464b4d946d0569918be07ea53c75dabe",
+      "fingerprint": "4905c87376f7bd6af8c3d116a954b652ffda4e9c41453e7004d58c3e2bf80184",
       "owner": "lintsight-js"
     },
     {
@@ -599,12 +599,12 @@
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
       "file": "fixtures/ts/no-floating-promise.bad-3.ts",
       "span": {
-        "offset": 113,
+        "offset": 125,
         "length": 12,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "c5caf14e7f589e620e6490a7df58957eae2e3ed987207d628971f74b5f93f594",
+      "fingerprint": "792739733ada173fa89083ee70f357d44924dbdf4928f8fb0f199f77be40cbcb",
       "owner": "lintsight-js"
     },
     {
@@ -614,12 +614,12 @@
       "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
       "file": "fixtures/ts/no-hardcoded-credentials.bad-1.ts",
       "span": {
-        "offset": 105,
+        "offset": 117,
         "length": 20,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "59e2e97918abc1d4b5ac9e198f8ef3a89b3ac988366c2384cc61388c05087b40",
+      "fingerprint": "1ad55efd51619bf5d0a9d4ecd31c1f1f71c34b85854797961c883ac1416ba011",
       "owner": "lintsight-js"
     },
     {
@@ -629,12 +629,12 @@
       "message": "Possible hardcoded credential for \"apiKey\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
       "file": "fixtures/ts/no-hardcoded-credentials.bad-2.ts",
       "span": {
-        "offset": 60,
+        "offset": 72,
         "length": 29,
         "line": 2,
         "column": 14
       },
-      "fingerprint": "d5d64ab5513980131ba8f7550efaba1e81b4c9c5539a52da28b5de8a76532fa7",
+      "fingerprint": "ea34bfb49a703794c2b62b2ed0f71a5ad00f72e22606739cd37a8867ddc6df86",
       "owner": "lintsight-js"
     },
     {
@@ -644,12 +644,12 @@
       "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
       "file": "fixtures/ts/no-hardcoded-credentials.bad-3.ts",
       "span": {
-        "offset": 94,
+        "offset": 106,
         "length": 34,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "32d542a3840c3702a88f8977730dd0d363dae714cd5601d5cc990bb9a7c9136d",
+      "fingerprint": "dfaeb1fd49f7428f3a0fb9ddef04248e1dda61a3d0aab7151719057577a97de7",
       "owner": "lintsight-js"
     },
     {
@@ -659,12 +659,12 @@
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
       "file": "fixtures/ts/no-ignored-reduce-result.bad-1.ts",
       "span": {
-        "offset": 84,
+        "offset": 96,
         "length": 36,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "cb7fdd00abcf85c8a78ec47815a6074f0dccfe02399c0781530790cbff080d75",
+      "fingerprint": "b3ae7992dd319fbcbe16661d66bd657d4cd8dbf6a83303085510f99e20c7a458",
       "owner": "lintsight-js"
     },
     {
@@ -674,12 +674,12 @@
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
       "file": "fixtures/ts/no-ignored-reduce-result.bad-2.ts",
       "span": {
-        "offset": 82,
+        "offset": 94,
         "length": 38,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "f3971eca857f8161df0911399ac7ba2db34c51abe78bbd8ea3117e945e88602e",
+      "fingerprint": "40ae8efd9402922e0457177e7708b468f9b9f7abe1804f251a4a64f07d98a29f",
       "owner": "lintsight-js"
     },
     {
@@ -689,12 +689,12 @@
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
       "file": "fixtures/ts/no-ignored-reduce-result.bad-3.ts",
       "span": {
-        "offset": 104,
+        "offset": 116,
         "length": 53,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "8417d90ae325752d0a91d706e8c3b5707a9f51aee772c6d89d158196f96e6e11",
+      "fingerprint": "058d7fa78c58200a508338a13ed0b0f9f24d33dba6cb64907b8ba6dc43fa9938",
       "owner": "lintsight-js"
     },
     {
@@ -704,12 +704,12 @@
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
       "file": "fixtures/ts/no-innerhtml-assignment.bad-1.ts",
       "span": {
-        "offset": 117,
+        "offset": 129,
         "length": 24,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "3a1f81c8e8caab354b4b716ba9b08295d6945071aad718127d8666b4153c2f04",
+      "fingerprint": "82f00223c0b9a3776c6511b705258f9161ed6e8db441d5b2f0e4f176706c6b67",
       "owner": "lintsight-js"
     },
     {
@@ -719,12 +719,12 @@
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
       "file": "fixtures/ts/no-innerhtml-assignment.bad-2.ts",
       "span": {
-        "offset": 102,
+        "offset": 114,
         "length": 48,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "501222bc0804a36cc07d3b0cc1ac0b2d0dda69eca22f60bc89055e8be95e0dcb",
+      "fingerprint": "3c202ba21af659f42923fed1dd164fe782ef528826bc3cac6e3f276bc76038ef",
       "owner": "lintsight-js"
     },
     {
@@ -734,12 +734,12 @@
       "message": "Assigning non-literal content to \"document.write\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
       "file": "fixtures/ts/no-innerhtml-assignment.bad-3.ts",
       "span": {
-        "offset": 99,
+        "offset": 111,
         "length": 27,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "1855aa60b3d1afb4b196b5cf7d5c3af1446fb6ebb04b8af5095d3d30aff02253",
+      "fingerprint": "c74d98c42526e57ec8946d53d19a4c5d6755cb3bbedb57f9d96195ac71d8f4af",
       "owner": "lintsight-js"
     },
     {
@@ -749,12 +749,12 @@
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
       "file": "fixtures/ts/no-insecure-cookie.bad-1.ts",
       "span": {
-        "offset": 125,
+        "offset": 137,
         "length": 50,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "8f073bb35468ad01676bea6acdb201fdea52c27f610500a301338975a42c1067",
+      "fingerprint": "3191ab47f853a039af71390ef474dfda6bec3009457f4f9653f8f34ab499ccf5",
       "owner": "lintsight-js"
     },
     {
@@ -764,12 +764,12 @@
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
       "file": "fixtures/ts/no-insecure-cookie.bad-2.ts",
       "span": {
-        "offset": 162,
+        "offset": 174,
         "length": 21,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "b0a0f1c0affbdb9acee02cdaa0bc6004131f6c25d5e75f09972960473fa7f06b",
+      "fingerprint": "3f47e3a507539b3cc6a5ca90c416b88f3ba3f18c4617aebe5110c2d623265e75",
       "owner": "lintsight-js"
     },
     {
@@ -779,12 +779,12 @@
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
       "file": "fixtures/ts/no-insecure-cookie.bad-3.ts",
       "span": {
-        "offset": 136,
+        "offset": 148,
         "length": 41,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "c001d5e2c43ef2eea31fd1bbbba5b3f9a682108adf48c97e0ff30657b21af736",
+      "fingerprint": "cc7275e01dc28e998f04aeea9310f9eab7b212171336882ee3e71fffd1580d83",
       "owner": "lintsight-js"
     },
     {
@@ -794,12 +794,12 @@
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
       "file": "fixtures/ts/no-json-structured-clone.bad-1.ts",
       "span": {
-        "offset": 143,
+        "offset": 155,
         "length": 31,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "71eb03e63b95a4b9d03134cbc8c663fdefc5743cbd2354e88a3f5dee67c8122d",
+      "fingerprint": "630f3eb94d26b4a2443bc48b1d5c6c3bf29866735d6b64cfaf4c90c4bf6fae5f",
       "owner": "lintsight-js"
     },
     {
@@ -809,12 +809,12 @@
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
       "file": "fixtures/ts/no-json-structured-clone.bad-2.ts",
       "span": {
-        "offset": 141,
+        "offset": 153,
         "length": 33,
         "line": 3,
         "column": 47
       },
-      "fingerprint": "6e15823be6170ed89acd275f5b1e0ed97b6bf6c7b6378009f8471b1e530de67d",
+      "fingerprint": "2ef51dd6356bb6f113da30f5b567a5a1197cca35871fd168d0d1afc5db0ac187",
       "owner": "lintsight-js"
     },
     {
@@ -824,12 +824,12 @@
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
       "file": "fixtures/ts/no-json-structured-clone.bad-3.ts",
       "span": {
-        "offset": 100,
+        "offset": 112,
         "length": 33,
         "line": 3,
         "column": 18
       },
-      "fingerprint": "f880d0d61017df613dfaccb906d658dfa578bd2c6dcaf06dfaf1c25523cf46fd",
+      "fingerprint": "0776b897c78631de8ed64b5f7655e4f5c8b92e9aee129ba404460d0b117e3b2f",
       "owner": "lintsight-js"
     },
     {
@@ -839,12 +839,12 @@
       "message": "\"token\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
       "file": "fixtures/ts/no-math-random-secret.bad-1.ts",
       "span": {
-        "offset": 98,
+        "offset": 110,
         "length": 21,
         "line": 3,
         "column": 9
       },
-      "fingerprint": "64d52966b135d4abdda99ea00b297ff5de282b9e25751fd963220522e9cb466a",
+      "fingerprint": "12fc5c95fb4e6a301ba3b8336c49154e2900dd9638563d7ef8f6124ac8cb98f1",
       "owner": "lintsight-js"
     },
     {
@@ -854,12 +854,12 @@
       "message": "\"otpSeed\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
       "file": "fixtures/ts/no-math-random-secret.bad-2.ts",
       "span": {
-        "offset": 101,
+        "offset": 113,
         "length": 30,
         "line": 3,
         "column": 9
       },
-      "fingerprint": "a1ff9a2df29202b9ab5ef84ee51a2871d233ac12f2dda11613041e0e7bc668cf",
+      "fingerprint": "501f3f3c7e2e55b88bf9f8d8f903f309ed069eee80841fd4b9534d015d470de7",
       "owner": "lintsight-js"
     },
     {
@@ -869,12 +869,12 @@
       "message": "\"nonce\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
       "file": "fixtures/ts/no-math-random-secret.bad-3.ts",
       "span": {
-        "offset": 112,
+        "offset": 124,
         "length": 29,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "48b8956783d49d8c49a22fe760f00e7fa83f9cd294def0015760cd548eb97753",
+      "fingerprint": "29db75078de95d86a2ad20ae140ed009948173084cd27914b0e6649c536391a2",
       "owner": "lintsight-js"
     },
     {
@@ -884,12 +884,12 @@
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
       "file": "fixtures/ts/no-non-literal-fs-filename.bad-1.ts",
       "span": {
-        "offset": 194,
+        "offset": 206,
         "length": 25,
         "line": 5,
         "column": 3
       },
-      "fingerprint": "1dbe8c65f47819995f97b40439c6a06192467f6f2b0fb2f6c078f25e48310fa5",
+      "fingerprint": "0f1e64c40281040d8195dcac74ecd6b76db74422c5eddf6ba0c0adf4b804d45a",
       "owner": "lintsight-js"
     },
     {
@@ -899,12 +899,12 @@
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
       "file": "fixtures/ts/no-non-literal-fs-filename.bad-2.ts",
       "span": {
-        "offset": 119,
+        "offset": 131,
         "length": 33,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "d17b4294f14230f3b9e4a671215c9fd6664d24bd730eb1e02f4ed3d65c0c1329",
+      "fingerprint": "5db305841a86b665a85b3ca554fe5814aa078fe382cc5449503a5ee5fc2df422",
       "owner": "lintsight-js"
     },
     {
@@ -914,12 +914,12 @@
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
       "file": "fixtures/ts/no-non-literal-fs-filename.bad-3.ts",
       "span": {
-        "offset": 106,
+        "offset": 118,
         "length": 30,
         "line": 5,
         "column": 3
       },
-      "fingerprint": "8d2f980c557b654ec3cc57954e1c87b2b8e201dad715576012b9e3d34c5eaf24",
+      "fingerprint": "72bfb79b666e4bd73b4e9092326cfff2b561c1feae6046fd486418399ddcfdae",
       "owner": "lintsight-js"
     },
     {
@@ -929,12 +929,12 @@
       "message": "Function 'loadFromUser' is declared but never used.",
       "file": "fixtures/ts/no-non-literal-fs-filename.bad-4.ts",
       "span": {
-        "offset": 145,
+        "offset": 157,
         "length": 12,
         "line": 4,
         "column": 10
       },
-      "fingerprint": "e290d66c68a70c25589159137afd714dea962f4fcab2c6acc40af23b7a68c6e3",
+      "fingerprint": "b226b0b8b0d49ab821348e2f7566200cff7563d894d061f9bf19d176a2f14159",
       "owner": "oxlint-native"
     },
     {
@@ -944,12 +944,12 @@
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
       "file": "fixtures/ts/no-non-literal-fs-filename.bad-4.ts",
       "span": {
-        "offset": 208,
+        "offset": 220,
         "length": 33,
         "line": 6,
         "column": 10
       },
-      "fingerprint": "f63ff671d0e6c612b4b98a442d2f3033c7ce4a0211cdc882ec5e60e53c781bce",
+      "fingerprint": "80aa3231f0d6ee29e4b600971b39cc746b945f563845e7c997a4926615a42251",
       "owner": "lintsight-js"
     },
     {
@@ -959,12 +959,12 @@
       "message": "Function 'readMdFile' is declared but never used.",
       "file": "fixtures/ts/no-non-literal-fs-filename.good-3.ts",
       "span": {
-        "offset": 151,
+        "offset": 163,
         "length": 10,
         "line": 4,
         "column": 10
       },
-      "fingerprint": "82cdee12be0c1880c86f0d08708bc3fe1505c4a1a150da3ebf2aa8faadb8b0ae",
+      "fingerprint": "f03072a3866b42b3dbcc8b7b0f4ec8552b6e54a3b2252908949ab82182ceb060",
       "owner": "oxlint-native"
     },
     {
@@ -974,12 +974,12 @@
       "message": "Function 'listPosts' is declared but never used.",
       "file": "fixtures/ts/no-non-literal-fs-filename.good-3.ts",
       "span": {
-        "offset": 245,
+        "offset": 257,
         "length": 9,
         "line": 8,
         "column": 10
       },
-      "fingerprint": "15318b4f4bce4427e7b56597ab3b9862d0d53798d850f845ccece2935debbe25",
+      "fingerprint": "042b639c69f8c8d40b647d5d35ff7decbdf3b3f6713e4495d1ef741c26d12606",
       "owner": "oxlint-native"
     },
     {
@@ -989,12 +989,12 @@
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
       "file": "fixtures/ts/no-non-literal-require.bad-1.ts",
       "span": {
-        "offset": 102,
+        "offset": 114,
         "length": 19,
         "line": 3,
         "column": 15
       },
-      "fingerprint": "612dd8c5ddd23b86da10196d646c427ff239e27e16aa02b371c7fdc4162533b7",
+      "fingerprint": "2d7c997ad84faf3a59c1e21aaef909e2c1b5a60eeb33e7cfc9532a39fd340565",
       "owner": "lintsight-js"
     },
     {
@@ -1004,12 +1004,12 @@
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
       "file": "fixtures/ts/no-non-literal-require.bad-2.ts",
       "span": {
-        "offset": 109,
+        "offset": 121,
         "length": 28,
         "line": 3,
         "column": 18
       },
-      "fingerprint": "8a8b0df4690bb0e0252799041151fa21e82a80859cdadef6d5e3335280823b3f",
+      "fingerprint": "a5385cb8c687de9ba5ca554d45a7a5bf38e24a26f3f19e1fa13781549897e201",
       "owner": "lintsight-js"
     },
     {
@@ -1019,12 +1019,12 @@
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
       "file": "fixtures/ts/no-non-literal-require.bad-3.ts",
       "span": {
-        "offset": 114,
+        "offset": 126,
         "length": 17,
         "line": 3,
         "column": 19
       },
-      "fingerprint": "4f4e1d800c00659891b4894de36c2cd07333e3c9aa39745ec68aea5d4a850107",
+      "fingerprint": "7aa834adf143d20b3586d426804b9fd436c47ffe939072cb7ab5612b60ca54c1",
       "owner": "lintsight-js"
     },
     {
@@ -1034,12 +1034,12 @@
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
       "file": "fixtures/ts/no-prototype-pollution-syntax.bad-1.ts",
       "span": {
-        "offset": 119,
+        "offset": 131,
         "length": 16,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "6a5f0799bf63c692ea54be62831b2d85a5cbe8831e3662eae3ca82758470d792",
+      "fingerprint": "c14319b5d9e07cfb533031130093e2125616870488f013232383c51b64c48547",
       "owner": "lintsight-js"
     },
     {
@@ -1049,12 +1049,12 @@
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
       "file": "fixtures/ts/no-prototype-pollution-syntax.bad-2.ts",
       "span": {
-        "offset": 112,
+        "offset": 124,
         "length": 32,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "18948a3a29476e7742b63eba0acd2c3b016607aaa22bf0b341d23af4f409b1d8",
+      "fingerprint": "7c88ace30e50c8b5babf698e3c8159995abc0ad44495674928b03b86c37951f5",
       "owner": "lintsight-js"
     },
     {
@@ -1064,12 +1064,12 @@
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
       "file": "fixtures/ts/no-prototype-pollution-syntax.bad-3.ts",
       "span": {
-        "offset": 130,
+        "offset": 142,
         "length": 20,
         "line": 3,
         "column": 12
       },
-      "fingerprint": "9494a128ba3b11ab38340cde92ae97e8de15db2a5f46a8148395c001204bae27",
+      "fingerprint": "588133e9ea935a15acf0b78eb1ac0d2f2f79c838477954264a38fe6284480566",
       "owner": "lintsight-js"
     },
     {
@@ -1079,12 +1079,12 @@
       "message": "Storing sensitive data (\"token\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
       "file": "fixtures/ts/no-sensitive-storage.bad-1.ts",
       "span": {
-        "offset": 86,
+        "offset": 98,
         "length": 34,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "1e0ff6db962913eedd96f0c9924e925c1d8e0d3fc10ebe6491a2a8d2d294f3a8",
+      "fingerprint": "13c21f494b4c3fe5650f420ac9c19e65f952f64642299aa34eabedd352b121e9",
       "owner": "lintsight-js"
     },
     {
@@ -1094,12 +1094,12 @@
       "message": "Storing sensitive data (\"userPassword\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
       "file": "fixtures/ts/no-sensitive-storage.bad-2.ts",
       "span": {
-        "offset": 108,
+        "offset": 120,
         "length": 43,
         "line": 3,
         "column": 3
       },
-      "fingerprint": "ab49391148fff5ff553029df79a68877c4a1ba58c699bbb1e3c5fa6e06f9f074",
+      "fingerprint": "11c65655b726acfdf80e3165ae65bd1249d9447eeb6887d0d94e6bc771ff12f6",
       "owner": "lintsight-js"
     },
     {
@@ -1109,12 +1109,12 @@
       "message": "Storing sensitive data (\"STORED_JWT\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
       "file": "fixtures/ts/no-sensitive-storage.bad-3.ts",
       "span": {
-        "offset": 127,
+        "offset": 139,
         "length": 39,
         "line": 5,
         "column": 3
       },
-      "fingerprint": "e54c24661d63bce7433791aacac8dd4e80bb9381c2204c014a8557a7344f4ee6",
+      "fingerprint": "6fca71bf6532bee4b1ff6ba7c51b7fa4a10699c5fbe79fbf24458628ecaba7bd",
       "owner": "lintsight-js"
     },
     {
@@ -1124,12 +1124,12 @@
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
       "file": "fixtures/ts/no-sql-concat.bad-1.ts",
       "span": {
-        "offset": 111,
+        "offset": 123,
         "length": 38,
         "line": 3,
         "column": 13
       },
-      "fingerprint": "6b0a4ff9da44ce3a91800ef951e3d7ff923d14d3093cd9f92c90955d12639b14",
+      "fingerprint": "3920c407bac33ed2c42545ee1e03b00f362dc3783d8492fb0b6b211a065d112e",
       "owner": "lintsight-js"
     },
     {
@@ -1139,12 +1139,12 @@
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
       "file": "fixtures/ts/no-sql-concat.bad-2.ts",
       "span": {
-        "offset": 98,
+        "offset": 110,
         "length": 42,
         "line": 3,
         "column": 13
       },
-      "fingerprint": "378d69942af38bb3ad7c503b2eda334696f78381920f660d359ac39615ac8663",
+      "fingerprint": "f86ac61c9c3169fcda6c27e8ebe552370626ca6cdfffed600d70e319076e3859",
       "owner": "lintsight-js"
     },
     {
@@ -1154,12 +1154,12 @@
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
       "file": "fixtures/ts/no-sql-concat.bad-3.ts",
       "span": {
-        "offset": 84,
+        "offset": 96,
         "length": 36,
         "line": 3,
         "column": 13
       },
-      "fingerprint": "01eb8b631692f1ca6b3d1f7e937d670b5e380f8a3330b28d7c5fac9a86046840",
+      "fingerprint": "288756c4947f53d0749582f21c800802647aea63588f7861643e03741a246565",
       "owner": "lintsight-js"
     },
     {
@@ -1169,12 +1169,12 @@
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
       "file": "fixtures/ts/no-swallowed-promise-error.bad-1.ts",
       "span": {
-        "offset": 148,
+        "offset": 160,
         "length": 49,
         "line": 5,
         "column": 5
       },
-      "fingerprint": "dcfc051cfe0ab4f529bf5db7173b81e10dc8e893ca3e5d6e069816021d9e9d2d",
+      "fingerprint": "4a957f92ad895af9db0933ffc607eaef54161860fc15a59339eb9b870c4351ad",
       "owner": "lintsight-js"
     },
     {
@@ -1184,12 +1184,12 @@
       "message": "Catch parameter 'e' is caught but never used.",
       "file": "fixtures/ts/no-swallowed-promise-error.bad-1.ts",
       "span": {
-        "offset": 155,
+        "offset": 167,
         "length": 1,
         "line": 5,
         "column": 12
       },
-      "fingerprint": "f8f904c64343111f10803338aa2a8fe8c83bb8f060e994e5b5acf509baf1ce3f",
+      "fingerprint": "5691460f6b2706150af6b417b5d55393fbbe0122e88eeb2031161bc04a22aa87",
       "owner": "oxlint-native"
     },
     {
@@ -1199,12 +1199,12 @@
       "message": "Caught error \"err\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
       "file": "fixtures/ts/no-swallowed-promise-error.bad-2.ts",
       "span": {
-        "offset": 119,
+        "offset": 131,
         "length": 33,
         "line": 5,
         "column": 5
       },
-      "fingerprint": "3c0515bfae5b323dd60c0596d9158f8ce917572dcc3aa6bb8453c69df1dc5b2f",
+      "fingerprint": "fee89e4348bfc9b96f75b5fc584676d5e75c438841fabd62393c876e7735fa52",
       "owner": "lintsight-js"
     },
     {
@@ -1214,12 +1214,12 @@
       "message": "Catch parameter 'err' is caught but never used.",
       "file": "fixtures/ts/no-swallowed-promise-error.bad-2.ts",
       "span": {
-        "offset": 126,
+        "offset": 138,
         "length": 3,
         "line": 5,
         "column": 12
       },
-      "fingerprint": "85443eccba21f3756dc2ae19dc8cb69f9760e2557a2a36da59c90f5a65332d2e",
+      "fingerprint": "15e5f88a807acde437f78e4fbd8c2c9915f601de2c8bc0eabdf663c4c3b0896c",
       "owner": "oxlint-native"
     },
     {
@@ -1229,12 +1229,12 @@
       "message": "Caught error \"error\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
       "file": "fixtures/ts/no-swallowed-promise-error.bad-3.ts",
       "span": {
-        "offset": 118,
+        "offset": 130,
         "length": 75,
         "line": 5,
         "column": 5
       },
-      "fingerprint": "100755e55a70528b554dcfcfee034e6583dc3e71ec071ed39f75a6a423109b6f",
+      "fingerprint": "c113cd50c80960c137853773e42dda9250e9bf5c351a93498ea1614801311831",
       "owner": "lintsight-js"
     },
     {
@@ -1244,12 +1244,12 @@
       "message": "Catch parameter 'error' is caught but never used.",
       "file": "fixtures/ts/no-swallowed-promise-error.bad-3.ts",
       "span": {
-        "offset": 125,
+        "offset": 137,
         "length": 5,
         "line": 5,
         "column": 12
       },
-      "fingerprint": "d11d68ab4bbe4eb751c84c0452812d9ba3cf941fed450f593ec643c15fcdb36e",
+      "fingerprint": "8f7f3960365870d08b94b583018836c074cde6e75cadb2d8392067cbbd9e6ffb",
       "owner": "oxlint-native"
     },
     {
@@ -1259,12 +1259,12 @@
       "message": "Unnecessary try/catch wrapper",
       "file": "fixtures/ts/no-swallowed-promise-error.good-2.ts",
       "span": {
-        "offset": 274,
+        "offset": 286,
         "length": 1,
         "line": 13,
         "column": 12
       },
-      "fingerprint": "cf370cd602d5ea44844852a924d3744054524c6d836d82699c74ee5dc8cbf887",
+      "fingerprint": "4336385cc9d2ad403f6e2407b179c92b54e4d2e999f0c67933535c2f96bcc6c5",
       "owner": "oxlint-native"
     },
     {
@@ -1274,12 +1274,12 @@
       "message": "\"readFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
       "file": "fixtures/ts/no-sync-io-in-async.bad-1.ts",
       "span": {
-        "offset": 166,
+        "offset": 178,
         "length": 26,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "1b8ed2615670e9cf5f7704c0b35cc5842ffff4fe706da25d12649cfe57fce24c",
+      "fingerprint": "88666fa4338f6ac292fe7e5229b9ab70bebe7373ef7eb2672ac6d3699ab10742",
       "owner": "lintsight-js"
     },
     {
@@ -1289,12 +1289,12 @@
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
       "file": "fixtures/ts/no-sync-io-in-async.bad-2.ts",
       "span": {
-        "offset": 133,
+        "offset": 145,
         "length": 28,
         "line": 5,
         "column": 3
       },
-      "fingerprint": "f5291d54d98cf56a5b1b10217069aaae397aa3c5f490525d617d484faaabfe7c",
+      "fingerprint": "b8d7407ce4f60ea259b8abac151f692af78f09c979e57968de4bbb1d72c7fd1e",
       "owner": "lintsight-js"
     },
     {
@@ -1304,12 +1304,12 @@
       "message": "\"writeFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
       "file": "fixtures/ts/no-sync-io-in-async.bad-2.ts",
       "span": {
-        "offset": 133,
+        "offset": 145,
         "length": 28,
         "line": 5,
         "column": 3
       },
-      "fingerprint": "63f1e771e4b5d4c864636df2dbb68a4767e87eab26dc4f2e208f7e46fe275b1f",
+      "fingerprint": "1019d7fbe8a03ffccb2b4b7b50152ee3af5b268285baf24fc8af5039747b09ad",
       "owner": "lintsight-js"
     },
     {
@@ -1319,12 +1319,12 @@
       "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
       "file": "fixtures/ts/no-sync-io-in-async.bad-3.ts",
       "span": {
-        "offset": 153,
+        "offset": 165,
         "length": 16,
         "line": 5,
         "column": 8
       },
-      "fingerprint": "c5ebe8412779b014a921dd5e60af06f346326c84a7317da98ce23b5487641af6",
+      "fingerprint": "19280a566446878ae6ef3045e026b25abf6724e5ad4c9d458f3f9151faf88697",
       "owner": "lintsight-js"
     },
     {
@@ -1334,12 +1334,12 @@
       "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
       "file": "fixtures/ts/no-sync-io-in-async.bad-3.ts",
       "span": {
-        "offset": 177,
+        "offset": 189,
         "length": 25,
         "line": 6,
         "column": 5
       },
-      "fingerprint": "b6c606fe1830f22a985487546d4dcf58cebf549e7aaff2aed58a2495a4bd6a14",
+      "fingerprint": "4451a3f8baf97627163e86f0e229ba0c4771090fdd28e57c2ac5e12570d2b8f2",
       "owner": "lintsight-js"
     },
     {
@@ -1349,12 +1349,12 @@
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
       "file": "fixtures/ts/no-unsafe-regex.bad-1.ts",
       "span": {
-        "offset": 118,
+        "offset": 130,
         "length": 8,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "6bece8e5cf86db841045205987ff266b1e97202cd9c4c862abb9be2536ea342d",
+      "fingerprint": "013049388f087d5cc7541f02ee3058a9af306e7e95302b12922ce0861b65b96d",
       "owner": "lintsight-js"
     },
     {
@@ -1364,12 +1364,12 @@
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
       "file": "fixtures/ts/no-unsafe-regex.bad-2.ts",
       "span": {
-        "offset": 82,
+        "offset": 94,
         "length": 20,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "5e11f99f7bccc293fb688a6f48366c16b6d6251f5e66b5e8f6ebd594b60a76ca",
+      "fingerprint": "68e5a4fe1c96ff0235dfa81fcc0e245f894ce3e871679723610c4199ef358d02",
       "owner": "lintsight-js"
     },
     {
@@ -1379,12 +1379,12 @@
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
       "file": "fixtures/ts/no-unsafe-regex.bad-3.ts",
       "span": {
-        "offset": 106,
+        "offset": 118,
         "length": 10,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "1a5bd8503a650c703cd7e13c4a33c61295f9896a72f0f717653f6d10ddb239f3",
+      "fingerprint": "3290429c8c67c0d1c38ac79df4717c44c1847aa0e3e6bc3a8dba12f0508fc365",
       "owner": "lintsight-js"
     },
     {
@@ -1394,12 +1394,12 @@
       "message": "\"runInContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
       "file": "fixtures/ts/no-vm-dynamic-code.bad-1.ts",
       "span": {
-        "offset": 140,
+        "offset": 152,
         "length": 26,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "14b3fb7c9958ee5ed883c01c9b0ca105168cacd60145626f164be75bebe3a588",
+      "fingerprint": "3395659d49bec35136f98b82da88c9212ed716c185d3c74ac424bf9f0b009265",
       "owner": "lintsight-js"
     },
     {
@@ -1409,12 +1409,12 @@
       "message": "\"runInNewContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
       "file": "fixtures/ts/no-vm-dynamic-code.bad-2.ts",
       "span": {
-        "offset": 106,
+        "offset": 118,
         "length": 44,
         "line": 3,
         "column": 10
       },
-      "fingerprint": "d99e8af49a5ff036630cc3caf9d9b21117e4b2d5c79ebc788c2332f49106ce4b",
+      "fingerprint": "b3ad723e8a211be6e8dbcfc6bf4212f5850da8688c43dd37e52a95164408cb64",
       "owner": "lintsight-js"
     },
     {
@@ -1424,12 +1424,12 @@
       "message": "\"runInThisContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
       "file": "fixtures/ts/no-vm-dynamic-code.bad-3.ts",
       "span": {
-        "offset": 126,
+        "offset": 138,
         "length": 34,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "5621cec5a5e6f2d23585944474b5df754771f1e95195600990ab48260e514fe3",
+      "fingerprint": "e29881591649e953e3b2a673638637fda220bc36b0aa06001df3589e6541c3f3",
       "owner": "lintsight-js"
     },
     {
@@ -1439,12 +1439,12 @@
       "message": "Parameter 'body' is declared but never used. Unused parameters should start with a '_'.",
       "file": "fixtures/ts/no-vm-dynamic-code.good-2.ts",
       "span": {
-        "offset": 93,
+        "offset": 105,
         "length": 4,
         "line": 4,
         "column": 25
       },
-      "fingerprint": "66d278a77300094b90d951e62ca175c8cdc059a2f87595e7a6495f76f881e337",
+      "fingerprint": "32be5d73138295ff7eb50dfc60aafb391055480e158a8dc028cd3cdb7e5eb0c4",
       "owner": "oxlint-native"
     },
     {
@@ -1454,12 +1454,12 @@
       "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
       "file": "fixtures/ts/no-weak-hash.bad-1.ts",
       "span": {
-        "offset": 106,
+        "offset": 118,
         "length": 24,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "9dd90f058d882aa60cf20b7d979ea8923f8b01eba2399abb7e316611c7dd655e",
+      "fingerprint": "470b8b5e7889828e0de1555cb602f3492e7edeb9896b83fc4b15479b177f936b",
       "owner": "lintsight-js"
     },
     {
@@ -1469,12 +1469,12 @@
       "message": "\"sha1\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
       "file": "fixtures/ts/no-weak-hash.bad-2.ts",
       "span": {
-        "offset": 101,
+        "offset": 113,
         "length": 25,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "12e70501215c9a9f342d1c7de49456742e63c4e648dcc43f55fed5dc1e403776",
+      "fingerprint": "b12e1c097ff9eef9360948e4a59355d49d9adae46fd8b0298ed9a11ef79bb688",
       "owner": "lintsight-js"
     },
     {
@@ -1484,12 +1484,12 @@
       "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
       "file": "fixtures/ts/no-weak-hash.bad-3.ts",
       "span": {
-        "offset": 116,
+        "offset": 128,
         "length": 24,
         "line": 5,
         "column": 10
       },
-      "fingerprint": "9688e9c83c80e16b76230e48b3787e3dad4627118bbc5edf9c4e66c027383981",
+      "fingerprint": "bd716df35fcc9f4a5c8d7415a87341f50aab765808c33b2df7bd29adf3ca4bcb",
       "owner": "lintsight-js"
     },
     {

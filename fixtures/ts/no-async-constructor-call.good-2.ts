@@ -1,4 +1,4 @@
-// valid-2：同步初始化不受影响
+// @ts-nocheck valid-2：同步初始化不受影响
 class Pool2 {
   ready = false
 

@@ -1,4 +1,4 @@
-// valid-1：字面量路径
+// @ts-nocheck valid-1：字面量路径
 import fs from 'node:fs'
 
 export function loadKnown() {

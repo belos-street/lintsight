@@ -1,4 +1,4 @@
-// invalid-2：SHA1
+// @ts-nocheck invalid-2：SHA1
 import crypto from 'node:crypto'
 
 export function sha1(input: string) {

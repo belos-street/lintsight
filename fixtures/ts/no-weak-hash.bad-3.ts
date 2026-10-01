@@ -1,4 +1,4 @@
-// invalid-3：大小写变体
+// @ts-nocheck invalid-3：大小写变体
 import crypto from 'node:crypto'
 
 export function md5Upper(input: string) {

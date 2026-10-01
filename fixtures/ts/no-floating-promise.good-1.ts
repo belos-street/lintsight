@@ -1,4 +1,4 @@
-// valid-1：await / void / return 都是已处理形态
+// @ts-nocheck valid-1：await / void / return 都是已处理形态
 export async function handler2(id: string) {
   await save(id)
   void maybeSync()

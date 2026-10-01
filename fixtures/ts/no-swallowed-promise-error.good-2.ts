@@ -1,4 +1,4 @@
-// valid-2：rethrow / 包装抛出都算处理
+// @ts-nocheck valid-2：rethrow / 包装抛出都算处理
 export function parse(raw: string) {
   try {
     return JSON.parse(raw)

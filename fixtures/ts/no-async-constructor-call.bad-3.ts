@@ -1,4 +1,4 @@
-// invalid-3：.then 链不算 await
+// @ts-nocheck invalid-3：.then 链不算 await
 class Cache {
   loaded = false
 

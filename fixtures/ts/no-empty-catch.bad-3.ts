@@ -1,4 +1,4 @@
-// invalid-3：嵌套 try + TS 断言语法共存（预期 2 条诊断）
+// @ts-nocheck invalid-3：嵌套 try + TS 断言语法共存（预期 2 条诊断）
 type Payload = { data?: unknown };
 
 export function handle(input: string): Payload {

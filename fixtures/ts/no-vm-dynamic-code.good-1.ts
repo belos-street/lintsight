@@ -1,4 +1,4 @@
-// valid-1：字面量脚本（静态）
+// @ts-nocheck valid-1：字面量脚本（静态）
 import vm from 'node:vm'
 
 export function sanity(ctx: vm.Context) {
