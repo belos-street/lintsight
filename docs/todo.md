@@ -65,10 +65,11 @@
 
 > 依据：[requirements-v0.2.md](requirements/requirements-v0.2.md) §2.4 sidecar 双引擎 + §8.2 修订⑬ M2 内部排序（架构规则先行 → taint 竖切）+ [spikes/oxc-crate-poc.md](spikes/oxc-crate-poc.md)（spike ① 已验证 L1/L2 直连与版本锁定）。域级颗粒度：任务到模块 + 验收锚点；执行级拆解随 design-m2-v0.1 评审后滚动细化。
 
-### T2.0 门禁任务（不完成对应切片不得开工）
+### T2.0 门禁任务（不完成对应切片不得开工）✅ 2026-10-01
 
-- [ ] **design-m2-v0.1.md**：sidecar 进程编排与接口协议（M1 Bun ↔ M2 Rust 的 stdin/stdout 诊断流）、双引擎诊断合并协议（附录 C 路径事件流 v0）、Rust 工程结构（crates/ 布局、oxc `=0.150.0` 锁定策略承接 spike ①）、诊断冲突消解落地（§3.6）
-- [ ] spike ⑤ **taint 竖切预演**：单文件 source→sanitizer→sink 沿 CFG worklist 传播的最小 Rust 实现（spike ① 结论：挂载点 = `SymbolId + cfg_id`）→ 验证传播模型可行 + 产出可验证证据（readdir→join→readFile 场景，text-rpg 试用残留 8 条正是首个真实输入）
+- [x] **design-m2-v0.1.md** ✅ 2026-10-01：[design/design-m2-v0.1.md](design/design-m2-v0.1.md)——sidecar 架构 + JSON Lines 诊断协议（含 pathEvents 证据链 v0）+ 桥接解析链（OXLINT_ENGINE_BIN → node_modules → cargo 产物，fail-open 降级）+ 双报消解 supersedes 机制 + M2-DR1~5（协议/传播模型/降级/分发/函数表治理，均含备选与否决理由）。待用户评审
+- [x] spike ⑤ **taint 竖切预演** ✅ 2026-10-01：报告见 [spikes/taint-poc-spike5.md](spikes/taint-poc-spike5.md)；代码 `crates/oxc-poc/src/taint.rs` + `taint-fixture.ts`。三场景全过：参数→join→sink 命中、basename sanitizer 豁免、readdir→for-of→sink 循环回边（28 轮不动点收敛，sink offset 去重）。教训回填 design-m2：source/sink 函数表不得交叠（登记期校验）、for-of 迭代变量必须显式处理、API 修正（BindingPattern 是 enum 无 Kind 包装）
+- 设计评审通过后 T2.1~T2.6 升执行级开工
 
 ### T2.1 Rust 工程脚手架（执行级锚点：`cargo test` + bun 侧 spawn 联通）
 

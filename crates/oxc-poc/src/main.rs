@@ -8,10 +8,11 @@
 //! 用法：
 //!   oxc-poc walk    <file>      # 单文件全链路：scope 树 / 符号表 / 引用 / CFG 统计 / DOT 导出
 //!   oxc-poc bench   [n_funcs]   # 合成 10 万行语料跑 parse+semantic，报耗时与吞吐
-//!   oxc-poc astkind <file> [..]  # AstKind 覆盖度抽查（对照规则相关节点清单）
+//!   oxc-poc astkind <file> [..] # AstKind 覆盖度抽查（对照规则相关节点清单）
+//!   oxc-poc taint   <file>      # spike ⑤：单文件 source→sanitizer→sink 沿 CFG worklist 传播预演
 
 use std::{
-    collections::BTreeSet,
+    collections::{BTreeSet, HashMap},
     env, fs,
     path::{Path, PathBuf},
     time::Instant,
@@ -22,6 +23,8 @@ use oxc_cfg::{DisplayDot, EdgeType, graph::visit::EdgeRef};
 use oxc_parser::Parser;
 use oxc_semantic::{Semantic, SemanticBuilder};
 use oxc_span::{SourceType, Span};
+
+mod taint;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -36,8 +39,9 @@ fn main() {
                 astkind(Path::new(f))
             }
         }
+        Some("taint") => taint::run(Path::new(args.get(2).expect("usage: taint <file>"))),
         _ => {
-            eprintln!("usage: oxc-poc <walk <file> | bench [n_funcs] | astkind <file>...>");
+            eprintln!("usage: oxc-poc <walk <file> | bench [n_funcs] | astkind <file>... | taint <file>>");
             std::process::exit(2)
         }
     }
