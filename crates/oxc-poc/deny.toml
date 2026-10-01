@@ -1,0 +1,13 @@
+# spike ①：版本锁定策略试运行（version-policy.md：oxc crates =x.y.z 精确锁 + cargo-deny 校验）
+# 用法：cargo deny check bans
+
+[graph]
+all-features = true
+
+[bans]
+# spike 实测：deny=warn。oxc 家族内部 11 crate 全部精确 0.150.0 无漂移；
+# 上游传递依赖存在 2 组重复（hashbrown 0.15/0.17、syn 2/3），非我方可控——
+# M2 正式化时在 skip 清单显式登记，warn 观测漂移趋势
+multiple-versions = "warn"
+wildcards = "deny"
+deny = []

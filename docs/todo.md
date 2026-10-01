@@ -33,10 +33,10 @@
 - [x] T1.10 正确性规则全量完成 ✅ 2026-09-16：`no-async-array-method` + 剩余 9 条（floating-promise [local 预扫描启发] / swallowed-promise-error / closure-loop-var / array-map-side-effect / json-structured-clone / ignored-reduce-result / empty-promise-catch / async-constructor-call / sync-io-in-async）；每条 3 bad / 2 good 用例先行，期望位置探测校准后固化；契约测试 9 组全绿（73/73），golden 重生成；dogfood 配置启用全部 11 条
 - [x] T1.11 注册表登记 + CI 校验 ✅ 2026-09-16：`lintsight-diagnostic/test/registry.test.ts` 四项校验（插件规则必须登记 / detection 与 typeRequirement 映射一致 / 防陈旧条目 / 命名空间契约）；M1 校验载体 = bun test 套件；已登记 11 条，负向验证可拦漏登记
 
-## S4 安全语法级规则 ~14 条（域级，可与 S3 并行）
+## S4 安全语法级规则（域级，可与 S3 并行）✅ 2026-09-16
 
-- [ ] T1.12 安全 P0 规则逐条开发（同 S3 标准，cwe/owasp tags 逐条核定）
-- [ ] T1.13 `no-empty-catch` 的 `allowComments` 选项随批评审定案（spike 遗留开放问题）
+- [x] T1.12 安全 P0 规则全量完成 ✅ 2026-09-16：14 条 CWE/OWASP 对齐 checker（hardcoded-credentials 798 / unsafe-regex 1333 / prototype-pollution-syntax 1321 / child-process-nonliteral 78 / non-literal-fs-filename 22 [low 禁门禁] / non-literal-require 94 / weak-hash 327 / math-random-secret 338 / sensitive-storage 312 / innerhtml-assignment 79 / sql-concat 89 / cors-wildcard 942 / vm-dynamic-code 94 / insecure-cookie 614）；每条 3 bad / 2 good 用例先行；注册表 25 条全登记；88/88 全绿；dogfood 修复自指误报后 0 error
+- [ ] T1.13 `no-empty-catch` 的 `allowComments` 选项随批评审定案（spike 遗留开放问题；依赖 RFC 开放问题 2 的 sourceCode 注释访问能力）
 
 ## S5 Vue 正式版（域级）
 
@@ -55,6 +55,6 @@
 
 ## 远期占位（M2 输入，M1 不做）
 
-- spike ① oxc crate 直连 PoC（M2 路线，可提前并行）
+- [x] spike ① oxc crate 直连 PoC ✅ 2026-10-01（提前完成）：报告见 [spikes/oxc-crate-poc.md](spikes/oxc-crate-poc.md)；PoC 工程 `crates/oxc-poc/`。结论：M2 路线可行——L1/L2（semantic/cfg）GA 免建、101k 行 29ms（3.49M LOC/s，超 NFR-1 预算 23 倍）、AST↔CFG 桥实证、版本锁 `=0.150.0`（对齐 oxlint 1.83.0）+ cargo-deny 门禁跑通；DFG/taint 为自建区，挂载点 = `SymbolId + cfg_id`
 - SARIF / 平台路径契约（附录 C）/ `lintsight migrate --from eslint`
 - LSP（M3）
