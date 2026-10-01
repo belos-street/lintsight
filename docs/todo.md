@@ -117,7 +117,19 @@
 - [x] bench 门禁扩展到引擎：hyperfine 引擎直测（stdin 重定向方案，本机 hyperfine 不支持 --stdin 参数）；硬门禁 = 万行 <1s + NFR-1 吞吐报告 + 回退 >15% 双门禁（CLI/引擎分离基线字段 engineMeanMs）
 - [x] 实测：引擎直测 5.9ms/万行 = **181 万 LOC/s（NFR-1 预算 15 万的 12 倍）**；10 万行 20ms 墙钟（5 线程 512% CPU）；峰值 RSS 12.4MB（≈线程数×单文件，内存纪律并行下保持）；CLI 全管线 194ms（与 M1 基线持平）
 
-**M2 执行切片 T2.1~T2.6 全部完成（2026-10-01），M2.5 收口（typeAware 编排 + FR-304 别名兜底）完成。挂起项：Vue 真实项目试用（需用户提供项目路径）；unicorn/no-new-array 上游 issue（起草中）。**
+**M2 执行切片 T2.1~T2.6 全部完成（2026-10-01），M2.5 收口（typeAware 编排 + FR-304 别名兜底）完成。**
+
+### T1.19 补完：Vue 真实项目试用 + 三项目 M2 复扫 ✅ 2026-10-01
+
+- [x] ④ code-viewer（Vue 3.5 + Vite 组件库，pnpm，lib 组件源 / src 示例 app 双入口，43 文件含 14 .vue）：
+  - **自有规则 2 条真缺陷**（lib/core/code-viewer.vue#L97 同一调用双命中）：`props.plugins.map(async (plugin) => await pluginManager.registerPlugin(plugin))`——no-array-map-side-effect（map 结果丢弃纯副作用）+ no-async-array-method（async 回调 Promise 数组被弃 → registerPlugin 异常 unhandled rejection，且 setup 顶层后续代码不等待注册完成）
+  - **.vue 虚拟块管线实战验证**：诊断行号精确回映射到 SFC 真实行（L97/L62/L72），就地临时文件机制在 pnpm + 双入口形态下工作正常
+  - 口径噪音：no-useless-escape ×250 全部来自 `src/**/token/*.ts` 语法高亮正则测试语料（有意转义）；no-unused-vars ×64（demo 示例 + lib 重构残留）；docs/ 为 vite 构建产物不应纳入扫描面
+- [x] 三项目 M2 复扫（引擎 no-path-traversal + supersedes 消解生效验证）：
+  - text-rpg（57 文件 24 条，T1.19 时 27）：**no-path-traversal ×2 命中 db.ts L159/L188（readdir→join→readFile）且同位置语法级 no-non-literal-fs-filename 被 supersedes 抑制**——双引擎消解在生产项目端到端生效；no-floating-promise ×2 落在 T1.19 已知的 saves 页真缺陷区域
+  - Lexio（31 文件 3 条）：全部 unicorn（lcs.ts#L17 no-new-array 即上游 issue 场景）；**裸 token 优化后自有规则 0 误报**（T1.19 #2 优化回归通过）
+  - hono（39 文件 10 条）：全部 no-hardcoded-credentials（1 真 seed-data.ts + 9 测试 fixture 惯例）；自指豁免后 ACCESS_TOKEN 零误报 ✓
+  - 四项目结论：**M2 引擎能力（taint 数据流 + 双报消解）在真实项目形态下工作正常，自有规则误报率随三轮反哺持续下降（Lexio/hono 本轮零误报）**
 
 ## 远期占位（M3+ / 择机）
 
