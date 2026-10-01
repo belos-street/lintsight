@@ -66,18 +66,24 @@ fn event(kind: EventKind, key: (&str, &str), offset: u32) -> PathEvent {
 /// 引擎函数表（M2-DR5 注册表）。字段顺序即事件链语义分层。
 pub struct TaintTables {
     pub name: &'static str,
+    /// 调用形态 source：`fs.readdirSync(...)` 返回值污染
     pub sources: &'static [FuncKey],
+    /// 成员表达式形态 source（FR-303 后端扩展）：`req.query` / `req.body` 访问即污染；
+    /// 同名调用形态（Hono `c.req.query()`）同样污染。匹配「链上相邻段对」
+    pub member_sources: &'static [FuncKey],
     pub propagators: &'static [FuncKey],
     pub sanitizers: &'static [FuncKey],
+    /// sink 的 (obj, func)：obj 为空串 = 裸标识符调用（如 `import { exec } from 'node:child_process'`）
     pub sinks: &'static [FuncKey],
 }
 
 impl TaintTables {
-    /// 登记期交叠校验：四张表两两不得含相同 (obj, func)——自指传播/清洗即报告
+    /// 登记期交叠校验：五张表两两不得含相同 (obj, func)——自指传播/清洗即报告
     /// 的根源（spike ⑤ 教训 #1 制度化）。
     pub fn validate(&self) -> Result<(), String> {
         let tables = [
             ("sources", self.sources),
+            ("member_sources", self.member_sources),
             ("propagators", self.propagators),
             ("sanitizers", self.sanitizers),
             ("sinks", self.sinks),
@@ -100,7 +106,7 @@ impl TaintTables {
     /// 按值查表（arena 生命周期键 vs 'static 表条目）
     fn member_kind(&self, key: (&str, &str)) -> Option<EventKind> {
         let in_table = |t: &'static [FuncKey]| t.iter().any(|k| k.0 == key.0 && k.1 == key.1);
-        if in_table(self.sources) {
+        if in_table(self.sources) || in_table(self.member_sources) {
             Some(EventKind::Source)
         } else if in_table(self.propagators) {
             Some(EventKind::Propagation)
@@ -145,17 +151,26 @@ impl BlockState {
     }
 }
 
-/// callee 的 (对象名, 方法名)：仅 `obj.func(...)` 命名空间形态（v0 边界）
-fn member_name<'a>(call: &CallExpression<'a>) -> (&'a str, &'a str) {
-    match &call.callee {
-        Expression::StaticMemberExpression(m) => {
-            let obj = match &m.object {
-                Expression::Identifier(i) => i.name.as_str(),
-                _ => "",
-            };
-            (obj, m.property.name.as_str())
+/// 调用/成员链的 (命名空间, 末段名)：取链上最后两段。
+/// `fs.readFileSync` → ("fs","readFileSync")；`c.req.query` → ("req","query")；
+/// 裸标识符 `exec(...)` → ("","exec")（obj 空串约定 = 无命名空间形态）。
+fn member_name<'a>(expr: &'a Expression<'a>) -> (&'a str, &'a str) {
+    let mut cur = expr;
+    loop {
+        match cur {
+            Expression::StaticMemberExpression(m) => {
+                // 链末段 (m.object 的末段名, m.property)
+                let obj = match &m.object {
+                    Expression::Identifier(i) => i.name.as_str(),
+                    Expression::StaticMemberExpression(inner) => inner.property.name.as_str(),
+                    _ => "",
+                };
+                return (obj, m.property.name.as_str());
+            }
+            Expression::Identifier(i) => return ("", i.name.as_str()),
+            // 继续剥 Parenthesized/TS 断言等包装（0.150 无该 Expression 变体则自然落空）
+            _ => return ("", ""),
         }
-        _ => ("", ""),
     }
 }
 
@@ -253,7 +268,7 @@ impl<'a, 't> Analyzer<'a, 't> {
             }
             // sink 检查：fs.readFileSync(<tainted>) 等
             oxc_ast::AstKind::CallExpression(call) => {
-                let key = member_name(call);
+                let key = member_name(&call.callee);
                 if self.tables.is_sink(key) {
                     if let Some(arg) = call.arguments.first() {
                         let mut extra = Vec::new();
@@ -313,7 +328,7 @@ impl<'a, 't> Analyzer<'a, 't> {
                 })
             }
             Expression::CallExpression(call) => {
-                let key = member_name(call);
+                let key = member_name(&call.callee);
                 match self.tables.member_kind(key) {
                     Some(EventKind::Source) => {
                         // source 事件只进返回链（链头）
@@ -352,9 +367,37 @@ impl<'a, 't> Analyzer<'a, 't> {
                     _ => None,
                 }
             }
+            // 成员表达式形态 source（FR-303 后端扩展）：`req.query` / `req.body` 访问即污染。
+            // 链上任意相邻段对命中即算（req.query.id → (req,query) ✓，(query,name) ✗ 不影响）
+            Expression::StaticMemberExpression(_) => {
+                let mut pairs: Vec<(&str, &str)> = Vec::new();
+                let mut cur = expr;
+                while let Expression::StaticMemberExpression(m) = cur {
+                    match &m.object {
+                        Expression::Identifier(i) => {
+                            pairs.push((i.name.as_str(), m.property.name.as_str()))
+                        }
+                        Expression::StaticMemberExpression(inner) => {
+                            pairs.push((inner.property.name.as_str(), m.property.name.as_str()))
+                        }
+                        _ => {}
+                    }
+                    cur = &m.object;
+                }
+                for pair in &pairs {
+                    if self.tables.member_kind(*pair) == Some(EventKind::Source) {
+                        return Some(vec![event(
+                            EventKind::Source,
+                            *pair,
+                            oxc_span::GetSpan::span(expr).start,
+                        )]);
+                    }
+                }
+                None
+            }
             // files[i]：索引访问继承容器污染
             Expression::ComputedMemberExpression(m) => self.eval(&m.object, state, events),
-            // `${dir}/${f}`
+            // `${dir}/${f}`——模板串传播点记入证据链（平台研判依赖传播节点）
             Expression::TemplateLiteral(t) => {
                 let mut merged: Option<Vec<PathEvent>> = None;
                 for e in &t.expressions {
@@ -362,20 +405,35 @@ impl<'a, 't> Analyzer<'a, 't> {
                         merged.get_or_insert_with(Vec::new).extend(chain);
                     }
                 }
-                merged
+                merged.map(|mut chain| {
+                    chain.push(PathEvent {
+                        kind: "propagation",
+                        node: "template-literal".into(),
+                        offset: t.span.start,
+                    });
+                    chain
+                })
             }
-            // dir + '/' + f
+            // dir + '/' + f——字符串拼接传播点
             Expression::BinaryExpression(b) => {
                 let l = self.eval(&b.left, state, events);
                 let r = self.eval(&b.right, state, events);
-                match (l, r) {
+                let mut merged = match (l, r) {
                     (Some(mut a), Some(b)) => {
                         a.extend(b);
                         Some(a)
                     }
                     (Some(a), None) | (None, Some(a)) => Some(a),
                     (None, None) => None,
+                };
+                if let Some(chain) = &mut merged {
+                    chain.push(PathEvent {
+                        kind: "propagation",
+                        node: "concat".into(),
+                        offset: b.span.start,
+                    });
                 }
+                merged
             }
             _ => None,
         }

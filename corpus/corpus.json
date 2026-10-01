@@ -13,6 +13,12 @@
       "repo": "https://github.com/iamkun/dayjs.git",
       "tag": "v1.11.9",
       "note": "日期库：插件架构/原型扩展，跨文件引用密集"
+    },
+    {
+      "name": "express",
+      "repo": "https://github.com/expressjs/express.git",
+      "tag": "4.21.2",
+      "note": "企业级后端框架（JS）：req→路由→fs/exec 数据流密集，M2 taint 规则面代表（M2.6 扩容）"
     }
   ]
 }

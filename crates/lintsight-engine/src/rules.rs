@@ -61,6 +61,7 @@ impl EngineRule for NoEval {
 const PATH_TRAVERSAL_TABLES: TaintTables = TaintTables {
     name: "no-path-traversal",
     sources: &[("fs", "readdirSync")],
+    member_sources: &[],
     propagators: &[("path", "join")],
     sanitizers: &[("path", "basename")],
     sinks: &[
@@ -102,6 +103,77 @@ impl EngineRule for NoPathTraversal {
     }
 }
 
+/// no-command-injection（CWE-78 命令注入，FR-303 硬门槛，FR-305 后端扩展首批）：
+/// 用户输入（成员表达式 source：req.query/body/params/headers/cookies 及 Koa
+/// ctx.request.* 形态）未验证抵达 shell 执行 sink。裸标识符 sink 支持
+/// `import { exec } from 'node:child_process'` 的解构导入形态（obj=""约定）。
+/// v0 无 sanitizer 表（shell 转义不可靠，正确做法是 execFile + 参数数组）。
+const COMMAND_INJECTION_TABLES: TaintTables = TaintTables {
+    name: "no-command-injection",
+    sources: &[],
+    member_sources: &[
+        ("req", "query"),
+        ("req", "body"),
+        ("req", "params"),
+        ("req", "headers"),
+        ("req", "cookies"),
+        ("request", "query"),
+        ("request", "body"),
+        ("request", "params"),
+        ("request", "headers"),
+        ("request", "cookies"),
+        ("ctx", "query"),
+        ("ctx", "request"),
+    ],
+    propagators: &[("path", "join")],
+    sanitizers: &[],
+    sinks: &[
+        ("", "exec"),
+        ("", "execSync"),
+        ("", "spawn"),
+        ("", "spawnSync"),
+        ("cp", "exec"),
+        ("cp", "execSync"),
+        ("cp", "spawn"),
+        ("cp", "spawnSync"),
+        ("child_process", "exec"),
+        ("child_process", "execSync"),
+        ("child_process", "spawn"),
+        ("child_process", "spawnSync"),
+    ],
+};
+
+/// no-command-injection：外部可控输入未验证抵达 shell 执行 sink。
+/// span = sink 调用表达式；pathEvents = source→…→sink 证据链（链头 = 实际 source 形态）。
+struct NoCommandInjection;
+
+impl EngineRule for NoCommandInjection {
+    fn id(&self) -> &'static str {
+        "lintsight-engine/no-command-injection"
+    }
+
+    fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
+        crate::taint::run(ctx, &COMMAND_INJECTION_TABLES)
+            .into_iter()
+            .map(|hit| RawDiag {
+                rule_id: self.id(),
+                severity: "error",
+                message: format!(
+                    "Untrusted input from {} reaches {}.{} without validation; use an allowlist or execFile with argument arrays. (no-command-injection)",
+                    hit.events
+                        .first()
+                        .map(|e| e.node.as_str())
+                        .unwrap_or("request input"),
+                    hit.func.0,
+                    hit.func.1,
+                ),
+                span: hit.span,
+                path_events: hit.events,
+            })
+            .collect()
+    }
+}
+
 /// 全部引擎规则登记处（表交叠校验随登记执行——校验失败即引擎启动 panic，
 /// Bun 侧 fail-open 降级，cargo test 提前拦截）。
 /// arch 配置缺省时架构规则不注册（Summary.rules 亦不含）；ts_paths 同随 stdin 下发。
@@ -109,7 +181,14 @@ pub fn registry(arch: Option<&ArchConfig>, ts_paths: &[TsPathMapping]) -> Vec<Bo
     PATH_TRAVERSAL_TABLES
         .validate()
         .expect("no-path-traversal 函数表交叠");
-    let mut rules: Vec<Box<dyn EngineRule>> = vec![Box::new(NoEval), Box::new(NoPathTraversal)];
+    COMMAND_INJECTION_TABLES
+        .validate()
+        .expect("no-command-injection 函数表交叠");
+    let mut rules: Vec<Box<dyn EngineRule>> = vec![
+        Box::new(NoEval),
+        Box::new(NoPathTraversal),
+        Box::new(NoCommandInjection),
+    ];
     if let Some(cfg) = arch {
         rules.push(Box::new(ArchBoundaries {
             config: cfg.clone(),
@@ -229,6 +308,62 @@ fs.writeFileSync(files[0], 'x')
     #[test]
     fn tables_have_no_overlap() {
         assert!(PATH_TRAVERSAL_TABLES.validate().is_ok());
+        assert!(COMMAND_INJECTION_TABLES.validate().is_ok());
+    }
+
+    // —— no-command-injection（CWE-78，FR-303 硬门槛：成员表达式 source 模型首批） ——
+
+    fn injection_hits(source: &str) -> Vec<(u32, Vec<&'static str>)> {
+        let allocator = oxc_allocator::Allocator::default();
+        let mut out = Vec::new();
+        crate::context::with_context(&allocator, "a.ts", source, |ctx| {
+            for d in NoCommandInjection.check(ctx) {
+                out.push((d.span.start, d.path_events.iter().map(|e| e.kind).collect()));
+            }
+        });
+        out
+    }
+
+    #[test]
+    fn detects_injection_from_express_member_source() {
+        let src = "\
+import { exec } from 'node:child_process'
+export function handler(req) {
+  exec(`ls ${req.query.name}`)
+}
+";
+        let hits = injection_hits(src);
+        assert_eq!(hits.len(), 1);
+        // 链头 = 成员表达式 source（req.query），经模板串传播到 sink
+        assert_eq!(hits[0].1, vec!["source", "propagation", "sink"]);
+    }
+
+    #[test]
+    fn detects_injection_from_hono_call_source() {
+        // Hono 形态：c.req.query('cmd') 调用返回值污染 → 模板串 → 裸 execSync
+        let src = "\
+import { execSync } from 'node:child_process'
+export function h(c) {
+  const cmd = c.req.query('cmd')
+  return execSync(`git log ${cmd}`)
+}
+";
+        let hits = injection_hits(src);
+        assert_eq!(hits.len(), 1);
+        assert_eq!(hits[0].1, vec!["source", "propagation", "sink"]);
+    }
+
+    #[test]
+    fn clean_commands_not_reported() {
+        let src = "\
+import { exec } from 'node:child_process'
+const fixed = 'ls -la'
+export function run(cmd) {
+  exec('ls -la')
+  exec(fixed)
+}
+";
+        assert!(injection_hits(src).is_empty(), "字面量与非源变量不得报");
     }
 
     // —— arch-boundaries（T2.4） ——

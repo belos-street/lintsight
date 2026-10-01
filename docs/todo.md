@@ -119,6 +119,14 @@
 
 **M2 执行切片 T2.1~T2.6 全部完成（2026-10-01），M2.5 收口（typeAware 编排 + FR-304 别名兜底）完成。**
 
+### M2.6 安全规则批次启动 + 企业级语料扩容 ✅ 2026-10-01
+
+- [x] **taint source 模型扩展**（FR-303 后端前置）：source 表新增成员表达式形态（`member_sources`）——`req.query/body/params/headers/cookies` 访问即污染，链上任意相邻段对命中（`req.query.id` → (req,query)）；同名调用形态（Hono `c.req.query()`）同样污染；裸标识符 sink 支持（`import { exec } from 'node:child_process'` 解构形态，obj=""约定）；五表交叠校验扩展。证据链增强：模板串/字符串拼接记 propagation 事件（template-literal/concat）
+- [x] **no-command-injection**（CWE-78，FR-303 硬门槛第 2 条）：Express/Koa/Hono 常见 source 形态 ×12 → `exec/execSync/spawn/spawnSync`（cp/child_process 命名空间 + 裸调用）×12；v0 无 sanitizer 表（shell 转义不可靠，正确做法 execFile + 参数数组）；cargo 用例 ×3（Express/Hono/负面）
+- [x] **corpus 扩容 express@4.21.2**（企业级后端语料）：基线 654→806 文件 / 310→590 诊断；构成分析——+213 unused-vars 与 +6 credentials 来自 test/；**no-insecure-cookie 20/24 集中在 res.cookie.js = 库 API 实现体口径噪音**（库代码 Set-Cookie 是 API 本体，已知模式）；引擎 0 命中符合预期（框架库无 req→exec 应用流，taint 价值面在应用层）
+- [x] 教训：express tag 不带 v 前缀（ls-remote 先行验证 tag 格式）
+- 待办延伸：no-ssrf / no-prototype-pollution-merge（M2.6 后续批次）；express 应用层样例（examples/ 目录）可作 taint 场景补充验证
+
 ### T1.19 补完：Vue 真实项目试用 + 三项目 M2 复扫 ✅ 2026-10-01
 
 - [x] ④ code-viewer（Vue 3.5 + Vite 组件库，pnpm，lib 组件源 / src 示例 app 双入口，43 文件含 14 .vue）：
