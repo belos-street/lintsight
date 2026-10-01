@@ -8,12 +8,17 @@
 //!     {"type":"summary","files":n,"rules":["lintsight-engine/<name>",…]}
 //!
 //! 失败语义：任何输入异常 → stderr 输出错误 + exit 2，Bun 侧 fail-open 降级纯 M1 扫描。
-//! T2.1 范围：协议联通 + no-eval 联通验证规则；T2.2 semantic/CFG 消费层、T2.3 taint 竖切随后。
+//! T2.2 范围：FileContext 消费层（semantic+CFG 查询面）+ 规则 trait + 流式分配
+//! （每文件独立 arena，分析完即 drop——峰值 ≈ 最大单文件，与批大小无关）。
 
 mod analyze;
+mod context;
 mod protocol;
+mod rules;
 
 use std::io::{self, Read};
+
+use oxc_allocator::Allocator;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -31,7 +36,7 @@ fn main() {
     let input: protocol::EngineInput = serde_json::from_str(&stdin)
         .unwrap_or_else(|e| protocol::fatal(&format!("stdin JSON parse failed: {e}")));
 
-    let allocator = oxc_allocator::Allocator::default();
+    let rules = rules::registry();
     let mut diagnostics = Vec::new();
     let mut scanned = 0usize;
 
@@ -48,9 +53,13 @@ fn main() {
             .strip_prefix(&root)
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| file.clone());
-        let analyzed = analyze::analyze_file(&allocator, &rel, &source);
+        // 内存纪律（T2.2）：每文件独立 arena，analyze_file 返回即 drop——
+        // 整批文件绝不共享 arena，否则峰值 = 全批 AST 之和
+        let allocator = Allocator::default();
+        let analyzed = analyze::analyze_file(&allocator, &rel, &source, &rules);
         diagnostics.extend(analyzed);
         scanned += 1;
+        // allocator、source 在此 drop
     }
 
     for d in &diagnostics {
@@ -59,7 +68,7 @@ fn main() {
     let summary = protocol::Summary {
         kind: "summary",
         files: scanned,
-        rules: vec!["lintsight-engine/no-eval".into()],
+        rules: rules.iter().map(|r| r.id().to_string()).collect(),
     };
     protocol::emit_line(&summary);
 }
