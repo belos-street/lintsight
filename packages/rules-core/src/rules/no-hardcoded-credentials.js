@@ -23,6 +23,7 @@ export default {
       goodExamples: ['const apiKey = process.env.API_KEY'],
       falsePositives: [
         '键名命中但值为占位/空/非凭证语义（长度 < 6 的字符串不触发）',
+        '值与键名自指（normalize 后相同，如 ACCESS_TOKEN = "access_token"）——值只是键名的机器形式复述，零信息量（T1.19 #3 误报反哺：hono 项目 cookie 名常量）',
         '裸 token 属性承载非凭证语义（语言学词元/设计 token 等）：值不含数字/非字母字符且长度 < 12 时不触发（Lexio 项目 diffTokens 词元误报实证，T1.19 #2）',
         '测试文件的样例凭证（后续可加 test 目录豁免选项）'
       ]
@@ -35,6 +36,13 @@ export default {
     function isSuspectName(name) {
       return typeof name === 'string' && NAME.test(name)
     }
+    // 值与键名自指（normalize 后相同，如 ACCESS_TOKEN = 'access_token'）→ 跳过：
+    // 值只是键名的机器形式复述，信息量为零（T1.19 #3 误报反哺）
+    function isSelfReferential(name, value) {
+      if (typeof name !== 'string') return false
+      const norm = (s) => s.toLowerCase().replace(/[_\-\s]/g, '')
+      return norm(value.value) === norm(name)
+    }
     function isCredentialLiteral(value, name) {
       if (
         value?.type !== 'Literal' ||
@@ -43,6 +51,7 @@ export default {
       ) {
         return false
       }
+      if (isSelfReferential(name, value)) return false
       // 裸 token 多义（语言学词元/设计 token/会话 token）——要求值具备凭证形态：
       // 含数字或非字母字符，或长度 ≥ 12；纯字母短词不触发（T1.19 #2 误报反哺）
       if (/^token$/i.test(name ?? '')) {

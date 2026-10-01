@@ -11,7 +11,7 @@
     }
   ],
   "digest": {
-    "total": 313,
+    "total": 310,
     "byRule": {
       "eslint/no-unassigned-vars": 1,
       "eslint/no-unused-expressions": 103,
@@ -20,7 +20,7 @@
       "lintsight/no-array-map-side-effect": 2,
       "lintsight/no-empty-catch": 27,
       "lintsight/no-floating-promise": 5,
-      "lintsight/no-hardcoded-credentials": 12,
+      "lintsight/no-hardcoded-credentials": 9,
       "lintsight/no-json-structured-clone": 5,
       "lintsight/no-non-literal-fs-filename": 1,
       "lintsight/no-non-literal-require": 1,
@@ -38,14 +38,13 @@
       "unicorn/no-useless-fallback-in-spread": 1,
       "unicorn/no-useless-spread": 2
     },
-    "fingerprintsHash": "68b38b90dcdd99316d2b722c113cc62a8a584d19057dc962220311de4c72e907",
+    "fingerprintsHash": "10190c200931f09be520da35264f500747cf9fcf99ec66022281c52f8be73e06",
     "fingerprints": [
       "0053fa7e749e3cee7807b4626e5a464804ac2f78e901c5d820dd0a3ddfa61c41",
       "00663c4e36707b8fedb926ef922a30ed86439f89e628ae555a14e7bf63d536ce",
       "006cf2f42810c095f65915af5887ef544c7259d0136a97268fbd9a00e4b1cf59",
       "00b36df04f6aa8d45208d3efdf2201851b120f6a0a0abda31f8975c923f0377b",
       "00fb20d22d057503c086c2f59ede6e1d7eea1a3f94bc7c14cf2e6e1258d1724a",
-      "0335924831fab390ba6b0cb36a2e8e7f6c7602f9e333803132641d2f10788b81",
       "0349243855a2f4bf73e5bbbf5565b32633a674b06c5157d2338a821cd736bd6f",
       "0382723810e9200ce1ebc54bffab92596ed9843526498346689a0e36555dcf59",
       "0484c125a57e5b5ea3475e14e324b372505d22bce06e4bf01be57893e9b141dd",
@@ -61,7 +60,6 @@
       "0d15e3a1198f3eaac6570481fe8ef198f0be4a3c37ac0cf068b6faaf3448088a",
       "0d6e0835927dd8c1751380c88dc41df7a4c927ae882f62f9c70e2b98a9c45100",
       "0d81aad5c9f8fef4c260ff2eb220c4611aa428f9ebbceff76ed14d22ffd029a0",
-      "0e25f83d6d321fdc0286ff14b7557d79c87defd49e8d07efa3ecd0820d13050f",
       "0e44db3790fd9bff28895bbd5f71eb6c0c803c179a814c92d5aa2597a22b2f1e",
       "0f091b8e54f268631309ed5c767f4725449e17651ce798a5788e7827f6288d4a",
       "0f8be924e6cbe3b99d28a6130262809fa1b0ac0ad68b10b5dbfbf54db9a4a32f",
@@ -242,7 +240,6 @@
       "a2b69ceb877a4fd6bb7608dbdf1b888504d7bc11ffd6ea2da13b5a7b52253f7d",
       "a2e28d7bcf69cb9afb89517be832cb0ce6b07157bd5e09433256288591737d04",
       "a3f5764f3c0e538408c4673d4dfeab5f761bfc1758116a7a8af8f2c59cb5fce3",
-      "a403acd2f14a135043b4905d3fcdb2b4291253004cf9977f747dacc84add31d7",
       "a4bcb8da3214528291f064173e46f8e1ff8237a8fcabc79c10dc99b2ce92e751",
       "a4c5c67eef8488a26c11b9f9caaf6647220a99eaa01fa2303368a7950ac5c5fb",
       "a5ec7384a84d208dade5a1c0224e8c2a815983269f489453b0093ba73ea4f691",

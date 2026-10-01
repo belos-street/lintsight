@@ -1,0 +1,26 @@
+{
+  "//": "仅供 IDE / 类型服务（bun runtime 不依赖本文件）：workspaces 裸名导入的 paths 映射。Bun 不在根 node_modules 链接 @lintsight/*，TS server 无 Bun 的 workspaces 解析能力，需此处显式映射。子路径导入按需显式列举（TS paths 模式仅允许单个 *）。",
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "strict": true,
+    "baseUrl": ".",
+    "paths": {
+      "@lintsight/*": ["./packages/*/src/index.ts"],
+      "@lintsight/cli/oxlint-bridge": [
+        "./packages/lintsight-cli/src/oxlint-bridge.ts"
+      ],
+      "@lintsight/rule-sdk/testing": [
+        "./packages/lintsight-rule-sdk/src/testing.ts"
+      ]
+    }
+  },
+  "include": [
+    "scripts/**/*.ts",
+    "packages/*/src/**/*.ts",
+    "packages/*/test/**/*.ts"
+  ]
+}

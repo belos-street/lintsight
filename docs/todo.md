@@ -51,11 +51,13 @@
 ## S7 试用与基线（域级）
 
 - [x] T1.18 语料库 v0 接入 + 基线脚本 + 双报率 0 断言 ✅ 2026-10-01：`corpus/corpus.json` manifest（zod@v3.25.76 + dayjs@v1.11.9 锁 tag，本体浅克隆 `corpus/repos/` 已 gitignore）；`bun run corpus:check` = 全量冷扫（654 文件 / 313 诊断，自有规则命中 86）+ 双报率 0 断言（同 file+offset+length 跨引擎双 owner）+ 指纹级基线 diff（漂移 exit 1，重建显式 `--save`）；`corpus/baseline-v0.json` 入库；⚠️ `bun test` 收窄 `./packages ./scripts`（裸 bun test 子串 filter 撞 corpus 第三方测试）
-- [ ] T1.19 内部 ≥3 项目接入试用 + 误报标注反哺 confidence（**进行中 2/3**）：
-  - ✅ 首个试用项目 text-rpg（Next.js + Bun，57 文件）：27 条诊断（自有规则 26 条），抽验 error 级 3 真 1 误报——saves 页静默失败为真缺陷；**首例误报已回填**（no-empty-promise-catch 写队列隔离模式，confidence high→medium，注册表同步）；no-non-literal-fs-filename 补内部 utility 噪音 pattern 标注（M1.5 改进候选）；SSE enqueue 空 catch 3 条 = allowComments 选项的典型场景
-  - ✅ 第二个试用项目 Lexio/kb-vault-platform（Vite + Bun，31 文件）：4 条 error，误报 1 条——no-hardcoded-credentials 命中 `token: 'really'`（LCS 词元测试数据）；**行为优化已回填**：裸 token 要求值具备凭证形态（含数字/非字母字符或长度 ≥ 12），good-3 契约 + golden 重生成；注记：unicorn/no-new-array 对 `new Array<number>(n).fill(0)` 合法 DP 初始化误报（oxlint 内置，M2 接管评估对象）
+- [x] T1.19 内部 ≥3 项目接入试用 + 误报标注反哺 confidence ✅ 2026-10-01（**3/3 完成，M1 验收全达成**）：
+  - ✅ ① text-rpg（Next.js + Bun，57 文件）：27 条诊断（自有规则 26 条），抽验 error 级 3 真 1 误报——saves 页静默失败为真缺陷；首例误报回填（no-empty-promise-catch 写队列隔离模式，confidence high→medium，注册表同步）；no-non-literal-fs-filename 补内部 utility 噪音 pattern 标注（M1.5 改进候选）；SSE enqueue 空 catch 3 条 = allowComments 选项的典型场景
+  - ✅ ② Lexio/kb-vault-platform（Vite + Bun，31 文件）：4 条 error，误报 1 条——no-hardcoded-credentials 命中 `token: 'really'`（LCS 词元测试数据）；行为优化回填：裸 token 要求值具备凭证形态（含数字/非字母字符或长度 ≥ 12）；注记：unicorn/no-new-array 对合法 DP 初始化误报（oxlint 内置，M2 接管评估对象）
+  - ✅ ③ hono 后端/kb-vault-server（Hono + Prisma，39 文件）：12 条全部 no-hardcoded-credentials——2 条自指误报（ACCESS_TOKEN = 'access_token' cookie 名常量）→ 规则优化回填（值与键名 normalize 后相同 → 豁免）；1 条真问题（seed-data.ts 演示环境 admin 默认口令）；9 条测试 fixture 密码（惯例可接受，改进建议 = import SEED_PASSWORD 单一来源）
   - 注册表扩 confidence 字段（与 meta.confidence 一致性 CI 校验）——试用标注的反哺通道建成
-  - ⏳ 待接 1 个项目
+  - 根 tsconfig.json 落地（Bun workspaces 裸名导入的 IDE paths 映射；runtime 不依赖）
+  - 试用统计：3 项目 127 文件 / 43 诊断 / 误报标注 4 例 / 规则行为优化 2 次（均附契约用例）
 
 ## 远期占位（M2 输入，M1 不做）
 
