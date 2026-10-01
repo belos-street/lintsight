@@ -14,6 +14,7 @@ import {
   normalizeDiagnostics,
   normalizeFilePath,
   sortDiagnostics,
+  suppressSuperseded,
   toLintsightDiagnostic,
   type LintsightDiagnostic
 } from '@lintsight/diagnostic'
@@ -333,8 +334,11 @@ export async function runPipeline(
       )
     }
 
-    // 合并（缓存命中 + 本次扫描）→ 确定性排序（M1-DR4）
-    const diagnostics = sortDiagnostics([...results.values()].flat())
+    // 合并（缓存命中 + 本次扫描）→ 双报消解（M2 §4.4：数据流版抑制同位置语法级版）
+    // → 确定性排序（M1-DR4）
+    const diagnostics = sortDiagnostics(
+      suppressSuperseded([...results.values()].flat())
+    )
 
     const summary = { error: 0, warning: 0, info: 0 }
     for (const d of diagnostics) {

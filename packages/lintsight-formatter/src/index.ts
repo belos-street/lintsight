@@ -1,6 +1,6 @@
 /**
- * 报告器（design-m1 §4.1）：JSON / text。
- * JSON 为平台消费面（快照测试锁定）；text 供本地 CLI 阅读。
+ * 报告器（design-m1 §4.1）：JSON / text / SARIF（M2 T2.5）。
+ * JSON 为平台消费面（快照测试锁定）；text 供本地 CLI 阅读；SARIF 2.1.0 供平台对接。
  */
 
 export interface ReportSummary {
@@ -40,5 +40,12 @@ export function formatText(report: ReportLike): string {
   return lines.join('\n')
 }
 
-export const formatters = { json: formatJson, text: formatText }
+import { formatSarif } from './sarif'
+export { formatSarif }
+
+export const formatters = {
+  json: formatJson,
+  text: formatText,
+  sarif: formatSarif
+}
 export type FormatName = keyof typeof formatters

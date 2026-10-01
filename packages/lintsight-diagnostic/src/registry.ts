@@ -18,6 +18,10 @@ export interface RegistryEntry {
   status: RegistryStatus
   /** 平台侧置信账目，与 meta.confidence 联动校验；试用误报证据反哺调整 */
   confidence: Confidence
+  /** M2 双报消解（design-m2 §4.4）：本规则（engine 数据流版）命中时，
+   * 同文件同行被列出的 JS 语法级规则诊断在合并层抑制。
+   * 仅 owner=lintsight-engine 条目使用；目标必须是在册 lintsight-js 规则。 */
+  supersedes?: string[]
 }
 
 export const registry: RegistryEntry[] = [
@@ -196,6 +200,31 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium'
+  },
+
+  // —— M2 引擎规则（T2.3~T2.4 起；design-m2 §4.2 ruleId 命名空间 lintsight-engine/<name>） ——
+  {
+    ruleId: 'lintsight-engine/no-eval',
+    owner: 'lintsight-engine',
+    detection: 'syntax',
+    status: 'active',
+    confidence: 'high'
+  },
+  {
+    ruleId: 'lintsight-engine/no-path-traversal',
+    owner: 'lintsight-engine',
+    detection: 'taint',
+    status: 'active',
+    confidence: 'high',
+    // 数据流版命中（含证据链）时抑制同位置的语法级低置信版本（M2-DR5/§4.4 归属矩阵）
+    supersedes: ['lintsight/no-non-literal-fs-filename']
+  },
+  {
+    ruleId: 'lintsight-engine/arch-boundaries',
+    owner: 'lintsight-engine',
+    detection: 'local',
+    status: 'active',
+    confidence: 'high'
   }
 ]
 

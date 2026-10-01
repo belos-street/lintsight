@@ -119,6 +119,55 @@ describe('engine-bridge: pipeline 集成（degraded 透传）', () => {
   })
 })
 
+describe('engine-bridge: 双报消解集成（T2.5 supersedes）', () => {
+  test('no-path-traversal 命中行抑制 no-non-literal-fs-filename，他行保留', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-supersede-'))
+    try {
+      // jsPlugins 直指 monorepo 产物（业务项目 node_modules 形态的等价短路）
+      await writeFile(
+        path.join(dir, '.oxlintrc.json'),
+        JSON.stringify({
+          jsPlugins: [
+            new URL(
+              '../../../plugins/lintsight-rules/index.js',
+              import.meta.url
+            ).pathname
+          ],
+          rules: { 'lintsight/no-non-literal-fs-filename': 'warn' }
+        })
+      )
+      await writeFile(
+        path.join(dir, 'db.ts'),
+        `import fs from 'node:fs'
+import path from 'node:path'
+const files = fs.readdirSync('./data')
+for (const filePath of files) {
+  fs.readFileSync(path.join('./data', filePath))
+}
+const externalFilePath = process.argv[2]
+fs.readFileSync(externalFilePath)
+`
+      )
+      const r = await runPipeline(['.'], { cwd: dir })
+      const engine =
+        r.report?.diagnostics.filter(
+          (d) => d.ruleId === 'lintsight-engine/no-path-traversal'
+        ) ?? []
+      const js =
+        r.report?.diagnostics.filter(
+          (d) => d.ruleId === 'lintsight/no-non-literal-fs-filename'
+        ) ?? []
+      expect(engine).toHaveLength(1)
+      expect(engine[0].span.line).toBe(5)
+      // L5 的 JS 版被 engine 版抑制（同文件同行）；L8 无 engine 命中 → 保留
+      expect(js).toHaveLength(1)
+      expect(js[0].span.line).toBe(8)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
 describe('engine-bridge: arch 规则集成（T2.4）', () => {
   test('zone 越界 import → lintsight-engine/arch-boundaries 进统一报告', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-arch-'))

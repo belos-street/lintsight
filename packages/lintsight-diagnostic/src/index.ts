@@ -3,6 +3,8 @@
  * contractVersion="1"：字段变更必须递增并以快照测试锁定。
  */
 
+import { getRegistryEntry } from './registry'
+
 export const CONTRACT_VERSION = '1'
 
 // —— oxlint 原始 JSON 形状（`-f json`，oxlint 1.83.0 实测，见 docs/spikes/vertical-slice-m1.md） ——
@@ -90,13 +92,21 @@ export function normalizeFilePath(
   return filename
 }
 
+/** M2 type-aware 编排（spike ③ 结论）：tsgolint 对 TS7 已移除的 tsconfig 选项
+ * （downlevelIteration/baseUrl/paths 等）输出 typescript(tsconfig-error) error 级诊断，
+ * 非用户代码问题且不可阻断——统一降级为 info（不进 exit code）。 */
+export const TYPE_AWARE_ERROR_RULE_ID = 'typescript/tsconfig-error'
+
 export function normalizeDiagnostics(
   output: OxlintJsonOutput,
   projectRoot: string
 ): NormalizedDiagnostic[] {
   return output.diagnostics.map((d) => ({
     ruleId: normalizeRuleId(d.code),
-    severity: d.severity,
+    severity:
+      normalizeRuleId(d.code) === TYPE_AWARE_ERROR_RULE_ID
+        ? 'info'
+        : d.severity,
     message: d.message,
     file: normalizeFilePath(d.filename, projectRoot),
     span: d.labels[0]?.span ?? { offset: 0, length: 0, line: 0, column: 0 }
@@ -120,6 +130,37 @@ export function deriveOwner(ruleId: string): Owner {
   if (ruleId.startsWith('lintsight/')) return 'lintsight-js'
   if (ruleId.startsWith('lintsight-engine/')) return 'lintsight-engine'
   return 'oxlint-native'
+}
+
+// —— 双报消解（M2 T2.5，design-m2 §4.4 归属矩阵） ——
+
+/**
+ * 数据流版命中 → 抑制同位置语法级低置信版本。
+ * 消解对由注册表 supersedes 字段登记（engine 条目）；位置口径 = 同文件同行
+ * （配对 ruleId 语义上同一问题，行级比 span 精确匹配鲁棒——JS 规则与引擎对
+ * 同一 fs 调用的锚点 span 不同，实测 db.ts 列号相差 4）。
+ * 纯函数：返回过滤后的数组（engine 诊断恒保留）。
+ */
+export function suppressSuperseded<T extends LintsightDiagnostic>(
+  diagnostics: T[]
+): T[] {
+  // engine 命中位置 → 被抑制的 JS ruleId 集合
+  const engineHits = new Map<string, Set<string>>()
+  for (const d of diagnostics) {
+    const entry = getRegistryEntry(d.ruleId)
+    if (entry?.owner !== 'lintsight-engine' || !entry.supersedes?.length)
+      continue
+    const key = `${d.file}\u0000${d.span.line}`
+    const set = engineHits.get(key) ?? new Set<string>()
+    for (const t of entry.supersedes) set.add(t)
+    engineHits.set(key, set)
+  }
+  if (engineHits.size === 0) return diagnostics
+  return diagnostics.filter((d) => {
+    if (deriveOwner(d.ruleId) !== 'lintsight-js') return true
+    const set = engineHits.get(`${d.file}\u0000${d.span.line}`)
+    return !set?.has(d.ruleId)
+  })
 }
 
 export function toLintsightDiagnostic(

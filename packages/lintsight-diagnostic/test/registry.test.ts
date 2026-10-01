@@ -61,7 +61,7 @@ describe('规则注册表 CI 校验（T1.11）', () => {
 
   test('lintsight-js 条目不得指向不存在的插件规则（防陈旧条目）', () => {
     for (const entry of registry) {
-      if (entry.owner !== 'lintsight-js') continue // oxlint-native 条目描述接管对，M2 生效
+      if (entry.owner !== 'lintsight-js') continue // oxlint-native / lintsight-engine 条目非插件承载
       const key = entry.ruleId.slice(PLUGIN_PREFIX.length)
       expect(
         plugin.rules[key],
@@ -70,9 +70,39 @@ describe('规则注册表 CI 校验（T1.11）', () => {
     }
   })
 
-  test('ruleId 命名空间契约（铁律 6：lintsight/<rule-name>）', () => {
+  test('ruleId 命名空间契约（铁律 6 + design-m2 §4.2：lintsight/<name> 或 lintsight-engine/<name>）', () => {
     for (const entry of registry) {
-      expect(entry.ruleId).toMatch(/^lintsight\/[a-z0-9-]+$/)
+      expect(entry.ruleId).toMatch(/^lintsight(-engine)?\/[a-z0-9-]+$/)
+    }
+  })
+
+  test('supersedes 消解对（M2 §4.4）：仅 engine 条目可用，目标必须是在册 lintsight-js 规则', () => {
+    for (const entry of registry) {
+      if (!entry.supersedes) continue
+      expect(entry.owner, `${entry.ruleId}.supersedes`).toBe('lintsight-engine')
+      for (const target of entry.supersedes) {
+        const t = getRegistryEntry(target)
+        expect(
+          t,
+          `${entry.ruleId}.supersedes 目标 ${target} 未登记`
+        ).toBeDefined()
+        expect(t!.owner, `${entry.ruleId}.supersedes 目标 ${target}`).toBe(
+          'lintsight-js'
+        )
+      }
+    }
+    // 消解锚点条目在册（no-path-traversal → no-non-literal-fs-filename）
+    const pt = getRegistryEntry('lintsight-engine/no-path-traversal')
+    expect(pt?.supersedes).toContain('lintsight/no-non-literal-fs-filename')
+  })
+
+  test('engine 条目 owner/detection 合法（lintsight-engine 条目 CI 校验）', () => {
+    const engineEntries = registry.filter((e) => e.owner === 'lintsight-engine')
+    expect(engineEntries.length).toBeGreaterThan(0)
+    for (const entry of engineEntries) {
+      expect(entry.ruleId).toMatch(/^lintsight-engine\//)
+      expect(['syntax', 'local', 'taint']).toContain(entry.detection)
+      expect(['active', 'retired']).toContain(entry.status)
     }
   })
 })

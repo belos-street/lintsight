@@ -9,7 +9,10 @@ import {
   normalizeFilePath,
   normalizeRuleId,
   sortDiagnostics,
+  suppressSuperseded,
   toLintsightDiagnostic,
+  TYPE_AWARE_ERROR_RULE_ID,
+  type LintsightDiagnostic,
   type NormalizedDiagnostic
 } from '../src/index'
 
@@ -159,5 +162,71 @@ describe('normalizeDiagnostics', () => {
       file: 'a.ts',
       span: { offset: 0, length: 0, line: 0, column: 0 }
     })
+  })
+
+  test('type-aware 编排（spike ③）：typescript(tsconfig-error) 降级为 info', () => {
+    const out = normalizeDiagnostics(
+      {
+        diagnostics: [
+          {
+            message: "Option 'baseUrl' is deprecated.",
+            code: 'typescript(tsconfig-error)',
+            severity: 'error',
+            filename: 'a.ts',
+            labels: [{ span: { offset: 0, length: 4, line: 1, column: 1 } }]
+          }
+        ],
+        number_of_files: 1,
+        number_of_rules: 1
+      },
+      ROOT
+    )
+    expect(out[0].ruleId).toBe(TYPE_AWARE_ERROR_RULE_ID)
+    expect(out[0].severity).toBe('info')
+  })
+})
+
+describe('suppressSuperseded（M2 T2.5 双报消解，design-m2 §4.4）', () => {
+  const diag = (
+    ruleId: string,
+    file: string,
+    line: number,
+    offset: number
+  ): LintsightDiagnostic => ({
+    contractVersion: CONTRACT_VERSION,
+    ruleId,
+    severity: 'error',
+    message: 'm',
+    file,
+    span: { offset, length: 10, line, column: 1 },
+    fingerprint: 'f'.repeat(64),
+    owner: ruleId.startsWith('lintsight-engine/')
+      ? 'lintsight-engine'
+      : ruleId.startsWith('lintsight/')
+        ? 'lintsight-js'
+        : 'oxlint-native'
+  })
+
+  test('engine 命中行 → 同文件同行 JS 版抑制；他行/他文件保留', () => {
+    const input = [
+      diag('lintsight/no-non-literal-fs-filename', 'a.ts', 159, 4700), // 同行 → 抑制
+      diag('lintsight/no-non-literal-fs-filename', 'a.ts', 155, 4400), // 他行 → 保留
+      diag('lintsight/no-non-literal-fs-filename', 'b.ts', 159, 4700), // 他文件 → 保留
+      diag('lintsight-engine/no-path-traversal', 'a.ts', 159, 4791), // engine 恒保留
+      diag('eslint/no-var', 'a.ts', 159, 100) // 非 lintsight-js → 不受消解影响
+    ]
+    const out = suppressSuperseded(input)
+    // 纯过滤保序：a.ts:159 的 JS 版被抑制，其余原序保留
+    expect(out.map((d) => `${d.ruleId}@${d.file}:${d.span.line}`)).toEqual([
+      'lintsight/no-non-literal-fs-filename@a.ts:155',
+      'lintsight/no-non-literal-fs-filename@b.ts:159',
+      'lintsight-engine/no-path-traversal@a.ts:159',
+      'eslint/no-var@a.ts:159'
+    ])
+  })
+
+  test('无 engine 命中 → 原样返回（零开销路径）', () => {
+    const input = [diag('lintsight/no-non-literal-fs-filename', 'a.ts', 1, 0)]
+    expect(suppressSuperseded(input)).toEqual(input)
   })
 })

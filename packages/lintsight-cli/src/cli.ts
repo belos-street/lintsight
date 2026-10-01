@@ -6,7 +6,7 @@ import { createLogger, type LogLevel } from '@lintsight/shared'
 
 const args = process.argv.slice(2)
 
-const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text] [--output <file>] [--log-level debug|info|warn|error] [--fix] [--no-cache]`
+const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text|sarif] [--output <file>] [--log-level debug|info|warn|error] [--fix] [--no-cache]`
 
 function readOption(name: string): string | undefined {
   const i = args.indexOf(name)
@@ -24,7 +24,7 @@ if (args.includes('--help') || args.includes('-h')) {
 
 const format = readOption('--format') ?? 'json'
 if (!(format in formatters)) {
-  console.error(`lintsight: --format 期望 json|text，得到 '${format}'`)
+  console.error(`lintsight: --format 期望 json|text|sarif，得到 '${format}'`)
   process.exit(2)
 }
 const logLevel = readOption('--log-level') ?? 'error'
