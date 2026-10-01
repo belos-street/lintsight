@@ -61,8 +61,50 @@
   - M1.5 候选提前落地（2026-10-01）：no-non-literal-fs-filename 未导出函数参数豁免（bad-4 契约守住「豁免仅限参数」边界 + good-3 私有 helper/闭包场景）；⚠️ 实测 oxlint 嵌入式 runtime 不支持 { enter, exit } 对象形态 visitor（只认函数值 / ':exit' 键，1.83.0）——已写入规则注释；残留 8 条 path.join 派生路径复核清单 = M2 taint 演示场景（readdir→join→readFile 数据流判定）
   - 上游误报候选（M2 接管评估）：unicorn/no-new-array 对 `new Array<number>(n).fill(0)` 泛型+fill 合法 DP 初始化报错（Lexio lcs.ts 实测）；候选动作：oxc 仓库提 issue / M2 自研规则接管
 
-## 远期占位（M2 输入，M1 不做）
+## M2 深度分析引擎（域级 Todo · 2026-10-01 起草，design-m2 评审后升执行级）
 
-- [x] spike ① oxc crate 直连 PoC ✅ 2026-10-01（提前完成）：报告见 [spikes/oxc-crate-poc.md](spikes/oxc-crate-poc.md)；PoC 工程 `crates/oxc-poc/`。结论：M2 路线可行——L1/L2（semantic/cfg）GA 免建、101k 行 29ms（3.49M LOC/s，超 NFR-1 预算 23 倍）、AST↔CFG 桥实证、版本锁 `=0.150.0`（对齐 oxlint 1.83.0）+ cargo-deny 门禁跑通；DFG/taint 为自建区，挂载点 = `SymbolId + cfg_id`
-- SARIF / 平台路径契约（附录 C）/ `lintsight migrate --from eslint`
-- LSP（M3）
+> 依据：[requirements-v0.2.md](requirements/requirements-v0.2.md) §2.4 sidecar 双引擎 + §8.2 修订⑬ M2 内部排序（架构规则先行 → taint 竖切）+ [spikes/oxc-crate-poc.md](spikes/oxc-crate-poc.md)（spike ① 已验证 L1/L2 直连与版本锁定）。域级颗粒度：任务到模块 + 验收锚点；执行级拆解随 design-m2-v0.1 评审后滚动细化。
+
+### T2.0 门禁任务（不完成对应切片不得开工）
+
+- [ ] **design-m2-v0.1.md**：sidecar 进程编排与接口协议（M1 Bun ↔ M2 Rust 的 stdin/stdout 诊断流）、双引擎诊断合并协议（附录 C 路径事件流 v0）、Rust 工程结构（crates/ 布局、oxc `=0.150.0` 锁定策略承接 spike ①）、诊断冲突消解落地（§3.6）
+- [ ] spike ⑤ **taint 竖切预演**：单文件 source→sanitizer→sink 沿 CFG worklist 传播的最小 Rust 实现（spike ① 结论：挂载点 = `SymbolId + cfg_id`）→ 验证传播模型可行 + 产出可验证证据（readdir→join→readFile 场景，text-rpg 试用残留 8 条正是首个真实输入）
+
+### T2.1 Rust 工程脚手架（执行级锚点：`cargo test` + bun 侧 spawn 联通）
+
+- [ ] `crates/lintsight-engine` 独立 cargo 工程（不进 Bun workspaces；oxc crates `=0.150.0` 精确锁 + deny.toml 门禁承接 spike ①）
+- [ ] sidecar 桥接：`bun run cli` 检测/调用 Rust 引擎二进制（进程编排、失败降级为纯 M1 扫描——fail-open 与缓存同纪律）
+- [ ] 统一诊断流：Rust 侧输出 contractVersion=1 兼容 JSON（复用 @lintsight/diagnostic 归一化 + 指纹口径）
+
+### T2.2 L1/L2 消费层（基建白捡区，spike ① 代码产品化）
+
+- [ ] Semantic/CFG 消费封装：scope/symbol/reference 查询面 + CFG 前向遍历（`nodes.cfg_id` 桥 = DFG 挂载点）
+- [ ] 内存纪律落地：流式分批 + 每 batch `Allocator` drop（spike ① 实测 1.1KB/LOC → 百万行需流式）
+
+### T2.3 taint 竖切（首切片，单文件，价值验证优先于覆盖面）
+
+- [ ] 污点状态机 + 沿 CFG 前向 worklist 传播（source→propagation→sanitizer→sink；Backedge 进不动点迭代）
+- [ ] 首条规则：no-path-traversal（CWE-22 数据流版，接管 M1 语法级的复核清单场景）；语料基线 diff 门禁同 M1 纪律
+- [ ] 验收：text-rpg 的 readdir→join→readFile 场景正确判定（db.ts 有 SAVE_FILE_RE 校验 = sanitizer，不误报）
+
+### T2.4 架构规则（requirements §1.1 优先级 3，oxlint module graph 白捡区）
+
+- [ ] 跨层 import / 依赖方向约束（消费 oxlint project-wide module graph）
+- [ ] 依赖清单约束声明（lintsight.config.json 扩展）
+
+### T2.5 双引擎合并与平台契约
+
+- [ ] 诊断合并排序 + 双报消解落地（§3.6 归属矩阵）
+- [ ] SARIF 输出（FR-402）/ 平台路径事件流契约（附录 C）
+- [ ] type-aware 集成：`--type-aware` 规则集编排 + tsconfig-error 诊断降级过滤（spike ③ 结论）+ 别名兜底（FR-304）
+
+### T2.6 性能验收（§3.5 预算）
+
+- [ ] rayon 文件级并行（默认 min(cpu-1, 8)，--concurrency 可调）
+- [ ] 15 万 LOC/s 验收（none 类规则单 worker 折算；spike ① 实测 349 万 LOC/s 上限余量充足）+ 10 万行全量 <60s
+
+## 远期占位（M3+ / 择机）
+
+- `lintsight migrate --from eslint`（FR-502）
+- LSP（M3）/ 远端缓存 / 分布式分片（千万行场景）
+- 上游反馈：unicorn/no-new-array 对泛型+fill 合法初始化的误报（oxc 仓库提 issue）
