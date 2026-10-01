@@ -21,6 +21,9 @@ coverage/
 .lintsight-cache/
 .bench-corpus/
 
+# corpus（语料本体不入库，manifest/基线入库）
+corpus/repos/
+
 # lintsight: vue in-place temp files (auto-generated, do not commit)
 *.lintsight-*.ts
 *.lintsight-*.tsx

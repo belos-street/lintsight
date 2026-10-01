@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "cli": "bun run packages/lintsight-cli/src/cli.ts",
-    "test": "bun run build:rules && bun test",
+    "test": "bun run build:rules && bun test ./packages ./scripts",
     "lint": "oxlint packages plugins",
     "lint:fix": "oxlint --fix packages plugins",
     "format": "oxfmt packages plugins",
@@ -15,7 +15,9 @@
     "build:rules": "bun run scripts/build-rules.ts",
     "build:binary": "bun build --compile packages/lintsight-cli/src/cli.ts --outfile dist/lintsight",
     "bench": "bun run scripts/bench.ts",
-    "bench:save": "bun run scripts/bench.ts --save"
+    "bench:save": "bun run scripts/bench.ts --save",
+    "corpus:sync": "bun run scripts/corpus-sync.ts",
+    "corpus:check": "bun run scripts/corpus-baseline.ts"
   },
   "engines": {
     "bun": ">=1.2"

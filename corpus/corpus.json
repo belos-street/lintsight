@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "description": "lintsight 回归语料库 v0（T1.18）：真实开源库锁定版本，供基线 diff 与双报率门禁。语料本体不入库（corpus/repos/ 已 gitignore），由 scripts/corpus-sync.ts 克隆。",
+  "repos": [
+    {
+      "name": "zod",
+      "repo": "https://github.com/colinhacks/zod.git",
+      "tag": "v3.25.76",
+      "note": "TS schema 库：泛型/链式调用/类型密集，正确性规则面代表"
+    },
+    {
+      "name": "dayjs",
+      "repo": "https://github.com/iamkun/dayjs.git",
+      "tag": "v1.11.9",
+      "note": "日期库：插件架构/原型扩展，跨文件引用密集"
+    }
+  ]
+}

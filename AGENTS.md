@@ -47,13 +47,16 @@ lintsight/
 
 ```bash
 bun install                 # 安装（bun.lock 提交，禁 npm/pnpm/yarn）
-bun test                    # 全部测试（先自动构建规则集产物，再跑 74 例套件）
+bun run test                # 全部测试（先自动构建规则集产物；⚠️ 用 bun run test 而非裸 bun test——后者会扫到 corpus/ 里第三方库的测试）
 bun run cli -- <paths>      # 扫描（exit: 0 无 error / 1 有 error / 2 运行错误）
 bun run lint                # dev-lint（按目录收窄到 packages+plugins，勿全仓扫——fixtures 是故意的坏代码）
 bun run lint:fix
 bun run format              # oxfmt（fixtures 已排除）
 bun run build:rules         # 规则源（packages/rules-core）聚合为自包含产物（bun test 已自动执行）
 bun run build:binary        # bun build --compile 单文件（产物 59MB，dist/ 已 gitignore）
+bun run bench               # hyperfine 万行基准（--no-cache 冷扫；<10s 硬门禁 + 回退 >15% 拦截）
+bun run corpus:sync         # 语料库同步（zod/dayjs 锁定 tag 浅克隆到 corpus/repos/）
+bun run corpus:check        # 语料库基线：全量扫描 + 双报率 0 断言 + 指纹级基线 diff（-- --save 重建基线）
 ```
 
 环境变量：`OXLINT_BIN` 显式指定 oxlint 可执行文件（平台 worker / CI 镜像场景）。

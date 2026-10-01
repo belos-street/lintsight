@@ -48,10 +48,10 @@
 - [x] T1.16 内容哈希缓存 ✅ 2026-10-01：`@lintsight/cli` 内 `cache.ts`（pipeline 内筛减步骤，不拆独立包）；键 = sha256(引擎指纹\|配置指纹\|规则集指纹\|文件内容哈希)——oxlint `--version` 实测指纹、jsPlugins 产物内容哈希（规则逻辑变更击穿缓存）、依赖闭包/tsconfig 成分归 M2；降级 fail-open（oxlint 不可解析 → 缓存禁用，IO 异常 → miss）；`--fix` 禁缓存读写；pipeline 不再启动清空 `.lintsight-cache`；单测 6 例（键敏感性/roundtrip/引擎漂移/命中失效/配置击穿/fix 禁用）
 - [x] T1.17 hyperfine 基准 ✅ 2026-10-01：`bun run bench`（确定性万行语料 `.bench-corpus/` 100 文件×10700 行，`--no-cache` 冷扫，`--ignore-failure` 容忍 exit 1 诊断语义）；万行 <10s 硬门禁实测 **194ms**（余量 50 倍）；`scripts/bench-baseline.json` 基线（commit 溯源）+ 回退 >15% exit 1 门禁；100/100 全绿
 
-## S7 试用与基线（占位）
+## S7 试用与基线（域级）
 
-- [ ] T1.18 语料库 v0 接入（zod/dayjs 级）+ 基线脚本 + 双报率 0 断言
-- [ ] T1.19 内部 ≥3 项目接入试用 + 误报标注反哺 confidence
+- [x] T1.18 语料库 v0 接入 + 基线脚本 + 双报率 0 断言 ✅ 2026-10-01：`corpus/corpus.json` manifest（zod@v3.25.76 + dayjs@v1.11.9 锁 tag，本体浅克隆 `corpus/repos/` 已 gitignore）；`bun run corpus:check` = 全量冷扫（654 文件 / 313 诊断，自有规则命中 86）+ 双报率 0 断言（同 file+offset+length 跨引擎双 owner）+ 指纹级基线 diff（漂移 exit 1，重建显式 `--save`）；`corpus/baseline-v0.json` 入库；⚠️ `bun test` 收窄 `./packages ./scripts`（裸 bun test 子串 filter 撞 corpus 第三方测试）
+- [ ] T1.19 内部 ≥3 项目接入试用 + 误报标注反哺 confidence（**需人力执行**：工具链已就绪——`bun run cli` / `--fix` / 报告对接；试用产出误报标注后回填规则 confidence 字段）
 
 ## 远期占位（M2 输入，M1 不做）
 
