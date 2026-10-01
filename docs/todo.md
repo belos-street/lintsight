@@ -27,7 +27,7 @@
 - [x] T1.8 oxlint overrides 语义实测：`files+rules` 覆盖**有效**、jsPlugins 绝对路径有效、规则值 `allow/error/warn`、选项数组有效 → 结论回写设计文档 v0.1①；开放问题 1 拍板「不支持通配 severity」并在 config-bridge 显式拒绝
 - 验收：翻译单测全覆盖（12 例）+ overrides 实测记录进设计文档 §9
 
-## S3 正确性规则（域级，门禁已过 → 执行中）
+## S3 正确性规则（域级）✅ 2026-09-16
 
 - [x] T1.9 rule-sdk 正式化 ✅ 2026-09-16：`@lintsight/rule-sdk`（defineRule/definePlugin meta 契约校验 + messageId 运行时一致性 + RuleTester 工具化）；RuleTester 与 pipeline 同款 config 链路（dogfood）；现有插件全部规则经 definePlugin 校验通过
 - [x] T1.10 正确性规则全量完成 ✅ 2026-09-16：`no-async-array-method` + 剩余 9 条（floating-promise [local 预扫描启发] / swallowed-promise-error / closure-loop-var / array-map-side-effect / json-structured-clone / ignored-reduce-result / empty-promise-catch / async-constructor-call / sync-io-in-async）；每条 3 bad / 2 good 用例先行，期望位置探测校准后固化；契约测试 9 组全绿（73/73），golden 重生成；dogfood 配置启用全部 11 条
@@ -36,12 +36,12 @@
 ## S4 安全语法级规则（域级，可与 S3 并行）✅ 2026-09-16
 
 - [x] T1.12 安全 P0 规则全量完成 ✅ 2026-09-16：14 条 CWE/OWASP 对齐 checker（hardcoded-credentials 798 / unsafe-regex 1333 / prototype-pollution-syntax 1321 / child-process-nonliteral 78 / non-literal-fs-filename 22 [low 禁门禁] / non-literal-require 94 / weak-hash 327 / math-random-secret 338 / sensitive-storage 312 / innerhtml-assignment 79 / sql-concat 89 / cors-wildcard 942 / vm-dynamic-code 94 / insecure-cookie 614）；每条 3 bad / 2 good 用例先行；注册表 25 条全登记；88/88 全绿；dogfood 修复自指误报后 0 error
-- [ ] T1.13 `no-empty-catch` 的 `allowComments` 选项随批评审定案（spike 遗留开放问题；依赖 RFC 开放问题 2 的 sourceCode 注释访问能力）
+- [ ] T1.13 `no-empty-catch` 的 `allowComments` 选项（S4 唯一遗留，**不阻塞 S4 验收**；依赖 RFC 开放问题 2 的 sourceCode 注释访问能力——oxlint 嵌入式 runtime 能力面未实测前不承诺，随 spike ③ 一并实测后定案）
 
-## S5 Vue 正式版（域级）
+## S5 Vue 正式版（域级）✅ 2026-10-01
 
-- [ ] T1.14 就地临时文件约定落地（保 import 解析上下文，§11.2）+ 多 script 块策略
-- [ ] T1.15 oxlint fix JSON 结构实测 → safe fix 逆映射回写（可行性实测后再承诺，spike 未覆盖）
+- [x] T1.14 就地临时文件约定落地 ✅ 2026-10-01：虚拟文件改写至原 .vue 同目录（`<Foo>.vue.lintsight-<pid>-<seq>.<lang>`，取代 cache 目录方案，保 import 解析上下文）；多 script 块策略 = 优先 setup、其余显式告警（同行开标签/src 外链同样显式告警，不静默漏扫）；回映射改用本次运行精确路径表；并发写冲突处理 = pid+序号隔离 + finally 只清本次文件；gitignore 规则幂等追加（`ensureGitignore`）；结论回写设计文档 v0.1②
+- [x] T1.15 oxlint fix JSON 结构实测 → safe fix 逆映射回写 ✅ 2026-10-01：实测 JSON 诊断**无 fix 字段**（oxlint 1.83.0），唯一机制 = `--fix` 就地写盘 → 定案**差量行回写**（行数不变逐行 1:1 拷回，行数变化显式跳过告警）；CLI 新增 `--fix`；收敛断言进 CI（fix.test.ts：回写 → 复扫 0 诊断 → 临时文件零残留）；94/94 全绿，golden 未破坏
 
 ## S6 缓存 + 性能（占位）
 

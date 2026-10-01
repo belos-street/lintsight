@@ -35,10 +35,12 @@ export interface OxlintRunResult {
 
 export async function runOxlint(
   paths: string[],
-  opts: { config?: string; cwd?: string } = {}
+  opts: { config?: string; cwd?: string; fix?: boolean } = {}
 ): Promise<OxlintRunResult> {
   const cwd = opts.cwd ?? process.cwd()
   const args = ['-f', 'json']
+  // --fix：safe fix 就地改写文件；JSON 只报未修复项（oxlint 1.83.0 实测，T1.15）
+  if (opts.fix) args.push('--fix')
   if (opts.config) args.push('--config', opts.config)
   args.push(...paths)
 

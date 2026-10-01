@@ -20,6 +20,12 @@ coverage/
 .eslintcache
 .lintsight-cache/
 
+# lintsight: vue in-place temp files (auto-generated, do not commit)
+*.lintsight-*.ts
+*.lintsight-*.tsx
+*.lintsight-*.js
+*.lintsight-*.jsx
+
 # env & secrets（.env 永不提交；示例文件除外）
 .env
 .env.*
@@ -34,3 +40,9 @@ pnpm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# lintsight: vue in-place temp files (auto-generated)
+*.lintsight-*.ts
+*.lintsight-*.tsx
+*.lintsight-*.js
+*.lintsight-*.jsx

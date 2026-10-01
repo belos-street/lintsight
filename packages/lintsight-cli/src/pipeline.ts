@@ -4,7 +4,7 @@
  * 运行错误路径禁止异常逃逸（compile 实测抓到过该 bug）。
  */
 import path from 'node:path'
-import { rm, stat } from 'node:fs/promises'
+import { rm, stat, unlink } from 'node:fs/promises'
 import { runOxlint } from './oxlint-bridge'
 import {
   normalizeDiagnostics,
@@ -12,12 +12,17 @@ import {
   toLintsightDiagnostic,
   type LintsightDiagnostic
 } from '@lintsight/diagnostic'
-import { inverseVirtualPath, virtualizeVue } from '@lintsight/vue-processor'
+import {
+  ensureGitignore,
+  isInPlaceVirtualPath,
+  virtualizeVue,
+  writebackFix,
+  type VirtualVueFile
+} from '@lintsight/vue-processor'
 import { generateOxlintrc, resolveConfigFile } from '@lintsight/config-bridge'
 import { createLogger, type Logger } from '@lintsight/shared'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
-const CACHE_PREFIX = `${CACHE_DIR_NAME}/`
 const SCAN_EXTS = new Set([
   '.ts',
   '.tsx',
@@ -60,12 +65,16 @@ async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
       } catch {
         throw new Error(`input path not found: ${input}`)
       }
-      if (st.isFile()) return SCAN_EXTS.has(path.extname(abs)) ? [abs] : []
+      if (st.isFile()) {
+        if (isInPlaceVirtualPath(abs)) return []
+        return SCAN_EXTS.has(path.extname(abs)) ? [abs] : []
+      }
       if (!st.isDirectory()) throw new Error(`unsupported input type: ${input}`)
       const glob = new Bun.Glob('**/*')
       const matched: string[] = []
       for (const rel of glob.scanSync({ cwd: abs, onlyFiles: true })) {
         if (rel.split('/').some((seg) => IGNORED_DIRS.has(seg))) continue
+        if (isInPlaceVirtualPath(rel)) continue // 本次/历史运行的就地临时文件不重复扫描
         if (SCAN_EXTS.has(path.extname(rel)))
           matched.push(path.resolve(abs, rel))
       }
@@ -81,6 +90,8 @@ export async function runPipeline(
     cwd?: string
     config?: string
     logLevel?: 'debug' | 'info' | 'warn' | 'error'
+    /** --fix：oxlint safe fix 就地改写虚拟文件后，差量行回写原 .vue（T1.15） */
+    fix?: boolean
   } = {}
 ): Promise<PipelineResult> {
   const cwd = opts.cwd ?? process.cwd()
@@ -115,58 +126,89 @@ export async function runPipeline(
     return { exitCode: 2, report: null, error: 'no scannable files found' }
   }
 
-  // .vue → 虚拟块（行号 1:1 对齐，回映射只改路径）；各文件互相独立，并行虚拟化
+  // .vue → 就地临时虚拟块（同目录保 import 解析上下文；行号 1:1 对齐）；各文件互相独立，并行虚拟化
   const vueFiles = files.filter((f) => f.endsWith('.vue'))
   const passthrough = files.filter((f) => !f.endsWith('.vue'))
   const virtualized = await Promise.all(
-    vueFiles.map((f) => virtualizeVue(f, cwd, cacheDir))
+    vueFiles.map((f) => virtualizeVue(f, cwd))
   )
-  const targets = [
-    ...passthrough,
-    ...virtualized.filter((v) => v !== null).map((v) => v!.virtualAbs)
-  ]
+  const vues = virtualized.filter((v): v is VirtualVueFile => v !== null)
+  for (const v of vues) {
+    for (const w of v.warnings) logger.warn(`${v.originalRel}: ${w}`)
+  }
+  if (vues.length > 0) await ensureGitignore(cwd)
+  // 回映射表：本次运行精确路径（virtualRel → originalRel），不做模式猜测
+  const virtualMap = new Map(vues.map((v) => [v.virtualRel, v.originalRel]))
+  const targets = [...passthrough, ...vues.map((v) => v.virtualAbs)]
 
-  let result
   try {
-    result = await runOxlint(targets, { cwd, config: oxlintrcPath })
-  } catch (e) {
-    // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2
-    return { exitCode: 2, report: null, error: (e as Error).message }
-  }
-  if (!result.ok || !result.output) {
+    let result
+    try {
+      result = await runOxlint(targets, {
+        cwd,
+        config: oxlintrcPath,
+        fix: opts.fix
+      })
+    } catch (e) {
+      // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2
+      return { exitCode: 2, report: null, error: (e as Error).message }
+    }
+    if (!result.ok || !result.output) {
+      return {
+        exitCode: 2,
+        report: null,
+        error: `oxlint runtime failure (exit=${result.exitCode}): ${result.stderr.slice(0, 500)}`
+      }
+    }
+
+    // --fix：oxlint 已就地改写虚拟文件 → 差量行回写原 .vue（T1.15；仅行数不变的 safe fix）
+    if (opts.fix) {
+      const wbs = await Promise.all(
+        vues.map(async (v) => ({
+          v,
+          wb: await writebackFix(v.originalAbs, v.virtualAbs)
+        }))
+      )
+      for (const { v, wb } of wbs) {
+        if (wb.changed)
+          logger.info(`fix: ${v.originalRel} (${wb.lines} line(s))`)
+        else if (wb.skipped)
+          logger.warn(
+            `fix: ${v.originalRel} skipped — fix 改变行数，M1 仅回写行数不变的 safe fix`
+          )
+      }
+    }
+
+    // 回映射 → 统一模型 → 确定性排序（M1-DR4）
+    const diagnostics = sortDiagnostics(
+      normalizeDiagnostics(result.output, cwd).map((d) => {
+        const original = virtualMap.get(d.file)
+        return toLintsightDiagnostic(original ? { ...d, file: original } : d)
+      })
+    )
+
+    const summary = { error: 0, warning: 0, info: 0 }
+    for (const d of diagnostics) {
+      if (d.severity === 'error') summary.error++
+      else if (d.severity === 'warning') summary.warning++
+      else summary.info++
+    }
+
+    logger.info(
+      `scanned ${result.output.number_of_files} file(s), ${diagnostics.length} diagnostic(s)`
+    )
+
     return {
-      exitCode: 2,
-      report: null,
-      error: `oxlint runtime failure (exit=${result.exitCode}): ${result.stderr.slice(0, 500)}`
+      exitCode: summary.error > 0 ? 1 : 0,
+      report: {
+        contractVersion: diagnostics[0]?.contractVersion ?? '1',
+        files: result.output.number_of_files,
+        summary,
+        diagnostics
+      }
     }
-  }
-
-  // 回映射 → 统一模型 → 确定性排序（M1-DR4）
-  const diagnostics = sortDiagnostics(
-    normalizeDiagnostics(result.output, cwd).map((d) => {
-      const original = inverseVirtualPath(d.file, CACHE_PREFIX)
-      return toLintsightDiagnostic(original ? { ...d, file: original } : d)
-    })
-  )
-
-  const summary = { error: 0, warning: 0, info: 0 }
-  for (const d of diagnostics) {
-    if (d.severity === 'error') summary.error++
-    else if (d.severity === 'warning') summary.warning++
-    else summary.info++
-  }
-
-  logger.info(
-    `scanned ${result.output.number_of_files} file(s), ${diagnostics.length} diagnostic(s)`
-  )
-
-  return {
-    exitCode: summary.error > 0 ? 1 : 0,
-    report: {
-      contractVersion: diagnostics[0]?.contractVersion ?? '1',
-      files: result.output.number_of_files,
-      summary,
-      diagnostics
-    }
+  } finally {
+    // 就地临时文件清理：只删本次运行自己创建的（pid+序号隔离并发双跑，互不误删）
+    await Promise.all(vues.map((v) => unlink(v.virtualAbs).catch(() => {})))
   }
 }

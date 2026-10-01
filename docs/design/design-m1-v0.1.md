@@ -7,6 +7,7 @@
 > 修订记录：
 > - v0.1（2026-09-15）：初稿。吸收竖切验证结论（SV1~SV7 + compile 追加实测），全部 M1-DR 决策均附实测证据链接。
 > - v0.1①（2026-09-15）：S1/S2 实施落定 + T1.8 实测补充——oxlint overrides（`files`+`rules` 覆盖）**实测有效**，§9 风险项关闭；规则值为 `allow/error/warn`（`off` 由 config-bridge 翻译为 `allow`）；规则选项数组 `["error", {...}]` 有效；jsPlugins 支持绝对路径（生成的 .oxlintrc 写入 `.lintsight-cache/`）。开放问题 1 拍板：**M1 不支持通配 severity**（oxlint 规则键无通配语义，config-bridge 校验显式拒绝，须逐条列举）。包结构按 §4 拆分为 6 个 workspaces 包并迁移测试。
+> - v0.1②（2026-10-01）：S5 实施落定（T1.14/T1.15）——§4.3 就地临时文件约定定案：虚拟文件改写至 **原 .vue 同目录**（`<Foo>.vue.lintsight-<pid>-<seq>.<lang>`，取代初版 cache 目录方案），保 import 解析上下文；pid+序号隔离并发双跑，`finally` 只清本次文件；gitignore 规则幂等追加（`ensureGitignore`）；多 script 块策略 = 优先 `<script setup>`、其余显式告警；回映射改用本次运行**精确路径表**（不按文件名模式猜测，用户同名文件不受影响）。T1.15 实测（oxlint 1.83.0）：**JSON 诊断无 fix 字段**，唯一机制 = `--fix` 就地写盘 → **差量行回写**（行数不变逐行 1:1 拷回；行数变化显式跳过告警）；CLI 新增 `--fix`。
 
 ---
 
@@ -79,10 +80,10 @@ flowchart LR
 
 ### 4.3 `@lintsight/vue-processor`（正式版要求）
 
-- 主方案沿袭 M1-DR5：提取 `<script>` 块 → 生成与原文件**行号 1:1 对齐**的虚拟文件（非 script 行置空）→ 就地临时文件写入 `.lintsight-cache/vue/<相对路径>.vue.ts`。
-- 就地约定的目的（§11.2）：保 `.vue` 的路径上下文供 import 解析正确（依赖项目 tsconfig/别名时不再退化）。
-- 支持面：`<script>` / `<script setup>`，`lang="ts|js"`；不支持场景**显式报错跳过该文件**（不静默漏扫）：同行开标签、`src` 外链、多 script 块（M1 取首个 setup 块，其余告警）。
-- safe fix 逆映射回写：**M1 后期切片**（S5），依赖 oxlint JSON fix 结构实测，不在第一版承诺。
+- 主方案沿袭 M1-DR5：提取 `<script>` 块 → 生成与原文件**行号 1:1 对齐**的虚拟文件（非 script 行置空）→ **就地临时文件写入原 .vue 同目录**（v0.1② 定案，`<Foo>.vue.lintsight-<pid>-<seq>.<lang>`；初版 cache 目录方案因丢失 import 解析上下文废弃）。
+- 就地约定的目的（§11.2）：保 `.vue` 的路径上下文供 import 解析正确（依赖项目 tsconfig/别名时不再退化）。并发写冲突处理：pid+序号命名隔离并发双跑（同进程 bun test 亦隔离）；`finally` 清理只删本次运行创建的文件；gitignore 规则幂等追加（`ensureGitignore`，无 .gitignore 不创建）。
+- 支持面：`<script>` / `<script setup>`，`lang="ts|js"`；多 script 块策略 = **优先 setup 块，否则首个 script，其余显式告警**；不支持场景**显式告警跳过该文件**（不静默漏扫）：同行开标签、`src` 外链。回映射用本次运行精确路径表（virtualRel → originalRel），不做文件名模式猜测。
+- safe fix 逆映射回写（v0.1② 实测定案）：oxlint 1.83.0 **JSON 诊断无 fix 字段**，唯一机制 = `--fix` 就地改写虚拟文件 → **差量行回写**（行数不变的 diff 逐行 1:1 拷回原 .vue；行数变化显式跳过并告警）；CLI `--fix` 开关；收敛断言进 CI。
 
 ### 4.4 `@lintsight/diagnostic`（diagnostic-bridge 正式化）
 
