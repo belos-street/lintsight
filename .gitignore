@@ -19,6 +19,7 @@ coverage/
 .cache/
 .eslintcache
 .lintsight-cache/
+.bench-corpus/
 
 # lintsight: vue in-place temp files (auto-generated, do not commit)
 *.lintsight-*.ts

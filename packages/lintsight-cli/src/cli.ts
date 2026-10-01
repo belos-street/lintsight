@@ -5,7 +5,7 @@ import { createLogger, type LogLevel } from '@lintsight/shared'
 
 const args = process.argv.slice(2)
 
-const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text] [--log-level debug|info|warn|error] [--fix]`
+const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text] [--log-level debug|info|warn|error] [--fix] [--no-cache]`
 
 function readOption(name: string): string | undefined {
   const i = args.indexOf(name)
@@ -48,7 +48,8 @@ const logger = createLogger(logLevel as LogLevel)
 const result = await runPipeline(paths, {
   config: readOption('--config'),
   logLevel: logLevel as LogLevel,
-  fix: args.includes('--fix')
+  fix: args.includes('--fix'),
+  cache: !args.includes('--no-cache')
 })
 if (result.error) logger.error(result.error)
 if (result.report) console.log(formatters[format as FormatName](result.report))

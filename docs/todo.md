@@ -43,10 +43,10 @@
 - [x] T1.14 就地临时文件约定落地 ✅ 2026-10-01：虚拟文件改写至原 .vue 同目录（`<Foo>.vue.lintsight-<pid>-<seq>.<lang>`，取代 cache 目录方案，保 import 解析上下文）；多 script 块策略 = 优先 setup、其余显式告警（同行开标签/src 外链同样显式告警，不静默漏扫）；回映射改用本次运行精确路径表；并发写冲突处理 = pid+序号隔离 + finally 只清本次文件；gitignore 规则幂等追加（`ensureGitignore`）；结论回写设计文档 v0.1②
 - [x] T1.15 oxlint fix JSON 结构实测 → safe fix 逆映射回写 ✅ 2026-10-01：实测 JSON 诊断**无 fix 字段**（oxlint 1.83.0），唯一机制 = `--fix` 就地写盘 → 定案**差量行回写**（行数不变逐行 1:1 拷回，行数变化显式跳过告警）；CLI 新增 `--fix`；收敛断言进 CI（fix.test.ts：回写 → 复扫 0 诊断 → 临时文件零残留）；94/94 全绿，golden 未破坏
 
-## S6 缓存 + 性能（占位）
+## S6 缓存 + 性能（域级）✅ 2026-10-01
 
-- [ ] T1.16 内容哈希缓存（键 = 文件内容 + 规则集 + 配置 + 引擎版本指纹）
-- [ ] T1.17 hyperfine 基准脚本 + 万行库 <10s 校准 + 回退 >15% 门禁
+- [x] T1.16 内容哈希缓存 ✅ 2026-10-01：`@lintsight/cli` 内 `cache.ts`（pipeline 内筛减步骤，不拆独立包）；键 = sha256(引擎指纹\|配置指纹\|规则集指纹\|文件内容哈希)——oxlint `--version` 实测指纹、jsPlugins 产物内容哈希（规则逻辑变更击穿缓存）、依赖闭包/tsconfig 成分归 M2；降级 fail-open（oxlint 不可解析 → 缓存禁用，IO 异常 → miss）；`--fix` 禁缓存读写；pipeline 不再启动清空 `.lintsight-cache`；单测 6 例（键敏感性/roundtrip/引擎漂移/命中失效/配置击穿/fix 禁用）
+- [x] T1.17 hyperfine 基准 ✅ 2026-10-01：`bun run bench`（确定性万行语料 `.bench-corpus/` 100 文件×10700 行，`--no-cache` 冷扫，`--ignore-failure` 容忍 exit 1 诊断语义）；万行 <10s 硬门禁实测 **194ms**（余量 50 倍）；`scripts/bench-baseline.json` 基线（commit 溯源）+ 回退 >15% exit 1 门禁；100/100 全绿
 
 ## S7 试用与基线（占位）
 

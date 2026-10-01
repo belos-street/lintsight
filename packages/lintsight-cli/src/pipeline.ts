@@ -1,13 +1,18 @@
 /**
- * 分析流水线（design-m1 §4.1）：配置解析 → 收集 → Vue 虚拟块 → oxlint → 回映射 → 统一诊断 → exit code。
+ * 分析流水线（design-m1 §4.1）：配置解析 → 收集 → Vue 虚拟块 → 缓存筛减 → oxlint → 回映射 → 统一诊断 → exit code。
  * exit code 语义（M1-DR3）：0 无 error / 1 有 error / 2 运行错误（与诊断退出码严格区分），
  * 运行错误路径禁止异常逃逸（compile 实测抓到过该 bug）。
+ *
+ * 内容哈希缓存（T1.16）：未变更文件整体跳过 oxlint；--fix 模式禁用缓存读写
+ * （fix 需要完整诊断面才能发现可修复项，且 fix 会改写文件使缓存失真）。
  */
 import path from 'node:path'
-import { rm, stat, unlink } from 'node:fs/promises'
+import { stat, unlink } from 'node:fs/promises'
+import pkg from '../package.json'
 import { runOxlint } from './oxlint-bridge'
 import {
   normalizeDiagnostics,
+  normalizeFilePath,
   sortDiagnostics,
   toLintsightDiagnostic,
   type LintsightDiagnostic
@@ -21,6 +26,14 @@ import {
 } from '@lintsight/vue-processor'
 import { generateOxlintrc, resolveConfigFile } from '@lintsight/config-bridge'
 import { createLogger, type Logger } from '@lintsight/shared'
+import {
+  createCacheKey,
+  initCache,
+  readCacheEntry,
+  sha256Content,
+  writeCacheEntry,
+  type CacheContext
+} from './cache'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
 const SCAN_EXTS = new Set([
@@ -90,14 +103,16 @@ export async function runPipeline(
     cwd?: string
     config?: string
     logLevel?: 'debug' | 'info' | 'warn' | 'error'
-    /** --fix：oxlint safe fix 就地改写虚拟文件后，差量行回写原 .vue（T1.15） */
+    /** --fix：oxlint safe fix 就地改写虚拟文件后，差量行回写原 .vue（T1.15）；禁用缓存 */
     fix?: boolean
+    /** 内容哈希缓存（T1.16），默认开启；--no-cache 关闭 */
+    cache?: boolean
   } = {}
 ): Promise<PipelineResult> {
   const cwd = opts.cwd ?? process.cwd()
   const logger: Logger = createLogger(opts.logLevel ?? 'error')
+  // 缓存条目须跨运行存活：cacheDir 只在启动时确保存在，不再整体清空（oxlintrc 每次覆盖生成）
   const cacheDir = path.resolve(cwd, CACHE_DIR_NAME)
-  await rm(cacheDir, { recursive: true, force: true })
 
   // 配置解析：lintsight.config.json → 生成 .oxlintrc（--config 显式传入，避免自动发现歧义）
   let oxlintrcPath: string | undefined
@@ -137,55 +152,147 @@ export async function runPipeline(
     for (const w of v.warnings) logger.warn(`${v.originalRel}: ${w}`)
   }
   if (vues.length > 0) await ensureGitignore(cwd)
-  // 回映射表：本次运行精确路径（virtualRel → originalRel），不做模式猜测
-  const virtualMap = new Map(vues.map((v) => [v.virtualRel, v.originalRel]))
-  const targets = [...passthrough, ...vues.map((v) => v.virtualAbs)]
 
-  try {
-    let result
-    try {
-      result = await runOxlint(targets, {
-        cwd,
-        config: oxlintrcPath,
-        fix: opts.fix
-      })
-    } catch (e) {
-      // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2
-      return { exitCode: 2, report: null, error: (e as Error).message }
-    }
-    if (!result.ok || !result.output) {
-      return {
-        exitCode: 2,
-        report: null,
-        error: `oxlint runtime failure (exit=${result.exitCode}): ${result.stderr.slice(0, 500)}`
-      }
-    }
+  // 缓存筛减（T1.16）：units = 本次运行的扫描单元；storeRel = 诊断归属文件（vue 回映射后的原路径）
+  const relOf = (abs: string) => normalizeFilePath(abs, cwd)
+  const units = [
+    ...passthrough.map((abs) => ({
+      scanAbs: abs,
+      contentAbs: abs,
+      storeRel: relOf(abs)
+    })),
+    ...vues.map((v) => ({
+      scanAbs: v.virtualAbs,
+      contentAbs: v.originalAbs,
+      storeRel: v.originalRel
+    }))
+  ]
 
-    // --fix：oxlint 已就地改写虚拟文件 → 差量行回写原 .vue（T1.15；仅行数不变的 safe fix）
-    if (opts.fix) {
-      const wbs = await Promise.all(
-        vues.map(async (v) => ({
-          v,
-          wb: await writebackFix(v.originalAbs, v.virtualAbs)
-        }))
-      )
-      for (const { v, wb } of wbs) {
-        if (wb.changed)
-          logger.info(`fix: ${v.originalRel} (${wb.lines} line(s))`)
-        else if (wb.skipped)
-          logger.warn(
-            `fix: ${v.originalRel} skipped — fix 改变行数，M1 仅回写行数不变的 safe fix`
-          )
-      }
-    }
+  let cacheCtx: CacheContext = {
+    enabled: false,
+    dir: path.join(cacheDir, 'cache'),
+    engine: 'disabled',
+    config: '',
+    plugin: ''
+  }
+  if ((opts.cache ?? true) && !opts.fix) {
+    cacheCtx = await initCache({
+      cwd,
+      oxlintrcPath,
+      lintsightVersion: pkg.version
+    })
+  }
 
-    // 回映射 → 统一模型 → 确定性排序（M1-DR4）
-    const diagnostics = sortDiagnostics(
-      normalizeDiagnostics(result.output, cwd).map((d) => {
-        const original = virtualMap.get(d.file)
-        return toLintsightDiagnostic(original ? { ...d, file: original } : d)
+  const results = new Map<string, LintsightDiagnostic[]>()
+  const misses: {
+    scanAbs: string
+    scanRel: string
+    storeRel: string
+    key: string
+  }[] = []
+  let hits = 0
+  if (cacheCtx.enabled) {
+    await Promise.all(
+      units.map(async (u) => {
+        const hash = await sha256Content(u.contentAbs)
+        if (hash !== null) {
+          const key = createCacheKey(cacheCtx, hash)
+          const entry = await readCacheEntry(cacheCtx, key)
+          if (entry) {
+            hits++
+            results.set(u.storeRel, entry)
+            return
+          }
+          misses.push({
+            scanAbs: u.scanAbs,
+            scanRel: relOf(u.scanAbs),
+            storeRel: u.storeRel,
+            key
+          })
+        } else {
+          misses.push({
+            scanAbs: u.scanAbs,
+            scanRel: relOf(u.scanAbs),
+            storeRel: u.storeRel,
+            key: ''
+          })
+        }
       })
     )
+  } else {
+    for (const u of units) {
+      misses.push({
+        scanAbs: u.scanAbs,
+        scanRel: relOf(u.scanAbs),
+        storeRel: u.storeRel,
+        key: ''
+      })
+    }
+  }
+
+  try {
+    const missMap = new Map(misses.map((m) => [m.scanRel, m]))
+    let scannedFiles = 0
+    if (misses.length > 0) {
+      let result
+      try {
+        result = await runOxlint(
+          misses.map((m) => m.scanAbs),
+          { cwd, config: oxlintrcPath, fix: opts.fix }
+        )
+      } catch (e) {
+        // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2
+        return { exitCode: 2, report: null, error: (e as Error).message }
+      }
+      if (!result.ok || !result.output) {
+        return {
+          exitCode: 2,
+          report: null,
+          error: `oxlint runtime failure (exit=${result.exitCode}): ${result.stderr.slice(0, 500)}`
+        }
+      }
+      scannedFiles = result.output.number_of_files
+
+      // --fix：oxlint 已就地改写虚拟文件 → 差量行回写原 .vue（T1.15；仅行数不变的 safe fix）
+      if (opts.fix) {
+        const wbs = await Promise.all(
+          vues.map(async (v) => ({
+            v,
+            wb: await writebackFix(v.originalAbs, v.virtualAbs)
+          }))
+        )
+        for (const { v, wb } of wbs) {
+          if (wb.changed)
+            logger.info(`fix: ${v.originalRel} (${wb.lines} line(s))`)
+          else if (wb.skipped)
+            logger.warn(
+              `fix: ${v.originalRel} skipped — fix 改变行数，M1 仅回写行数不变的 safe fix`
+            )
+        }
+      }
+
+      // 回映射（scanRel → storeRel）→ 统一模型 → 按文件分组（= 缓存条目粒度）
+      for (const d of normalizeDiagnostics(result.output, cwd)) {
+        const storeRel = missMap.get(d.file)?.storeRel ?? d.file
+        const diag = toLintsightDiagnostic({ ...d, file: storeRel })
+        const group = results.get(storeRel)
+        if (group) group.push(diag)
+        else results.set(storeRel, [diag])
+      }
+
+      // 缓存回写：只写本次真实扫描且内容哈希可得的文件
+      await Promise.all(
+        misses.map((m) => {
+          const group = results.get(m.storeRel)
+          return m.key && group
+            ? writeCacheEntry(cacheCtx, m.key, group)
+            : Promise.resolve()
+        })
+      )
+    }
+
+    // 合并（缓存命中 + 本次扫描）→ 确定性排序（M1-DR4）
+    const diagnostics = sortDiagnostics([...results.values()].flat())
 
     const summary = { error: 0, warning: 0, info: 0 }
     for (const d of diagnostics) {
@@ -195,14 +302,14 @@ export async function runPipeline(
     }
 
     logger.info(
-      `scanned ${result.output.number_of_files} file(s), ${diagnostics.length} diagnostic(s)`
+      `scanned ${scannedFiles} file(s) (cache: ${hits} hit / ${misses.length} miss), ${diagnostics.length} diagnostic(s)`
     )
 
     return {
       exitCode: summary.error > 0 ? 1 : 0,
       report: {
         contractVersion: diagnostics[0]?.contractVersion ?? '1',
-        files: result.output.number_of_files,
+        files: units.length,
         summary,
         diagnostics
       }

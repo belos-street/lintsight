@@ -13,7 +13,9 @@
     "format": "oxfmt packages plugins",
     "format:check": "oxfmt --check packages plugins",
     "build:rules": "bun run scripts/build-rules.ts",
-    "build:binary": "bun build --compile packages/lintsight-cli/src/cli.ts --outfile dist/lintsight"
+    "build:binary": "bun build --compile packages/lintsight-cli/src/cli.ts --outfile dist/lintsight",
+    "bench": "bun run scripts/bench.ts",
+    "bench:save": "bun run scripts/bench.ts --save"
   },
   "engines": {
     "bun": ">=1.2"

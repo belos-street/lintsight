@@ -8,6 +8,7 @@
 > - v0.1（2026-09-15）：初稿。吸收竖切验证结论（SV1~SV7 + compile 追加实测），全部 M1-DR 决策均附实测证据链接。
 > - v0.1①（2026-09-15）：S1/S2 实施落定 + T1.8 实测补充——oxlint overrides（`files`+`rules` 覆盖）**实测有效**，§9 风险项关闭；规则值为 `allow/error/warn`（`off` 由 config-bridge 翻译为 `allow`）；规则选项数组 `["error", {...}]` 有效；jsPlugins 支持绝对路径（生成的 .oxlintrc 写入 `.lintsight-cache/`）。开放问题 1 拍板：**M1 不支持通配 severity**（oxlint 规则键无通配语义，config-bridge 校验显式拒绝，须逐条列举）。包结构按 §4 拆分为 6 个 workspaces 包并迁移测试。
 > - v0.1②（2026-10-01）：S5 实施落定（T1.14/T1.15）——§4.3 就地临时文件约定定案：虚拟文件改写至 **原 .vue 同目录**（`<Foo>.vue.lintsight-<pid>-<seq>.<lang>`，取代初版 cache 目录方案），保 import 解析上下文；pid+序号隔离并发双跑，`finally` 只清本次文件；gitignore 规则幂等追加（`ensureGitignore`）；多 script 块策略 = 优先 `<script setup>`、其余显式告警；回映射改用本次运行**精确路径表**（不按文件名模式猜测，用户同名文件不受影响）。T1.15 实测（oxlint 1.83.0）：**JSON 诊断无 fix 字段**，唯一机制 = `--fix` 就地写盘 → **差量行回写**（行数不变逐行 1:1 拷回；行数变化显式跳过告警）；CLI 新增 `--fix`。
+> - v0.1③（2026-10-01）：S6 实施落定（T1.16/T1.17）——**内容哈希缓存**定案（`@lintsight/cli` 内 `cache.ts`，不做独立包：M1 缓存是 pipeline 内筛减步骤，拆包无边界收益）：键 = sha256(引擎指纹\|配置指纹\|规则集指纹\|文件内容哈希)，§3.4 公式的依赖闭包/tsconfig 成分归 M2；降级语义 fail-open——oxlint 二进制不可解析 → 缓存整体禁用，缓存 IO 异常 → 当作 miss；`--fix` 模式禁用缓存读写（fix 需完整诊断面，缓存里只有最终诊断会漏修）；pipeline 不再启动时清空 `.lintsight-cache`（缓存须跨运行存活，oxlintrc 每次覆盖生成）；`report.files` 语义微调 = 本次运行扫描单元数（含缓存命中，与 oxlint 全量扫描时的 number_of_files 一致）；条目格式 `{v, engine, diagnostics}`，engine 双重校验。**基准脚本** `bun run bench`（hyperfine + 确定性万行语料 `.bench-corpus/`）：`--no-cache` 冷扫语义、万行 <10s 硬门禁、`scripts/bench-baseline.json` 基线（commit 溯源）、回退 >15% exit 1；实测基线 194ms/10700 行（余量 50 倍）。
 
 ---
 
