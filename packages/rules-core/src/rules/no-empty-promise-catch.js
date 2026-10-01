@@ -1,9 +1,9 @@
-/** no-empty-promise-catch —— P0 正确性（v0.1① #9）。 */
+/** no-empty-promise-catch —— P0 正确性（v0.1① #9）。confidence=medium（T1.19 试用反哺：text-rpg 写队列隔离模式误报 1 例）。 */
 export default {
   meta: {
     category: 'correctness',
     severity: 'error',
-    confidence: 'high',
+    confidence: 'medium',
     typeRequirement: 'none',
     tags: [],
     fixable: undefined,
@@ -18,7 +18,8 @@ export default {
       badExamples: ['fetch(url).catch(() => {})'],
       goodExamples: ['fetch(url).catch((e) => logger.error(e))'],
       falsePositives: [
-        '命名处理器（.catch(handleError)）无法证明为空，保守不报'
+        '命名处理器（.catch(handleError)）无法证明为空，保守不报',
+        'promise 链隔离层：catch 后的原 promise 仍暴露给调用方（如 writeQueue.set(id, next.catch(() => {})); return next），错误未被实际吞掉——text-rpg storage.ts 实测误报（T1.19 首例标注，confidence high→medium）'
       ]
     }
   },

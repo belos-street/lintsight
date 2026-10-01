@@ -7,11 +7,20 @@
  */
 import { describe, expect, test } from 'bun:test'
 import pluginDefault from '../../../plugins/lintsight-rules/index.js'
-import { getRegistryEntry, registry } from '../src/registry'
+import { getRegistryEntry, registry, type Confidence } from '../src/registry'
 
 const plugin = pluginDefault as unknown as {
   name: string
-  rules: Record<string, { meta: { typeRequirement: string; category: string } }>
+  rules: Record<
+    string,
+    {
+      meta: {
+        typeRequirement: string
+        category: string
+        confidence: Confidence
+      }
+    }
+  >
 }
 const PLUGIN_PREFIX = `${plugin.name}/`
 
@@ -38,6 +47,15 @@ describe('规则注册表 CI 校验（T1.11）', () => {
       const expected =
         rule.meta.typeRequirement === 'local' ? 'local' : 'syntax'
       expect(entry!.detection, `${PLUGIN_PREFIX}${key}`).toBe(expected)
+    }
+  })
+
+  test('注册表 confidence 与 meta.confidence 一致（T1.19 误报标注反哺通道）', () => {
+    for (const [key, rule] of Object.entries(plugin.rules)) {
+      const entry = getRegistryEntry(`${PLUGIN_PREFIX}${key}`)
+      expect(entry!.confidence, `${PLUGIN_PREFIX}${key}`).toBe(
+        rule.meta.confidence
+      )
     }
   })
 

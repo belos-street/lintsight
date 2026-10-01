@@ -51,7 +51,10 @@
 ## S7 试用与基线（域级）
 
 - [x] T1.18 语料库 v0 接入 + 基线脚本 + 双报率 0 断言 ✅ 2026-10-01：`corpus/corpus.json` manifest（zod@v3.25.76 + dayjs@v1.11.9 锁 tag，本体浅克隆 `corpus/repos/` 已 gitignore）；`bun run corpus:check` = 全量冷扫（654 文件 / 313 诊断，自有规则命中 86）+ 双报率 0 断言（同 file+offset+length 跨引擎双 owner）+ 指纹级基线 diff（漂移 exit 1，重建显式 `--save`）；`corpus/baseline-v0.json` 入库；⚠️ `bun test` 收窄 `./packages ./scripts`（裸 bun test 子串 filter 撞 corpus 第三方测试）
-- [ ] T1.19 内部 ≥3 项目接入试用 + 误报标注反哺 confidence（**需人力执行**：工具链已就绪——`bun run cli` / `--fix` / 报告对接；试用产出误报标注后回填规则 confidence 字段）
+- [ ] T1.19 内部 ≥3 项目接入试用 + 误报标注反哺 confidence（**进行中 1/3**）：
+  - ✅ 首个试用项目 text-rpg（Next.js + Bun，57 文件）：27 条诊断（自有规则 26 条），抽验 error 级 3 真 1 误报——saves 页静默失败为真缺陷；**首例误报已回填**（no-empty-promise-catch 写队列隔离模式，confidence high→medium，注册表同步）；no-non-literal-fs-filename 补内部 utility 噪音 pattern 标注（M1.5 改进候选）；SSE enqueue 空 catch 3 条 = allowComments 选项的典型场景
+  - 注册表扩 confidence 字段（与 meta.confidence 一致性 CI 校验）——试用标注的反哺通道建成
+  - ⏳ 待接 2 个项目
 
 ## 远期占位（M2 输入，M1 不做）
 

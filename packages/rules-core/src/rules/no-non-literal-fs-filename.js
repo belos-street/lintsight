@@ -21,7 +21,8 @@ export default {
         'fs.readFile(path.join(BASE, safeName), cb)'
       ],
       falsePositives: [
-        '命名启发（path/file/dir）与 fs 对象识别都很宽；low confidence 仅供人工复核'
+        '命名启发（path/file/dir）与 fs 对象识别都很宽；low confidence 仅供人工复核',
+        '内部 fs utility 函数接收路径参数（如 readMdFile(filePath)）——路径来源在调用侧，utility 被逐调用点名（text-rpg 实测 11 条同型噪音；M1.5 候选改进：文件内私有 helper 启发式豁免）'
       ]
     }
   },
