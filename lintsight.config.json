@@ -42,4 +42,8 @@
       }
     ]
   }
+  // typeAware 编排能力已就绪（FR-305）但 dogfood 不默认开启：
+  // golden/corpus 契约稳定性不绑定 tsgolint 行为（版本升级即诊断面漂移）。
+  // 试点结论（2026-10-01）：抓到 engine-bridge 2 条 no-floating-promises 真问题并已修；
+  // 业务项目按需开启，tsgolint 缺失自动降级纯 M1 并提示。
 }

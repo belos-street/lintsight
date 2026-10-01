@@ -8,7 +8,7 @@ use oxc_ast::AstKind;
 use oxc_span::Span;
 
 use crate::context::FileContext;
-use crate::protocol::{ArchConfig, PathEvent};
+use crate::protocol::{ArchConfig, PathEvent, TsPathMapping};
 use crate::taint::TaintTables;
 
 pub struct RawDiag {
@@ -104,8 +104,8 @@ impl EngineRule for NoPathTraversal {
 
 /// 全部引擎规则登记处（表交叠校验随登记执行——校验失败即引擎启动 panic，
 /// Bun 侧 fail-open 降级，cargo test 提前拦截）。
-/// arch 配置缺省时架构规则不注册（Summary.rules 亦不含）。
-pub fn registry(arch: Option<&ArchConfig>) -> Vec<Box<dyn EngineRule>> {
+/// arch 配置缺省时架构规则不注册（Summary.rules 亦不含）；ts_paths 同随 stdin 下发。
+pub fn registry(arch: Option<&ArchConfig>, ts_paths: &[TsPathMapping]) -> Vec<Box<dyn EngineRule>> {
     PATH_TRAVERSAL_TABLES
         .validate()
         .expect("no-path-traversal 函数表交叠");
@@ -113,15 +113,17 @@ pub fn registry(arch: Option<&ArchConfig>) -> Vec<Box<dyn EngineRule>> {
     if let Some(cfg) = arch {
         rules.push(Box::new(ArchBoundaries {
             config: cfg.clone(),
+            ts_paths: ts_paths.to_vec(),
         }));
     }
     rules
 }
 
 /// arch-boundaries（T2.4）：zone 依赖方向，配置驱动（stdin 下发，缺省不注册）。
-/// 拥有配置克隆（'static）——不借用 stdin 输入的生命周期。
+/// 拥有配置/映射克隆（'static）——不借用 stdin 输入的生命周期。
 struct ArchBoundaries {
     config: ArchConfig,
+    ts_paths: Vec<TsPathMapping>,
 }
 
 impl EngineRule for ArchBoundaries {
@@ -130,7 +132,7 @@ impl EngineRule for ArchBoundaries {
     }
 
     fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
-        crate::arch::run(ctx, &self.config)
+        crate::arch::run(ctx, &self.config, &self.ts_paths)
     }
 }
 
@@ -249,7 +251,7 @@ fs.writeFileSync(files[0], 'x')
             "src/core/a.ts",
             "import { x } from '../ui/b'\n",
             |ctx| {
-                out = crate::arch::run(ctx, &cfg);
+                out = crate::arch::run(ctx, &cfg, &[]);
             },
         );
         assert_eq!(out.len(), 1);
@@ -263,7 +265,7 @@ fs.writeFileSync(files[0], 'x')
             "src/ui/b.ts",
             "import { x } from '../core/a'\nimport 'lodash'\n",
             |ctx| {
-                out = crate::arch::run(ctx, &cfg);
+                out = crate::arch::run(ctx, &cfg, &[]);
             },
         );
         assert!(out.is_empty(), "allow 内 + 裸说明符不得报告");
@@ -271,8 +273,50 @@ fs.writeFileSync(files[0], 'x')
         // 未归 zone 文件不受约束
         let mut out = Vec::new();
         crate::context::with_context(&allocator, "src/other/c.ts", "import '../ui/b'\n", |ctx| {
-            out = crate::arch::run(ctx, &cfg);
+            out = crate::arch::run(ctx, &cfg, &[]);
         });
+        assert!(out.is_empty());
+    }
+
+    #[test]
+    fn arch_alias_via_tsconfig_paths() {
+        // importer（app）与目标（lib）都要归 zone：别名解析后 app→lib 越界
+        let cfg: ArchConfig = serde_json::from_str(
+            r#"{"zones":[
+                {"name":"app","match":["src/app/**"],"allow":[]},
+                {"name":"lib","match":["src/lib/**"],"allow":["src/app/**"]}
+            ]}"#,
+        )
+        .unwrap();
+        let ts_paths: Vec<TsPathMapping> =
+            serde_json::from_str(r#"[{"pattern":"@lib/*","targets":["src/lib/*"]}]"#).unwrap();
+        let allocator = oxc_allocator::Allocator::default();
+
+        // 别名 import 兜底解析后命中 zone 边界（FR-304）
+        let mut out = Vec::new();
+        crate::context::with_context(
+            &allocator,
+            "src/app/a.ts",
+            "import { x } from '@lib/util'\n",
+            |ctx| {
+                out = crate::arch::run(ctx, &cfg, &ts_paths);
+            },
+        );
+        assert_eq!(out.len(), 1);
+        // message 含解析后的目标路径（比别名 specifier 更可定位）与 zone 对
+        assert!(out[0].message.contains("src/lib/util"));
+        assert!(out[0].message.contains("'app' → 'lib'"));
+
+        // 无 ts_paths 时同名 import 维持跳过（v0 语义回归哨兵）
+        let mut out = Vec::new();
+        crate::context::with_context(
+            &allocator,
+            "src/app/a.ts",
+            "import { x } from '@lib/util'\n",
+            |ctx| {
+                out = crate::arch::run(ctx, &cfg, &[]);
+            },
+        );
         assert!(out.is_empty());
     }
 }

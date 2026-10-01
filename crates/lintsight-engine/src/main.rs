@@ -39,7 +39,10 @@ fn main() {
     let input: protocol::EngineInput = serde_json::from_str(&stdin)
         .unwrap_or_else(|e| protocol::fatal(&format!("stdin JSON parse failed: {e}")));
 
-    let rules = rules::registry(input.arch.as_ref());
+    let rules = rules::registry(
+        input.arch.as_ref(),
+        input.ts_paths.as_deref().unwrap_or(&[]),
+    );
 
     // 文件级并行（T2.6）：rayon par_iter，collect 保序 → 诊断顺序与串行一致
     //（M1-DR4 确定性）；每文件独立 arena，峰值 ≈ 线程数 × 最大单文件

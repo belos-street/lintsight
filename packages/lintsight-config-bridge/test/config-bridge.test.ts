@@ -106,6 +106,19 @@ describe('arch 配置校验（T2.4）', () => {
     const r = parseConfig('{ "rules": {} }')
     expect(r.config!.arch).toBeUndefined()
   })
+
+  test('typeAware 校验（T2.5 剩余项）：布尔合法 / 非布尔报错 / 缺省 undefined', () => {
+    const ok = parseConfig('{ "typeAware": true }')
+    expect(ok.ok).toBeTrue()
+    expect(ok.config!.typeAware).toBe(true)
+
+    const bad = parseConfig('{ "typeAware": "yes" }')
+    expect(bad.ok).toBeFalse()
+    expect(bad.errors[0]).toContain('typeAware')
+
+    const absent = parseConfig('{ "rules": {} }')
+    expect(absent.config!.typeAware).toBeUndefined()
+  })
 })
 
 describe('翻译器', () => {

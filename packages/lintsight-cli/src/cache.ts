@@ -13,6 +13,7 @@
 import path from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import type { LintsightDiagnostic } from '@lintsight/diagnostic'
+import { parseJsonc } from '@lintsight/config-bridge'
 import { createLogger } from '@lintsight/shared'
 import { resolveOxlintBin } from './oxlint-bridge'
 
@@ -84,9 +85,11 @@ async function jsPluginPaths(oxlintrcPath: string): Promise<string[]> {
   } catch {
     return []
   }
+  // 手写 .oxlintrc.json 是 JSONC（带注释）——JSON.parse 会静默失败导致
+  // 插件指纹成分缺失（type-aware 试点暴露），改用 config-bridge 的 JSONC 解析
   let parsed: { jsPlugins?: unknown }
   try {
-    parsed = JSON.parse(raw) as { jsPlugins?: unknown }
+    parsed = parseJsonc(raw) as { jsPlugins?: unknown }
   } catch (e) {
     log.debug(`cache: oxlintrc parse failed: ${String(e)}`)
     return []

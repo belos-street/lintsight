@@ -5,13 +5,15 @@
 //! - 同 zone 互引恒允许（内聚不需要配置列举）
 //! - 跨 zone import 的目标必须命中该 zone 的 `allow` glob，否则报告
 //! - 目标解析是**词法**的：相对导入（./ ../）按 importer 目录归一并 normalize；
-//!   裸说明符（npm 包 / tsconfig 别名）不解析——v0 边界，见误报复核清单
+//!   裸说明符走 tsconfig paths 别名兜底（FR-304），其余不解析——见误报复核清单
 //!
 //! 误报复核清单（v0 已知边界，登记于 docs/todo.md）：
-//! 1. 命名别名（@lintsight/cli、tsconfig paths）按裸说明符跳过——漏报不误报
+//! 1. 别名解析：tsconfig paths 走引擎侧兜底（FR-304，stdin 下发归一化映射表，
+//!    best-match 序）；paths 外的别名（package exports、嵌套 tsconfig）仍跳过——漏报不误报
 //! 2. require() 仅字面量形态；动态 import 仅字符串字面量
 //! 3. 扩展名省略按词法 normalize（不 stat 文件系统）——zone glob 需按目录前缀书写
 //! 4. re-export（export * from）覆盖；export {} from 覆盖
+//! 5. zone 首匹配（顺序敏感）
 //!
 //! span = import source 字符串字面量；glob 支持段级 `*` 与跨段 `**`（自实现，
 //! 避免 cargo 依赖扩张——cargo-deny 纪律）。
@@ -20,7 +22,7 @@ use oxc_ast::{ast::Expression, AstKind};
 use oxc_span::Span;
 
 use crate::context::FileContext;
-use crate::protocol::{ArchConfig, PathEvent};
+use crate::protocol::{ArchConfig, PathEvent, TsPathMapping};
 
 /// 段级 glob：`*` 单段内任意、`**` 跨任意段（含零段）、其余精确段匹配
 pub fn glob_match(pattern: &str, path: &str) -> bool {
@@ -82,6 +84,32 @@ fn resolve_import(importer_rel: &str, specifier: &str) -> Option<String> {
     Some(stack.join("/"))
 }
 
+/// tsconfig paths 别名兜底（FR-304）：裸说明符 → 词法目标路径。
+/// 映射表已由 Bun 侧按 TS best-match 排序（pattern 固定前缀长者优先），
+/// 此处顺序取首个命中；多 target 取首个（词法模式无文件系统可验证存在性）。
+/// 未命中返回 None → 调用方维持跳过语义（漏报不误报）。
+fn resolve_alias(specifier: &str, ts_paths: &[TsPathMapping]) -> Option<String> {
+    for m in ts_paths {
+        let target = match m.pattern.split_once('*') {
+            None => {
+                if specifier != m.pattern {
+                    continue;
+                }
+                m.targets.first()?.clone()
+            }
+            Some((prefix, suffix)) => {
+                let mid = specifier.strip_prefix(prefix)?.strip_suffix(suffix)?;
+                match m.targets.first() {
+                    Some(t) => t.replacen('*', mid, 1),
+                    None => continue,
+                }
+            }
+        };
+        return Some(target);
+    }
+    None
+}
+
 pub struct ArchViolation {
     pub span: Span,
     pub target: String,
@@ -90,7 +118,11 @@ pub struct ArchViolation {
 }
 
 /// 单文件架构检查：返回越界 import 列表（按源码序，确定性）
-pub fn check_file(ctx: &FileContext, config: &ArchConfig) -> Vec<ArchViolation> {
+pub fn check_file(
+    ctx: &FileContext,
+    config: &ArchConfig,
+    ts_paths: &[TsPathMapping],
+) -> Vec<ArchViolation> {
     let Some(from) = zone_of(config, ctx.rel_path()) else {
         return Vec::new(); // 未归 zone 的文件不受约束
     };
@@ -119,8 +151,12 @@ pub fn check_file(ctx: &FileContext, config: &ArchConfig) -> Vec<ArchViolation> 
             }
             _ => continue,
         };
-        let Some(target) = resolve_import(ctx.rel_path(), specifier) else {
-            continue; // 裸说明符（npm/别名）v0 跳过——复核清单 #1
+        // 相对导入词法解析 → 裸说明符 tsconfig paths 兜底（FR-304）→ 仍未命中跳过
+        let target = match resolve_import(ctx.rel_path(), specifier)
+            .or_else(|| resolve_alias(specifier, ts_paths))
+        {
+            Some(t) => t,
+            None => continue,
         };
         let to = zone_of(config, &target);
         if to.is_some_and(|z| z.name == from.name) {
@@ -152,8 +188,12 @@ pub fn rule_id() -> &'static str {
 }
 
 /// 规则接入（rules.rs 调用）：诊断整形
-pub fn run(ctx: &FileContext, config: &ArchConfig) -> Vec<crate::rules::RawDiag> {
-    check_file(ctx, config)
+pub fn run(
+    ctx: &FileContext,
+    config: &ArchConfig,
+    ts_paths: &[TsPathMapping],
+) -> Vec<crate::rules::RawDiag> {
+    check_file(ctx, config, ts_paths)
         .into_iter()
         .map(|v| crate::rules::RawDiag {
             rule_id: rule_id(),
@@ -204,6 +244,34 @@ mod tests {
             resolve_import("src/a/b.ts", "../../x/../y"),
             Some("y".into())
         );
+    }
+
+    #[test]
+    fn resolve_alias_tsconfig_paths() {
+        let mappings = |v: &str| -> Vec<TsPathMapping> { serde_json::from_str(v).unwrap() };
+        // 通配 pattern：捕获 `*` 中段替换进 target
+        let m: Vec<TsPathMapping> = mappings(r#"[{"pattern":"@app/*","targets":["src/app/*"]}]"#);
+        assert_eq!(
+            resolve_alias("@app/user/service", &m),
+            Some("src/app/user/service".into())
+        );
+        // 精确 pattern（无 *）
+        let m: Vec<TsPathMapping> =
+            mappings(r#"[{"pattern":"@config","targets":["src/config/index"]}]"#);
+        assert_eq!(
+            resolve_alias("@config", &m),
+            Some("src/config/index".into())
+        );
+        assert_eq!(
+            resolve_alias("@config/x", &m),
+            None,
+            "精确 pattern 不做前缀匹配"
+        );
+        // 未命中 → None（调用方维持跳过语义）
+        assert_eq!(resolve_alias("lodash", &m), None);
+        // 空 targets → 跳过该条
+        let m: Vec<TsPathMapping> = mappings(r#"[{"pattern":"@dead/*","targets":[]}]"#);
+        assert_eq!(resolve_alias("@dead/a", &m), None);
     }
 
     #[test]

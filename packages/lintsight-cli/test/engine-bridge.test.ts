@@ -7,7 +7,11 @@ import { describe, expect, test } from 'bun:test'
 import { chmod, cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { resolveEngineBin, runEngine } from '../src/engine-bridge'
+import {
+  resolveEngineBin,
+  resolveTsPaths,
+  runEngine
+} from '../src/engine-bridge'
 import { runPipeline } from '../src/pipeline'
 
 const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
@@ -194,6 +198,97 @@ fs.readFileSync(externalFilePath)
 })
 
 describe('engine-bridge: arch 规则集成（T2.4）', () => {
+  test('resolveTsPaths：JSONC tsconfig → best-match 排序映射表；fail-open', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-tspaths-'))
+    try {
+      // JSONC（注释 + 尾逗号）+ baseUrl 相对解析
+      await writeFile(
+        path.join(dir, 'tsconfig.json'),
+        `{
+          // 注释不应破坏解析
+          "compilerOptions": {
+            "baseUrl": ".",
+            "paths": {
+              "@lib/*": ["src/lib/*"],
+              "@app/core/*": ["src/app/core/*"],
+            }
+          }
+        }`
+      )
+      const m = await resolveTsPaths(dir)
+      expect(m).not.toBeNull()
+      // best-match：固定前缀长者优先
+      expect(m!.map((x) => x.pattern)).toEqual(['@app/core/*', '@lib/*'])
+      expect(m![1].targets).toEqual(['src/lib/*'])
+
+      // 无 tsconfig / 无 paths → null（fail-open）
+      const empty = await mkdtemp(
+        path.join(tmpdir(), 'lintsight-tspaths-empty-')
+      )
+      try {
+        expect(await resolveTsPaths(empty)).toBeNull()
+        await writeFile(
+          path.join(empty, 'tsconfig.json'),
+          '{ "compilerOptions": {} }'
+        )
+        expect(await resolveTsPaths(empty)).toBeNull()
+        // 坏 JSONC → null 不抛
+        await writeFile(path.join(empty, 'tsconfig.json'), '{ broken')
+        expect(await resolveTsPaths(empty)).toBeNull()
+      } finally {
+        await rm(empty, { recursive: true, force: true })
+      }
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('FR-304 别名兜底端到端：tsconfig paths 别名 import 命中 zone 边界', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-arch-alias-'))
+    try {
+      await cp(path.join(PROJECT_ROOT, 'plugins'), path.join(dir, 'plugins'), {
+        recursive: true
+      })
+      await mkdir(path.join(dir, 'src/app'), { recursive: true })
+      await mkdir(path.join(dir, 'src/lib'), { recursive: true })
+      await writeFile(
+        path.join(dir, 'tsconfig.json'),
+        JSON.stringify({
+          compilerOptions: {
+            baseUrl: '.',
+            paths: { '@lib/*': ['src/lib/*'] }
+          }
+        })
+      )
+      await writeFile(
+        path.join(dir, 'lintsight.config.json'),
+        JSON.stringify({
+          rules: {},
+          arch: {
+            zones: [
+              { name: 'app', match: ['src/app/**'], allow: [] },
+              { name: 'lib', match: ['src/lib/**'], allow: ['src/app/**'] }
+            ]
+          }
+        })
+      )
+      await writeFile(path.join(dir, 'src/lib/util.ts'), 'export const u = 1\n')
+      await writeFile(
+        path.join(dir, 'src/app/a.ts'),
+        "import { u } from '@lib/util'\nconsole.log(u)\n"
+      )
+      const r = await runPipeline(['.'], { cwd: dir })
+      const hits =
+        r.report?.diagnostics.filter(
+          (d) => d.ruleId === 'lintsight-engine/arch-boundaries'
+        ) ?? []
+      expect(hits).toHaveLength(1)
+      expect(hits[0].message).toContain('src/lib/util')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
   test('zone 越界 import → lintsight-engine/arch-boundaries 进统一报告', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-arch-'))
     try {

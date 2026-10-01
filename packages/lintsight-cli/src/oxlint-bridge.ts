@@ -35,12 +35,20 @@ export interface OxlintRunResult {
 
 export async function runOxlint(
   paths: string[],
-  opts: { config?: string; cwd?: string; fix?: boolean } = {}
+  opts: {
+    config?: string
+    cwd?: string
+    fix?: boolean
+    typeAware?: boolean
+  } = {}
 ): Promise<OxlintRunResult> {
   const cwd = opts.cwd ?? process.cwd()
   const args = ['-f', 'json']
   // --fix：safe fix 就地改写文件；JSON 只报未修复项（oxlint 1.83.0 实测，T1.15）
   if (opts.fix) args.push('--fix')
+  // --type-aware（FR-305，spike ③ 定案）：tsgolint 伴生依赖由 oxlint 自行定位，
+  // 缺失时进程报错——降级重试由 pipeline 编排（保持本模块单次 spawn 职责）
+  if (opts.typeAware) args.push('--type-aware')
   if (opts.config) args.push('--config', opts.config)
   args.push(...paths)
 

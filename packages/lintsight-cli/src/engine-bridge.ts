@@ -10,7 +10,60 @@
  *   3. monorepo 开发态 cargo 产物路径（bun run 场景；compile 后不存在自动跳过）
  */
 import { existsSync } from 'node:fs'
+import path from 'node:path'
+import { parseJsonc } from '@lintsight/config-bridge'
 import type { ArchConfig } from '@lintsight/config-bridge'
+
+/** tsconfig paths 映射（FR-304 别名兜底）：pattern/targets 均为相对 root 的 POSIX 路径，
+ * 保留 `*` 通配；已按 TS best-match 语义排序（pattern 固定前缀长者优先） */
+export interface TsPathMapping {
+  pattern: string
+  targets: string[]
+}
+
+/** 读 cwd/tsconfig.json（JSONC）→ paths + baseUrl 归一化为相对 root 的映射表。
+ * fail-open：文件缺失/解析失败/无 paths → null（引擎侧维持裸说明符跳过语义）。
+ * v0 边界：只读根 tsconfig（monorepo per-package 嵌套 tsconfig 不处理）。 */
+export async function resolveTsPaths(
+  cwd: string
+): Promise<TsPathMapping[] | null> {
+  const file = path.join(cwd, 'tsconfig.json')
+  if (!existsSync(file)) return null
+  type TsConfigRaw = {
+    compilerOptions?: { baseUrl?: string; paths?: Record<string, unknown> }
+  } | null
+  let raw: TsConfigRaw = null
+  try {
+    raw = parseJsonc(await Bun.file(file).text()) as TsConfigRaw
+  } catch {
+    return null
+  }
+  const paths = raw?.compilerOptions?.paths
+  if (!paths || typeof paths !== 'object') return null
+  // paths targets 相对 baseUrl（TS4.1+ 缺省 = 相对 tsconfig 目录）
+  const base =
+    typeof raw?.compilerOptions?.baseUrl === 'string'
+      ? path.resolve(cwd, raw.compilerOptions.baseUrl)
+      : cwd
+  const out: (TsPathMapping & { prefixLen: number })[] = []
+  for (const [pattern, targets] of Object.entries(paths)) {
+    if (!Array.isArray(targets)) continue
+    const norm = targets
+      .filter((t): t is string => typeof t === 'string')
+      .map((t) =>
+        path.relative(cwd, path.resolve(base, t)).split(path.sep).join('/')
+      )
+    if (norm.length === 0) continue
+    // TS best-match：pattern `*` 前的固定前缀越长优先级越高
+    out.push({
+      pattern,
+      targets: norm,
+      prefixLen: pattern.split('*')[0].length
+    })
+  }
+  out.sort((a, b) => b.prefixLen - a.prefixLen)
+  return out.map(({ pattern, targets }) => ({ pattern, targets }))
+}
 
 export interface EnginePathEvent {
   kind: 'source' | 'propagation' | 'sanitizer' | 'sink'
@@ -54,7 +107,11 @@ export function resolveEngineBin(cwd: string = process.cwd()): string | null {
 
 export async function runEngine(
   files: string[],
-  opts: { cwd?: string; arch?: ArchConfig } = {}
+  opts: {
+    cwd?: string
+    arch?: ArchConfig
+    tsPaths?: TsPathMapping[] | null
+  } = {}
 ): Promise<EngineRunResult> {
   const cwd = opts.cwd ?? process.cwd()
   const bin = resolveEngineBin(cwd)
@@ -69,9 +126,17 @@ export async function runEngine(
       stdout: 'pipe',
       stderr: 'pipe'
     })
-    // arch 配置（T2.4）随 stdin 下发；undefined 时引擎侧规则不注册
-    proc.stdin.write(JSON.stringify({ files, arch: opts.arch ?? null }))
-    proc.stdin.end()
+    // arch（T2.4）/ tsPaths（FR-304 别名兜底）随 stdin 下发；缺省时引擎侧规则不注册。
+    // void：write/end 在部分 bun-types 版本返回 Promise——no-floating-promises
+    // 要求显式标注「有意不等待」（type-aware 试点首获，M1 语法层盲区）
+    void proc.stdin.write(
+      JSON.stringify({
+        files,
+        arch: opts.arch ?? null,
+        tsPaths: opts.tsPaths ?? null
+      })
+    )
+    void proc.stdin.end()
     // stderr 流必须消费（防子进程阻塞），内容不进结果（降级细节由调用方按需取 stderr）
     const [stdout] = await Promise.all([
       new Response(proc.stdout).text(),

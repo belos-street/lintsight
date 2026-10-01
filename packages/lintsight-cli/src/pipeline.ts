@@ -39,7 +39,7 @@ import {
   writeCacheEntry,
   type CacheContext
 } from './cache'
-import { resolveEngineBin, runEngine } from './engine-bridge'
+import { resolveEngineBin, resolveTsPaths, runEngine } from './engine-bridge'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
 const SCAN_EXTS = new Set([
@@ -125,12 +125,14 @@ export async function runPipeline(
   // 配置解析：lintsight.config.json → 生成 .oxlintrc（--config 显式传入，避免自动发现歧义）
   let oxlintrcPath: string | undefined
   let arch: ArchConfig | undefined
+  let typeAware: boolean | undefined
   try {
     const configFile = resolveConfigFile(cwd, opts.config)
     if (configFile) {
       const generated = await generateOxlintrc(cwd, configFile, cacheDir)
       oxlintrcPath = generated.oxlintrcPath
       arch = generated.arch
+      typeAware = generated.typeAware
       logger.info(`config: ${configFile} → ${oxlintrcPath}`)
     } else {
       logger.info(
@@ -250,11 +252,31 @@ export async function runPipeline(
       try {
         result = await runOxlint(
           misses.map((m) => m.scanAbs),
-          { cwd, config: oxlintrcPath, fix: opts.fix }
+          {
+            cwd,
+            config: oxlintrcPath,
+            fix: opts.fix,
+            typeAware
+          }
         )
       } catch (e) {
         // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2
         return { exitCode: 2, report: null, error: (e as Error).message }
+      }
+      // FR-305 降级：type-aware 启用但 tsgolint 伴生依赖缺失/不可用 →
+      // 自动回落纯 M1 重试一次并提示（没结果比没 type-aware 更糟，fail-open 同纪律）
+      if (!result.ok && typeAware) {
+        result = await runOxlint(
+          misses.map((m) => m.scanAbs),
+          {
+            cwd,
+            config: oxlintrcPath,
+            fix: opts.fix
+          }
+        )
+        logger.warn(
+          'type-aware 降级：oxlint --type-aware 不可用（oxlint-tsgolint 未安装或版本不支持），本轮为纯 M1 扫描'
+        )
       }
       if (!result.ok || !result.output) {
         return {
@@ -284,11 +306,14 @@ export async function runPipeline(
       }
 
       // 回映射（scanRel → storeRel）→ 统一模型 → 按文件分组（= 缓存条目粒度）
+      // FR-304：tsconfig paths 归一化表随 stdin 下发引擎（arch 别名兜底；fail-open）
+      const tsPaths = await resolveTsPaths(cwd)
       const engineResult = await runEngine(
         misses.map((m) => m.scanRel),
         {
           cwd,
-          arch
+          arch,
+          tsPaths
         }
       )
       if (engineResult.degraded) {

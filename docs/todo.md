@@ -104,7 +104,12 @@
 - [x] suppressSuperseded：数据流版命中行抑制同文件同行语法级版本；行级口径（JS/引擎锚点 span 不同实测列差 4，span 精确匹配无效）；纯函数保序；端到端测试（命中行抑制/无命中行保留）
 - [x] type-aware 编排（spike ③ 结论落地）：typescript(tsconfig-error) 归一化降级 info（不进 exit code）；SARIF 2.1.0 报告器（--format sarif，level 映射 + rules 去重排序 + schema 结构测试）
 - [x] 验收：corpus 三 owner 双报率 0；SARIF schema 快照测试
-- ⚠️ 剩余（升 M2.5 执行级候选）：`--type-aware` 子编排接入 oxlint-bridge（需 opt-in 策略决策——开销 +23~38%，倾向 lintsight.config.json 显式开关）；FR-304 别名解析兜底
+- [x] ~~剩余~~ **M2.5 收口完成 ✅ 2026-10-01**（typeAware 编排 + FR-304 别名兜底落地）：
+  - **typeAware 子编排**：lintsight.config.json `typeAware: boolean` 显式开关（FR-305）→ oxlint spawn 追加 `--type-aware`；tsgolint 缺失/不可用自动降级重试纯 M1 并 warn 提示（fail-open 同纪律）；缓存经 configFp（含 config 文件 hash）自动击穿
+  - **FR-304 别名解析兜底**：pipeline 读 cwd/tsconfig.json（JSONC，含 baseUrl 相对解析）→ best-match 排序（pattern 固定前缀长者优先）→ stdin 下发引擎 → arch-boundaries 裸说明符走别名解析后 zone 匹配；未命中维持跳过（漏报不误报）。边界：只读根 tsconfig（嵌套/per-package 不处理）；package exports 别名仍跳过
+  - **typeAware dogfood 试点结论**：抓到 engine-bridge 2 条 `no-floating-promises` 真问题（`stdin.write/end` 在 tsgolint 类型视角为 floating——M1 语法层盲区，`void` 显式标注已修）；**dogfood 不默认开启**——golden/corpus 契约稳定性不绑定 tsgolint 行为（版本升级即诊断面漂移），业务项目按需开启
+  - **连带修复**：cache.jsPluginPaths 改 JSONC 解析（手写 .oxlintrc.json 带注释曾静默失败 → 插件指纹成分缺失）
+  - 测试：cargo 17/17（alias 解析/zone 命中/无映射回归哨兵）+ bun 130/130（typeAware 校验/resolveTsPaths fail-open/别名端到端）+ corpus 基线一致
 
 ### T2.6 性能验收（§3.5 预算）✅ 2026-10-01
 
@@ -112,7 +117,7 @@
 - [x] bench 门禁扩展到引擎：hyperfine 引擎直测（stdin 重定向方案，本机 hyperfine 不支持 --stdin 参数）；硬门禁 = 万行 <1s + NFR-1 吞吐报告 + 回退 >15% 双门禁（CLI/引擎分离基线字段 engineMeanMs）
 - [x] 实测：引擎直测 5.9ms/万行 = **181 万 LOC/s（NFR-1 预算 15 万的 12 倍）**；10 万行 20ms 墙钟（5 线程 512% CPU）；峰值 RSS 12.4MB（≈线程数×单文件，内存纪律并行下保持）；CLI 全管线 194ms（与 M1 基线持平）
 
-**M2 执行切片 T2.1~T2.6 全部完成（2026-10-01）。挂起项：Vue 真实项目试用（需用户提供项目路径）；unicorn/no-new-array 上游 issue；--type-aware opt-in 编排 + FR-304 别名兜底（M2.5 候选）。**
+**M2 执行切片 T2.1~T2.6 全部完成（2026-10-01），M2.5 收口（typeAware 编排 + FR-304 别名兜底）完成。挂起项：Vue 真实项目试用（需用户提供项目路径）；unicorn/no-new-array 上游 issue（起草中）。**
 
 ## 远期占位（M3+ / 择机）
 

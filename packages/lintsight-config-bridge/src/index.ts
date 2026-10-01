@@ -39,6 +39,9 @@ export interface LintsightConfig {
   overrides?: LintsightOverride[]
   /** M2 引擎架构规则（design-m2 §4.1 arch-rules）；undefined = 不启用 */
   arch?: ArchConfig
+  /** type-aware 编排（FR-305，spike ③）：true = oxlint spawn 追加 --type-aware
+   *（tsgolint 伴生依赖缺失时自动降级纯 M1 并提示）。开销 +23~38%，默认关闭 */
+  typeAware?: boolean
 }
 
 // —— schema 校验（手写，报友好错误：字段路径 + 期望值） ——
@@ -209,6 +212,13 @@ export function validateConfig(raw: unknown): {
       }
     }
   }
+  if (o.typeAware !== undefined) {
+    if (typeof o.typeAware !== 'boolean') {
+      errors.push('typeAware: 期望布尔值（默认 false；tsgolint 缺失自动降级）')
+    } else {
+      config.typeAware = o.typeAware
+    }
+  }
   return {
     ok: errors.length === 0,
     errors,
@@ -345,6 +355,8 @@ export interface GeneratedConfig {
   equivalent: EquivalenceRow[]
   /** M2 引擎架构规则配置（undefined = 未启用）；直传 engine stdin，不进 .oxlintrc */
   arch?: ArchConfig
+  /** type-aware 编排（FR-305）；oxlint spawn 参数，不进 .oxlintrc */
+  typeAware?: boolean
 }
 
 /** 生成 .oxlintrc 到 .lintsight-cache/（不污染项目根），返回路径与等价报告 */
@@ -364,5 +376,13 @@ export async function generateOxlintrc(
   const { oxlintrc, equivalent } = translate(parsed.config, { rulesPluginPath })
   const oxlintrcPath = path.join(cacheDir, 'oxlintrc.json')
   await Bun.write(oxlintrcPath, JSON.stringify(oxlintrc, null, 2))
-  return { oxlintrcPath, equivalent, arch: parsed.config.arch }
+  return {
+    oxlintrcPath,
+    equivalent,
+    arch: parsed.config.arch,
+    typeAware: parsed.config.typeAware
+  }
 }
+
+/** tsconfig.json 是 JSONC（注释/尾逗号）——供 cli 侧读取 tsconfig paths（FR-304 别名兜底） */
+export { parseJsonc } from './jsonc'

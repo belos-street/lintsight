@@ -7,6 +7,17 @@ pub struct EngineInput {
     pub files: Vec<String>,
     /// M2 架构规则配置（T2.4，config-bridge 校验后直传）；None = 不注册 arch 规则
     pub arch: Option<ArchConfig>,
+    /// tsconfig paths 映射（FR-304 别名兜底，Bun 侧归一化：相对 root、POSIX、
+    /// 已按 TS best-match 排序）；None = 裸说明符维持跳过语义
+    #[serde(rename = "tsPaths")]
+    pub ts_paths: Option<Vec<TsPathMapping>>,
+}
+
+/// tsconfig paths 单条映射（pattern/targets 保留 `*` 通配）
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct TsPathMapping {
+    pub pattern: String,
+    pub targets: Vec<String>,
 }
 
 /// 架构边界配置（design-m2 §4.1 arch-rules；shape 由 Bun config-bridge 校验保证）
