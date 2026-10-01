@@ -1,11 +1,12 @@
 import pkg from '../package.json'
+import path from 'node:path'
 import { runPipeline } from './pipeline'
 import { formatters, type FormatName } from '@lintsight/formatter'
 import { createLogger, type LogLevel } from '@lintsight/shared'
 
 const args = process.argv.slice(2)
 
-const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text] [--log-level debug|info|warn|error] [--fix] [--no-cache]`
+const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text] [--output <file>] [--log-level debug|info|warn|error] [--fix] [--no-cache]`
 
 function readOption(name: string): string | undefined {
   const i = args.indexOf(name)
@@ -34,7 +35,7 @@ if (!['debug', 'info', 'warn', 'error'].includes(logLevel)) {
   process.exit(2)
 }
 
-const optionNames = ['--format', '--log-level', '--config']
+const optionNames = ['--format', '--log-level', '--config', '--output']
 const paths = args.filter(
   (a, i) => !a.startsWith('-') && !optionNames.includes(args[i - 1]) // 前一个是选项名 → 当前是选项值
 )
@@ -52,5 +53,14 @@ const result = await runPipeline(paths, {
   cache: !args.includes('--no-cache')
 })
 if (result.error) logger.error(result.error)
-if (result.report) console.log(formatters[format as FormatName](result.report))
+if (result.report) {
+  const formatted = formatters[format as FormatName](result.report)
+  const output = readOption('--output')
+  if (output) {
+    // 报告落盘（平台对接 / IDE 浏览）；stdout 行为不变
+    await Bun.write(path.resolve(output), formatted)
+    logger.info(`report written: ${path.resolve(output)}`)
+  }
+  console.log(formatted)
+}
 process.exit(result.exitCode)
