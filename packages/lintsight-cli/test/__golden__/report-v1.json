@@ -1,9 +1,9 @@
 {
   "contractVersion": "1",
-  "files": 129,
+  "files": 131,
   "summary": {
-    "error": 68,
-    "warning": 29,
+    "error": 71,
+    "warning": 30,
     "info": 0
   },
   "diagnostics": [
@@ -921,6 +921,66 @@
       },
       "fingerprint": "8d2f980c557b654ec3cc57954e1c87b2b8e201dad715576012b9e3d34c5eaf24",
       "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Function 'loadFromUser' is declared but never used.",
+      "file": "fixtures/ts/no-non-literal-fs-filename.bad-4.ts",
+      "span": {
+        "offset": 145,
+        "length": 12,
+        "line": 4,
+        "column": 10
+      },
+      "fingerprint": "e290d66c68a70c25589159137afd714dea962f4fcab2c6acc40af23b7a68c6e3",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "lintsight/no-non-literal-fs-filename",
+      "severity": "warning",
+      "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
+      "file": "fixtures/ts/no-non-literal-fs-filename.bad-4.ts",
+      "span": {
+        "offset": 208,
+        "length": 33,
+        "line": 6,
+        "column": 10
+      },
+      "fingerprint": "f63ff671d0e6c612b4b98a442d2f3033c7ce4a0211cdc882ec5e60e53c781bce",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Function 'readMdFile' is declared but never used.",
+      "file": "fixtures/ts/no-non-literal-fs-filename.good-3.ts",
+      "span": {
+        "offset": 151,
+        "length": 10,
+        "line": 4,
+        "column": 10
+      },
+      "fingerprint": "82cdee12be0c1880c86f0d08708bc3fe1505c4a1a150da3ebf2aa8faadb8b0ae",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "1",
+      "ruleId": "eslint/no-unused-vars",
+      "severity": "error",
+      "message": "Function 'listPosts' is declared but never used.",
+      "file": "fixtures/ts/no-non-literal-fs-filename.good-3.ts",
+      "span": {
+        "offset": 245,
+        "length": 9,
+        "line": 8,
+        "column": 10
+      },
+      "fingerprint": "15318b4f4bce4427e7b56597ab3b9862d0d53798d850f845ccece2935debbe25",
+      "owner": "oxlint-native"
     },
     {
       "contractVersion": "1",

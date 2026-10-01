@@ -140,8 +140,15 @@ describe('P0 安全规则契约', () => {
         file: 'fixtures/ts/no-non-literal-fs-filename.bad-3.ts',
         expect: [{ line: 5, column: 3 }]
       },
+      // T1.19 #1 反哺：私有函数内但路径为局部变量（非参数）→ 仍报
+      {
+        file: 'fixtures/ts/no-non-literal-fs-filename.bad-4.ts',
+        expect: [{ line: 6, column: 10 }]
+      },
       { file: 'fixtures/ts/no-non-literal-fs-filename.good-1.ts', expect: [] },
-      { file: 'fixtures/ts/no-non-literal-fs-filename.good-2.ts', expect: [] }
+      { file: 'fixtures/ts/no-non-literal-fs-filename.good-2.ts', expect: [] },
+      // T1.19 #1 反哺：未导出 helper 的路径参数（含闭包引用外层参数）→ 豁免
+      { file: 'fixtures/ts/no-non-literal-fs-filename.good-3.ts', expect: [] }
     ]
     const { tester, results } = await runCases(
       'lintsight/no-non-literal-fs-filename',

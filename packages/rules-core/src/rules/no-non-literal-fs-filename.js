@@ -22,7 +22,7 @@ export default {
       ],
       falsePositives: [
         '命名启发（path/file/dir）与 fs 对象识别都很宽；low confidence 仅供人工复核',
-        '内部 fs utility 函数接收路径参数（如 readMdFile(filePath)）——路径来源在调用侧，utility 被逐调用点名（text-rpg 实测 11 条同型噪音；M1.5 候选改进：文件内私有 helper 启发式豁免）'
+        '未导出 helper 的路径参数不点名（如 readMdFile(filePath)）——参数来源在调用侧，语法级无法判定，跨模块审计归调用方/M2 taint（text-rpg 实测 11 条同型噪音，T1.19 #1 反哺转正）；导出函数的参数仍报'
       ]
     }
   },
@@ -46,7 +46,63 @@ export default {
       'openSync'
     ])
 
+    // 函数参数栈（T1.19 #1 反哺）：未导出函数的参数标识符豁免——
+    // 参数来源在调用侧，私有 helper 内部点名只是噪音；导出函数（模块边界 API）仍报。
+    // 栈式结构正确处理嵌套函数与参数遮蔽。
+    const fnStack = []
+
+    const collectParamNames = (params) => {
+      const names = new Set()
+      for (const p of params ?? []) {
+        if (p?.type === 'Identifier') names.add(p.name)
+        else if (
+          p?.type === 'AssignmentPattern' &&
+          p.left?.type === 'Identifier'
+        )
+          names.add(p.left.name)
+        else if (p?.type === 'RestElement' && p.argument?.type === 'Identifier')
+          names.add(p.argument.name)
+      }
+      return names
+    }
+    const isExported = (node) => {
+      let cur = node.parent
+      for (let depth = 0; cur && depth < 4; depth++) {
+        if (
+          cur.type === 'ExportNamedDeclaration' ||
+          cur.type === 'ExportDefaultDeclaration'
+        )
+          return true
+        cur = cur.parent
+      }
+      return false
+    }
+    const enterFn = (node) => {
+      fnStack.push({
+        paramNames: collectParamNames(node.params),
+        exported: isExported(node)
+      })
+    }
+    const exitFn = () => fnStack.pop()
+    // arg0 是某层函数的参数时，取定义它的最近一帧：私有 → 豁免，导出 → 仍报
+    const isParamOfPrivateFn = (arg0) => {
+      if (arg0?.type !== 'Identifier') return false
+      for (let i = fnStack.length - 1; i >= 0; i--) {
+        const frame = fnStack[i]
+        if (frame.paramNames.has(arg0.name)) return !frame.exported
+      }
+      return false
+    }
+
     return {
+      // ⚠️ oxlint 嵌入式 runtime 实测不支持 { enter, exit } 对象形态 visitor，
+      // 只认函数值 / ':exit' 后缀键——ESLint 标准的兼容缺口（1.83.0 实测）
+      FunctionDeclaration: enterFn,
+      'FunctionDeclaration:exit': exitFn,
+      FunctionExpression: enterFn,
+      'FunctionExpression:exit': exitFn,
+      ArrowFunctionExpression: enterFn,
+      'ArrowFunctionExpression:exit': exitFn,
       CallExpression(node) {
         const callee = node.callee
         if (callee?.type !== 'MemberExpression') return
@@ -73,6 +129,7 @@ export default {
         const named =
           arg0.type === 'Identifier' && /path|file|dir/i.test(arg0.name)
         if (named) {
+          if (isParamOfPrivateFn(arg0)) return // 未导出函数的参数 → 豁免（T1.19 #1）
           context.report({ node, messageId: 'nonLiteralPath' })
         }
       }
