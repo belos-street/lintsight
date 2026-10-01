@@ -1,16 +1,18 @@
 /**
  * SV6 → T1.1 迁移：竖切闭环验收（design-m1 §1 / requirements §11.3）。
  * CLI 输入 → config-bridge → oxlint(JS Plugin + .vue 虚拟块) → 带指纹 JSON → exit code。
+ * ⚠️ 扫描目标显式列出 fixtures 子目录：fixtures/options/ 是选项组用例（不进全量扫描面）。
  */
 import { describe, expect, test } from 'bun:test'
 import { runPipeline } from '../src/pipeline'
 
 const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
+const SCAN_TARGETS = ['fixtures/ts', 'fixtures/vue']
 
 describe('竖切闭环（§11.3）', () => {
   test('目录扫描：exit=1，TS 与 .vue 诊断齐全，JSON 重跑一致（指纹稳定）', async () => {
-    const r1 = await runPipeline(['fixtures'], { cwd: PROJECT_ROOT })
-    const r2 = await runPipeline(['fixtures'], { cwd: PROJECT_ROOT })
+    const r1 = await runPipeline(SCAN_TARGETS, { cwd: PROJECT_ROOT })
+    const r2 = await runPipeline(SCAN_TARGETS, { cwd: PROJECT_ROOT })
 
     expect(r1.exitCode).toBe(1)
     expect(r1.report).not.toBeNull()

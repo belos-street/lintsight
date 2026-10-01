@@ -23,7 +23,18 @@ const cases = [
     ]
   },
   { file: 'fixtures/ts/no-empty-catch.good-1.ts', expect: [] },
-  { file: 'fixtures/ts/no-empty-catch.good-2.ts', expect: [] }
+  { file: 'fixtures/ts/no-empty-catch.good-2.ts', expect: [] },
+  // —— T1.13 allowComments 选项组（RuleTester 按选项分组叠加 oxlintrc；fixtures/options/ 不进全量扫描面）——
+  {
+    file: 'fixtures/options/no-empty-catch.allowcomments.good-1.ts', // 注释占位 → 放行
+    expect: [],
+    options: { allowComments: true }
+  },
+  {
+    file: 'fixtures/options/no-empty-catch.allowcomments.bad-1.ts', // 无注释 → 仍报
+    expect: [{ line: 5, column: 5 }],
+    options: { allowComments: true }
+  }
 ]
 
 const tester = defineRuleTester({ ruleId: 'lintsight/no-empty-catch' })

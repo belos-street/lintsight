@@ -88,4 +88,6 @@ bun run corpus:check        # 语料库基线：全量扫描 + 双报率 0 断�
 | [docs/design/p0-rules-proposal-v0.1.md](docs/design/p0-rules-proposal-v0.1.md) | P0 规则清单提案（差异化 24+1 条，CWE/OWASP 映射，待评审） |
 | [docs/design/rule-sdk-rfc-v0.1.md](docs/design/rule-sdk-rfc-v0.1.md) | rule-sdk 接口 RFC（T1.0a，待评审） |
 | [docs/spikes/vertical-slice-m1.md](docs/spikes/vertical-slice-m1.md) | 竖切验证报告（技术可行性实证 + oxlint 行为实测） |
+| [docs/spikes/oxc-crate-poc.md](docs/spikes/oxc-crate-poc.md) | spike ①：oxc crate 直连 PoC（M2 路线验证，性能/内存/CFG 实测） |
+| [docs/spikes/tsgolint-spike3.md](docs/spikes/tsgolint-spike3.md) | spike ③：tsgolint 类型感知实测（跑通性/兼容坑/no-misused-promises/sourceCode 能力） |
 | [docs/todo.md](docs/todo.md) | 当前执行 Todo |

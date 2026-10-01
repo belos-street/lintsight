@@ -7,6 +7,13 @@ var no_empty_catch_default = {
     typeRequirement: "none",
     tags: [],
     fixable: undefined,
+    schema: [
+      {
+        type: "object",
+        properties: { allowComments: { type: "boolean" } },
+        additionalProperties: false
+      }
+    ],
     messages: {
       emptyCatch: "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)"
     },
@@ -18,15 +25,22 @@ var no_empty_catch_default = {
         "try { risky(); } catch (e) { logger.error(e); throw e; }"
       ],
       falsePositives: [
-        "注释占位的 catch 也会告警（零语句即触发）——正式版可增加 allowComments 选项"
+        "注释占位的 catch 默认仍告警（零语句即触发）；allowComments 选项可放行，默认关闭"
       ]
     }
   },
   create(context) {
+    const opts = Array.isArray(context.options) ? context.options[0] ?? {} : context.options ?? {};
+    const allowComments = opts.allowComments === true;
     return {
       CatchClause(node) {
         const statements = node.body?.body ?? [];
         if (statements.length === 0) {
+          if (allowComments) {
+            const comments = context.sourceCode?.getCommentsInside?.(node) ?? [];
+            if (comments.length > 0)
+              return;
+          }
           context.report({ node, messageId: "emptyCatch" });
         }
       }

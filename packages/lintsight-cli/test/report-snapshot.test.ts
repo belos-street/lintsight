@@ -13,7 +13,10 @@ const GOLDEN = new URL('./__golden__/report-v1.json', import.meta.url).pathname
 
 describe('JSON 报告 golden（contractVersion=1）', () => {
   test('fixtures 全量扫描报告', async () => {
-    const r = await runPipeline(['fixtures'], { cwd: PROJECT_ROOT })
+    // ⚠️ 显式列出子目录：fixtures/options/ 是选项组用例（不进全量扫描面，见 closed-loop 注释）
+    const r = await runPipeline(['fixtures/ts', 'fixtures/vue'], {
+      cwd: PROJECT_ROOT
+    })
     expect(r.report).not.toBeNull()
     // golden 统一以换行结尾（文件惯例），比对时对齐
     const actual = `${formatJson(r.report!)}\n`

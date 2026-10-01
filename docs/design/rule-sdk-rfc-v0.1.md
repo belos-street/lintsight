@@ -129,6 +129,7 @@ describe('lintsight/no-empty-catch', () => {
 
 1. meta 校验失败行为：加载期 throw（当前选择）vs 收集诊断统一报错？
 2. `sourceCode` 能力（注释查询/文本切片）是否 M1 必需——`no-hardcoded-credentials` 的词法扫描路径可以绕开 sourceCode，但 `allowComments` 选项（T1.13）需要注释访问。倾向：M1 最小暴露 `sourceCode.getText(node)` + `getAllComments()`，以 oxlint 实测为准。
+   **已拍板（2026-10-01，spike ③ 实测关闭）**：oxlint 嵌入式 runtime 的 `context.sourceCode` 为**完整 ESLint SourceCode API 面**（`getAllComments`/`getCommentsInside`/`getText`/`getJSDocComment`/tokens 系列全在，注释内容可读，见 [spikes/tsgolint-spike3.md](../spikes/tsgolint-spike3.md) 实测 C）。`allowComments` 已落地（`no-empty-catch`，默认关闭）；SDK 类型面按需渐进暴露，规则可直接经 `context.sourceCode` 访问。
 3. `createOnce`（per-program 单次 create）采用时机：M1 默认不用，`--debug timings` 前 10 热点再迁。
 4. `fixable` 类型启用节奏：与 T1.15 fix JSON 结构实测联动，M1 末补齐。
 5. defineRule 运行时的物理形态：插件文件必须自包含（嵌入 runtime 无 npm 解析）——候选：a) 构建期 bundle（rolldown/esbuild 把 SDK 内联进 index.js）；b) 规则文件手写裸对象 + SDK 仅做类型面。倾向 a（契约校验必须真实执行）。

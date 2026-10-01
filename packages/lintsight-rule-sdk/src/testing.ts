@@ -1,7 +1,10 @@
 /**
  * RuleTester（RFC §3）：bun test 承载，一次 oxlint spawn 批扫 + 按文件断言。
  * 断言只看目标 ruleId 的诊断，内置噪音不进契约；bad 期望非空 / good 期望空由结构强制。
+ * 规则选项（T1.13）：case 带 options 时按选项分组叠加生成独立 oxlintrc
+ * （config-bridge 选项数组语义，T1.8 实测有效），每组一次 spawn。
  */
+import { readFile } from 'node:fs/promises'
 import { runOxlint } from '@lintsight/cli/oxlint-bridge'
 import { generateOxlintrc, resolveConfigFile } from '@lintsight/config-bridge'
 import {
@@ -14,6 +17,8 @@ export interface RuleCase {
   file: string
   /** 期望诊断位置（1-based）；valid 用例传 [] */
   expect: { line: number; column: number }[]
+  /** 规则选项对象（如 { allowComments: true }）；缺省 = 产品默认配置 */
+  options?: Record<string, unknown>
 }
 
 export type CaseResults = Map<string, NormalizedDiagnostic[]>
@@ -33,28 +38,57 @@ export function defineRuleTester(opts: { ruleId: string }): RuleTester {
       // 与 pipeline 同款配置链路（dogfood）：lintsight.config.json → 生成 .oxlintrc → --config 显式传入，
       // 避免与根 dev 配置（.oxlintrc.json）漂移——规则契约必须按产品配置验收
       const configFile = resolveConfigFile(cwd)
-      let config: string | undefined
+      let baseOxlintrc: string | undefined
+      const cacheDir = `${cwd}/.lintsight-cache/rules-testing`
       if (configFile) {
-        const cacheDir = `${cwd}/.lintsight-cache/rules-testing`
-        config = (await generateOxlintrc(cwd, configFile, cacheDir))
+        baseOxlintrc = (await generateOxlintrc(cwd, configFile, cacheDir))
           .oxlintrcPath
       }
-      const scan = await runOxlint(
-        cases.map((c) => `${cwd}/${c.file}`),
-        { cwd, config }
-      )
-      if (!scan.output) {
-        throw new Error(
-          `RuleTester: oxlint 输出不可解析（exit=${scan.exitCode}）\n${scan.stderr.slice(0, 300)}`
-        )
+
+      // 按规则选项分组：同选项共享一次 spawn；无选项组走产品默认配置
+      const groups = new Map<string, RuleCase[]>()
+      for (const c of cases) {
+        const key = JSON.stringify(c.options ?? null)
+        const g = groups.get(key)
+        if (g) g.push(c)
+        else groups.set(key, [c])
       }
+
       const results: CaseResults = new Map()
-      for (const d of normalizeDiagnostics(scan.output, cwd)) {
-        if (d.ruleId !== ruleId) continue
-        const list = results.get(d.file) ?? []
-        list.push(d)
-        results.set(d.file, list)
-      }
+      await Promise.all(
+        [...groups.entries()].map(async ([key, groupCases]) => {
+          let config = baseOxlintrc
+          if (key !== 'null' && baseOxlintrc) {
+            // 叠加规则选项：rules[ruleId] = ['error', options]（T1.8 实测语义）
+            const raw = JSON.parse(await readFile(baseOxlintrc, 'utf8')) as {
+              rules?: Record<string, unknown>
+            }
+            raw.rules = raw.rules ?? {}
+            raw.rules[ruleId] = [
+              'error',
+              JSON.parse(key) as Record<string, unknown>
+            ]
+            const groupConfig = `${cacheDir}/options-${key.replace(/[^\w]/g, '_')}.json`
+            await Bun.write(groupConfig, JSON.stringify(raw, null, 2))
+            config = groupConfig
+          }
+          const scan = await runOxlint(
+            groupCases.map((c) => `${cwd}/${c.file}`),
+            { cwd, config }
+          )
+          if (!scan.output) {
+            throw new Error(
+              `RuleTester: oxlint 输出不可解析（exit=${scan.exitCode}）\n${scan.stderr.slice(0, 300)}`
+            )
+          }
+          for (const d of normalizeDiagnostics(scan.output, cwd)) {
+            if (d.ruleId !== ruleId) continue
+            const list = results.get(d.file) ?? []
+            list.push(d)
+            results.set(d.file, list)
+          }
+        })
+      )
       return results
     },
 

@@ -9,7 +9,7 @@
 
 - [x] T1.0a **rule-sdk 接口 RFC 评审**：[rule-sdk-rfc-v0.1.md](design/rule-sdk-rfc-v0.1.md)——用户评审通过；开放问题 5 拍板 M1 形态 = 裸对象 + 测试期 definePlugin 校验（bundle 方案 M1.5）；M1 冻结面 = create + visitor
 - [x] T1.0b **P0 规则清单定稿**：[p0-rules-proposal-v0.1.md](design/p0-rules-proposal-v0.1.md) v0.1①——用户评审 6 点全部实证成立并吸收（no-then-without-catch 移入映射清单；innerhtml 单 severity；4 处边界注记；sync-io 转正），定稿 26 条
-- [ ] T1.0c spike ③ tsgolint 实测（可并行，不阻塞 S1~S5；M1 验收中 type-aware 相关承诺以其结论为前提；连带确认 typescript/no-misused-promises 生效性）
+- [x] T1.0c spike ③ tsgolint 实测 ✅ 2026-10-01：报告见 [spikes/tsgolint-spike3.md](spikes/tsgolint-spike3.md)。结论：type-aware 策略定案直接启用 `--type-aware`——三类存量形态全跑通（现代 tsconfig / 无 tsconfig JS 仓库 / monorepo 未 build）、开销 +23~38%、`no-misused-promises` 显式启用生效（⚠️ `--rules` 三列全空 ≠ 不可用）；TS7 移除选项（downlevelIteration/baseUrl/paths）→ tsconfig-error 诊断不阻断（桥接层须降级，别名兜底 FR-304 必要性实证）；无跨进程缓存；连带落地 T1.13（sourceCode 注释访问实证 → allowComments 选项 + RuleTester per-case options 基建）。**M1 门禁任务全清**
 
 ## S1 竖切正式化（执行级）✅ 2026-09-15
 
@@ -36,7 +36,7 @@
 ## S4 安全语法级规则（域级，可与 S3 并行）✅ 2026-09-16
 
 - [x] T1.12 安全 P0 规则全量完成 ✅ 2026-09-16：14 条 CWE/OWASP 对齐 checker（hardcoded-credentials 798 / unsafe-regex 1333 / prototype-pollution-syntax 1321 / child-process-nonliteral 78 / non-literal-fs-filename 22 [low 禁门禁] / non-literal-require 94 / weak-hash 327 / math-random-secret 338 / sensitive-storage 312 / innerhtml-assignment 79 / sql-concat 89 / cors-wildcard 942 / vm-dynamic-code 94 / insecure-cookie 614）；每条 3 bad / 2 good 用例先行；注册表 25 条全登记；88/88 全绿；dogfood 修复自指误报后 0 error
-- [ ] T1.13 `no-empty-catch` 的 `allowComments` 选项（S4 唯一遗留，**不阻塞 S4 验收**；依赖 RFC 开放问题 2 的 sourceCode 注释访问能力——oxlint 嵌入式 runtime 能力面未实测前不承诺，随 spike ③ 一并实测后定案）
+- [x] T1.13 `no-empty-catch` 的 `allowComments` 选项 ✅ 2026-10-01：spike ③ 实证 sourceCode 注释访问能力可用（RFC 开放问题 2 关闭）→ 选项落地（默认关闭，注释占位放行）；RuleTester 补 per-case options 基建（按选项分组叠加 oxlintrc）；选项组 fixture 移入 `fixtures/options/`（不进全量扫描面）；7/7 全绿
 
 ## S5 Vue 正式版（域级）✅ 2026-10-01
 
