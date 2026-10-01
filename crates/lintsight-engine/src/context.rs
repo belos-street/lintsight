@@ -102,6 +102,10 @@ pub fn with_context<'a, T>(
 
 #[allow(dead_code)]
 impl<'a> FileContext<'a> {
+    pub fn rel_path(&self) -> &str {
+        &self.rel_path
+    }
+
     pub fn source(&self) -> &'a str {
         self.source
     }

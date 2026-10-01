@@ -5,6 +5,25 @@ use serde::Serialize;
 #[derive(serde::Deserialize)]
 pub struct EngineInput {
     pub files: Vec<String>,
+    /// M2 架构规则配置（T2.4，config-bridge 校验后直传）；None = 不注册 arch 规则
+    pub arch: Option<ArchConfig>,
+}
+
+/// 架构边界配置（design-m2 §4.1 arch-rules；shape 由 Bun config-bridge 校验保证）
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct ArchConfig {
+    pub zones: Vec<ArchZone>,
+}
+
+#[derive(Debug, Clone, serde::Deserialize)]
+pub struct ArchZone {
+    pub name: String,
+    /// 文件归属 glob（POSIX 相对路径；首匹配生效）
+    #[serde(rename = "match")]
+    pub match_paths: Vec<String>,
+    /// 允许 import 的目标 glob（同 zone 互引恒允许，无需列举）
+    #[serde(default)]
+    pub allow: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]

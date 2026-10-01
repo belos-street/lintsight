@@ -24,7 +24,11 @@ import {
   writebackFix,
   type VirtualVueFile
 } from '@lintsight/vue-processor'
-import { generateOxlintrc, resolveConfigFile } from '@lintsight/config-bridge'
+import {
+  generateOxlintrc,
+  resolveConfigFile,
+  type ArchConfig
+} from '@lintsight/config-bridge'
 import { createLogger, type Logger } from '@lintsight/shared'
 import {
   createCacheKey,
@@ -119,11 +123,13 @@ export async function runPipeline(
 
   // 配置解析：lintsight.config.json → 生成 .oxlintrc（--config 显式传入，避免自动发现歧义）
   let oxlintrcPath: string | undefined
+  let arch: ArchConfig | undefined
   try {
     const configFile = resolveConfigFile(cwd, opts.config)
     if (configFile) {
       const generated = await generateOxlintrc(cwd, configFile, cacheDir)
       oxlintrcPath = generated.oxlintrcPath
+      arch = generated.arch
       logger.info(`config: ${configFile} → ${oxlintrcPath}`)
     } else {
       logger.info(
@@ -279,7 +285,10 @@ export async function runPipeline(
       // 回映射（scanRel → storeRel）→ 统一模型 → 按文件分组（= 缓存条目粒度）
       const engineResult = await runEngine(
         misses.map((m) => m.scanRel),
-        { cwd }
+        {
+          cwd,
+          arch
+        }
       )
       if (engineResult.degraded) {
         logger.warn(

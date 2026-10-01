@@ -8,7 +8,7 @@ use oxc_ast::AstKind;
 use oxc_span::Span;
 
 use crate::context::FileContext;
-use crate::protocol::PathEvent;
+use crate::protocol::{ArchConfig, PathEvent};
 use crate::taint::TaintTables;
 
 pub struct RawDiag {
@@ -102,12 +102,35 @@ impl EngineRule for NoPathTraversal {
 }
 
 /// 全部引擎规则登记处（表交叠校验随登记执行——校验失败即引擎启动 panic，
-/// Bun 侧 fail-open 降级，cargo test 提前拦截）
-pub fn registry() -> Vec<Box<dyn EngineRule>> {
+/// Bun 侧 fail-open 降级，cargo test 提前拦截）。
+/// arch 配置缺省时架构规则不注册（Summary.rules 亦不含）。
+pub fn registry(arch: Option<&ArchConfig>) -> Vec<Box<dyn EngineRule>> {
     PATH_TRAVERSAL_TABLES
         .validate()
         .expect("no-path-traversal 函数表交叠");
-    vec![Box::new(NoEval), Box::new(NoPathTraversal)]
+    let mut rules: Vec<Box<dyn EngineRule>> = vec![Box::new(NoEval), Box::new(NoPathTraversal)];
+    if let Some(cfg) = arch {
+        rules.push(Box::new(ArchBoundaries {
+            config: cfg.clone(),
+        }));
+    }
+    rules
+}
+
+/// arch-boundaries（T2.4）：zone 依赖方向，配置驱动（stdin 下发，缺省不注册）。
+/// 拥有配置克隆（'static）——不借用 stdin 输入的生命周期。
+struct ArchBoundaries {
+    config: ArchConfig,
+}
+
+impl EngineRule for ArchBoundaries {
+    fn id(&self) -> &'static str {
+        crate::arch::rule_id()
+    }
+
+    fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
+        crate::arch::run(ctx, &self.config)
+    }
 }
 
 #[cfg(test)]
@@ -203,5 +226,52 @@ fs.writeFileSync(files[0], 'x')
     #[test]
     fn tables_have_no_overlap() {
         assert!(PATH_TRAVERSAL_TABLES.validate().is_ok());
+    }
+
+    // —— arch-boundaries（T2.4） ——
+
+    #[test]
+    fn arch_zone_boundary_violation_and_allow() {
+        let cfg: ArchConfig = serde_json::from_str(
+            r#"{"zones":[
+                {"name":"core","match":["src/core/**"],"allow":["src/core/**"]},
+                {"name":"ui","match":["src/ui/**"],"allow":["src/core/**"]}
+            ]}"#,
+        )
+        .unwrap();
+        let allocator = oxc_allocator::Allocator::default();
+
+        // core → ui：越界（ui 不在 core 的 allow）
+        let mut out = Vec::new();
+        crate::context::with_context(
+            &allocator,
+            "src/core/a.ts",
+            "import { x } from '../ui/b'\n",
+            |ctx| {
+                out = crate::arch::run(ctx, &cfg);
+            },
+        );
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].rule_id, "lintsight-engine/arch-boundaries");
+        assert!(out[0].message.contains("'core' → 'ui'"));
+
+        // ui → core：allow 放行
+        let mut out = Vec::new();
+        crate::context::with_context(
+            &allocator,
+            "src/ui/b.ts",
+            "import { x } from '../core/a'\nimport 'lodash'\n",
+            |ctx| {
+                out = crate::arch::run(ctx, &cfg);
+            },
+        );
+        assert!(out.is_empty(), "allow 内 + 裸说明符不得报告");
+
+        // 未归 zone 文件不受约束
+        let mut out = Vec::new();
+        crate::context::with_context(&allocator, "src/other/c.ts", "import '../ui/b'\n", |ctx| {
+            out = crate::arch::run(ctx, &cfg);
+        });
+        assert!(out.is_empty());
     }
 }

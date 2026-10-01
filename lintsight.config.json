@@ -9,7 +9,7 @@
     "lintsight/no-array-map-side-effect": "warn",
     "lintsight/no-json-structured-clone": "warn",
     "lintsight/no-ignored-reduce-result": "error",
-    "lintsight/no-empty-promise-catch": "error",
+    "lintsight/no-empty-promise-catch": "warn",
     "lintsight/no-async-constructor-call": "warn",
     "lintsight/no-sync-io-in-async": "warn",
     "lintsight/no-hardcoded-credentials": "error",
@@ -30,5 +30,16 @@
   "ignore": [],
   "overrides": [
     { "files": ["**/*.vue"], "processor": "@lintsight/vue" }
-  ]
+  ],
+  // M2 架构规则（T2.4 dogfood）：自有规则源零运行时依赖——不得引用其他 packages/plugins
+  "arch": {
+    "zones": [
+      { "name": "rules-core", "match": ["packages/rules-core/**"], "allow": [] },
+      {
+        "name": "cli",
+        "match": ["packages/lintsight-cli/**"],
+        "allow": ["packages/**", "plugins/**"]
+      }
+    ]
+  }
 }

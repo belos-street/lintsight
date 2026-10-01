@@ -2,8 +2,8 @@
   "contractVersion": "1",
   "files": 131,
   "summary": {
-    "error": 71,
-    "warning": 30,
+    "error": 68,
+    "warning": 33,
     "info": 0
   },
   "diagnostics": [
@@ -520,7 +520,7 @@
     {
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-promise-catch",
-      "severity": "error",
+      "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
       "file": "fixtures/ts/no-empty-promise-catch.bad-1.ts",
       "span": {
@@ -535,7 +535,7 @@
     {
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-promise-catch",
-      "severity": "error",
+      "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
       "file": "fixtures/ts/no-empty-promise-catch.bad-2.ts",
       "span": {
@@ -550,7 +550,7 @@
     {
       "contractVersion": "1",
       "ruleId": "lintsight/no-empty-promise-catch",
-      "severity": "error",
+      "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
       "file": "fixtures/ts/no-empty-promise-catch.bad-3.ts",
       "span": {

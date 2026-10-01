@@ -67,6 +67,47 @@ describe('schema 校验（友好错误含字段路径）', () => {
   })
 })
 
+describe('arch 配置校验（T2.4）', () => {
+  test('合法 zones 通过并透传', () => {
+    const r = parseConfig(`{
+      "arch": { "zones": [
+        { "name": "core", "match": ["src/core/**"], "allow": [] },
+        { "name": "ui", "match": ["src/ui/**"], "allow": ["src/core/**"] }
+      ] }
+    }`)
+    expect(r.ok).toBeTrue()
+    expect(r.config!.arch!.zones).toHaveLength(2)
+    expect(r.config!.arch!.zones[1]).toEqual({
+      name: 'ui',
+      match: ['src/ui/**'],
+      allow: ['src/core/**']
+    })
+  })
+
+  test('match 空数组 / name 缺失 / zones 非数组 → 字段路径报错', () => {
+    const empty = parseConfig(
+      '{ "arch": { "zones": [{ "name": "x", "match": [], "allow": [] }] } }'
+    )
+    expect(empty.ok).toBeFalse()
+    expect(empty.errors[0]).toContain('arch.zones[0].match')
+
+    const noName = parseConfig(
+      '{ "arch": { "zones": [{ "match": ["a/**"] }] } }'
+    )
+    expect(noName.ok).toBeFalse()
+    expect(noName.errors[0]).toContain('arch.zones[0].name')
+
+    const badZones = parseConfig('{ "arch": { "zones": "nope" } }')
+    expect(badZones.ok).toBeFalse()
+    expect(badZones.errors[0]).toContain('arch.zones')
+  })
+
+  test('arch 缺省 → undefined（规则不注册）', () => {
+    const r = parseConfig('{ "rules": {} }')
+    expect(r.config!.arch).toBeUndefined()
+  })
+})
+
 describe('翻译器', () => {
   const config = parseConfig(`{
     "rules": { "lintsight/a": "off", "lintsight/b": ["error", { "x": 1 }] },

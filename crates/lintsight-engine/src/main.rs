@@ -12,6 +12,7 @@
 //! （每文件独立 arena，分析完即 drop——峰值 ≈ 最大单文件，与批大小无关）。
 
 mod analyze;
+mod arch;
 mod context;
 mod protocol;
 mod rules;
@@ -37,7 +38,7 @@ fn main() {
     let input: protocol::EngineInput = serde_json::from_str(&stdin)
         .unwrap_or_else(|e| protocol::fatal(&format!("stdin JSON parse failed: {e}")));
 
-    let rules = rules::registry();
+    let rules = rules::registry(input.arch.as_ref());
     let mut diagnostics = Vec::new();
     let mut scanned = 0usize;
 

@@ -19,7 +19,8 @@ export default {
       goodExamples: ['fetch(url).catch((e) => logger.error(e))'],
       falsePositives: [
         '命名处理器（.catch(handleError)）无法证明为空，保守不报',
-        'promise 链隔离层：catch 后的原 promise 仍暴露给调用方（如 writeQueue.set(id, next.catch(() => {})); return next），错误未被实际吞掉——text-rpg storage.ts 实测误报（T1.19 首例标注，confidence high→medium）'
+        'promise 链隔离层：catch 后的原 promise 仍暴露给调用方（如 writeQueue.set(id, next.catch(() => {})); return next），错误未被实际吞掉——text-rpg storage.ts 实测误报（T1.19 首例标注，confidence high→medium）',
+        'best-effort 清理：临时文件删除等收尾操作失败无需处理（如 unlink(virtualFile).catch(() => {})）——lintsight 自身 pipeline dogfood 实测（T2.4）'
       ]
     }
   },

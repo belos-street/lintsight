@@ -4,7 +4,7 @@
  * 降级用例通过 OXLINT_ENGINE_BIN 注入假二进制（不存在 / 协议损坏）。
  */
 import { describe, expect, test } from 'bun:test'
-import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { chmod, cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { resolveEngineBin, runEngine } from '../src/engine-bridge'
@@ -114,6 +114,54 @@ describe('engine-bridge: pipeline 集成（degraded 透传）', () => {
       ).toBe(true)
     } finally {
       restore()
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('engine-bridge: arch 规则集成（T2.4）', () => {
+  test('zone 越界 import → lintsight-engine/arch-boundaries 进统一报告', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-arch-'))
+    try {
+      // lintsight.config.json 形态要求插件产物可解析（业务项目布局）
+      await cp(path.join(PROJECT_ROOT, 'plugins'), path.join(dir, 'plugins'), {
+        recursive: true
+      })
+      await mkdir(path.join(dir, 'src/core'), { recursive: true })
+      await mkdir(path.join(dir, 'src/ui'), { recursive: true })
+      await writeFile(
+        path.join(dir, 'lintsight.config.json'),
+        JSON.stringify({
+          rules: {},
+          arch: {
+            zones: [
+              { name: 'core', match: ['src/core/**'], allow: [] },
+              { name: 'ui', match: ['src/ui/**'], allow: ['src/core/**'] }
+            ]
+          }
+        })
+      )
+      await writeFile(path.join(dir, 'src/ui/b.ts'), 'export const b = 2\n')
+      // core allow 为空 → 跨 zone 引用越界
+      await writeFile(
+        path.join(dir, 'src/core/a.ts'),
+        "import { b } from '../ui/b'\nconsole.log(b)\n"
+      )
+      // ui → core：allow 放行
+      await writeFile(
+        path.join(dir, 'src/ui/c.ts'),
+        "import { b } from '../core/a'\nconsole.log(b)\n"
+      )
+      const r = await runPipeline(['.'], { cwd: dir })
+      const hits =
+        r.report?.diagnostics.filter(
+          (d) => d.ruleId === 'lintsight-engine/arch-boundaries'
+        ) ?? []
+      expect(hits).toHaveLength(1)
+      expect(hits[0].file).toBe('src/core/a.ts')
+      expect(hits[0].span.line).toBe(1)
+      expect(hits[0].owner).toBe('lintsight-engine')
+    } finally {
       await rm(dir, { recursive: true, force: true })
     }
   })

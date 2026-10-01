@@ -19,10 +19,26 @@ export interface LintsightOverride {
   processor?: string
 }
 
+/** 架构边界 zone（T2.4）：文件按 match 首匹配归zone；同 zone 互引恒允许；
+ * 跨 zone import 的目标必须命中 allow（词法 glob，v0 不解析别名/别名路径） */
+export interface ArchZone {
+  name: string
+  /** 文件归属 glob（POSIX 相对路径） */
+  match: string[]
+  /** 允许 import 的目标 glob（同 zone 恒允许，无需列举） */
+  allow: string[]
+}
+
+export interface ArchConfig {
+  zones: ArchZone[]
+}
+
 export interface LintsightConfig {
   rules?: Record<string, RuleSetting>
   ignore?: string[]
   overrides?: LintsightOverride[]
+  /** M2 引擎架构规则（design-m2 §4.1 arch-rules）；undefined = 不启用 */
+  arch?: ArchConfig
 }
 
 // —— schema 校验（手写，报友好错误：字段路径 + 期望值） ——
@@ -145,6 +161,52 @@ export function validateConfig(raw: unknown): {
         }
         config.overrides!.push(entry)
       })
+    }
+  }
+  if (o.arch !== undefined) {
+    if (
+      typeof o.arch !== 'object' ||
+      o.arch === null ||
+      Array.isArray(o.arch)
+    ) {
+      errors.push('arch: 期望对象')
+    } else {
+      const zones = (o.arch as Record<string, unknown>).zones
+      if (!Array.isArray(zones)) {
+        errors.push('arch.zones: 期望数组')
+      } else {
+        config.arch = { zones: [] }
+        zones.forEach((z, i) => {
+          const p = `arch.zones[${i}]`
+          if (typeof z !== 'object' || z === null || Array.isArray(z)) {
+            errors.push(`${p}: 期望对象`)
+            return
+          }
+          const zone = z as Record<string, unknown>
+          if (typeof zone.name !== 'string' || zone.name === '') {
+            errors.push(`${p}.name: 期望非空字符串`)
+            return
+          }
+          const isStrArr = (v: unknown) =>
+            Array.isArray(v) && v.every((x) => typeof x === 'string')
+          if (!isStrArr(zone.match) || (zone.match as string[]).length === 0) {
+            errors.push(`${p}.match: 期望非空字符串数组（glob）`)
+            return
+          }
+          if (!isStrArr(zone.allow)) {
+            errors.push(
+              `${p}.allow: 期望字符串数组（glob）；同 zone 互引无需列举`
+            )
+            return
+          }
+          config.arch!.zones.push({
+            name: zone.name,
+            match: zone.match as string[],
+            allow: zone.allow as string[]
+          })
+        })
+        if (errors.length > 0) config.arch = undefined
+      }
     }
   }
   return {
@@ -281,6 +343,8 @@ export interface GeneratedConfig {
   /** 生成的 .oxlintrc 绝对路径（.lintsight-cache/oxlintrc.json） */
   oxlintrcPath: string
   equivalent: EquivalenceRow[]
+  /** M2 引擎架构规则配置（undefined = 未启用）；直传 engine stdin，不进 .oxlintrc */
+  arch?: ArchConfig
 }
 
 /** 生成 .oxlintrc 到 .lintsight-cache/（不污染项目根），返回路径与等价报告 */
@@ -300,5 +364,5 @@ export async function generateOxlintrc(
   const { oxlintrc, equivalent } = translate(parsed.config, { rulesPluginPath })
   const oxlintrcPath = path.join(cacheDir, 'oxlintrc.json')
   await Bun.write(oxlintrcPath, JSON.stringify(oxlintrc, null, 2))
-  return { oxlintrcPath, equivalent }
+  return { oxlintrcPath, equivalent, arch: parsed.config.arch }
 }

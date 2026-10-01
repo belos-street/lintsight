@@ -10,6 +10,7 @@
  *   3. monorepo 开发态 cargo 产物路径（bun run 场景；compile 后不存在自动跳过）
  */
 import { existsSync } from 'node:fs'
+import type { ArchConfig } from '@lintsight/config-bridge'
 
 export interface EnginePathEvent {
   kind: 'source' | 'propagation' | 'sanitizer' | 'sink'
@@ -53,7 +54,7 @@ export function resolveEngineBin(cwd: string = process.cwd()): string | null {
 
 export async function runEngine(
   files: string[],
-  opts: { cwd?: string } = {}
+  opts: { cwd?: string; arch?: ArchConfig } = {}
 ): Promise<EngineRunResult> {
   const cwd = opts.cwd ?? process.cwd()
   const bin = resolveEngineBin(cwd)
@@ -68,7 +69,8 @@ export async function runEngine(
       stdout: 'pipe',
       stderr: 'pipe'
     })
-    proc.stdin.write(JSON.stringify({ files }))
+    // arch 配置（T2.4）随 stdin 下发；undefined 时引擎侧规则不注册
+    proc.stdin.write(JSON.stringify({ files, arch: opts.arch ?? null }))
     proc.stdin.end()
     // stderr 流必须消费（防子进程阻塞），内容不进结果（降级细节由调用方按需取 stderr）
     const [stdout] = await Promise.all([
