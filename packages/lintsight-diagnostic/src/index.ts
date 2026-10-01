@@ -62,10 +62,12 @@ export interface LintsightDiagnostic {
 
 // —— 归一化 ——
 
-/** "eslint(no-debugger)" → "eslint/no-debugger"；已含 "/" 的原样返回 */
+/** "eslint(no-debugger)" → "eslint/no-debugger"；已含 "/" 的原样返回。
+ * ⚠️ code 缺失兜底：JS plugin 崩溃时 oxlint 输出无 code 的诊断（实测 "Error running JS plugin"），归一为 internal/oxlint-plugin-error 供下游过滤。 */
 export function normalizeRuleId(code: string): string {
-  const m = code.match(/^([\w-]+)\(([\w-]+)\)$/)
-  return m ? `${m[1]}/${m[2]}` : code
+  const m = (code ?? '').match(/^([\w-]+)\(([\w-]+)\)$/)
+  if (m) return `${m[1]}/${m[2]}`
+  return code || 'internal/oxlint-plugin-error'
 }
 
 /** 把 filename 归一为相对项目根的 POSIX 路径。
