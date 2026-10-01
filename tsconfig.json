@@ -1,5 +1,5 @@
 {
-  "//": "仅供 IDE / 类型服务（bun runtime 不依赖本文件）：workspaces 裸名导入的 paths 映射。Bun 不在根 node_modules 链接 @lintsight/*，TS server 无 Bun 的 workspaces 解析能力，需此处显式映射。子路径导入按需显式列举（TS paths 模式仅允许单个 *）。",
+  "//": "仅供 IDE / 类型服务（bun runtime 不依赖本文件）：workspaces 裸名导入的 paths 映射。Bun 把 @lintsight/* 链接在各 member 的 node_modules 下（根 node_modules 无链接），TS server 无 Bun 的 workspaces 解析能力，需此处显式映射——包名与目录名不一致（@lintsight/diagnostic → lintsight-diagnostic），通配 * 无法表达，逐包显式列举。baseUrl 已被 TS7 移除（spike ③ 同类问题），paths 相对 tsconfig 解析须带 ./ 前缀。allowJs：plugins/lintsight-rules/index.js 是自动聚合产物（无类型声明），由 TS 从 JS 推断类型。types 显式锁 bun（TS7 不自动包含 node_modules/@types）。",
   "compilerOptions": {
     "target": "es2022",
     "module": "preserve",
@@ -7,14 +7,25 @@
     "allowImportingTsExtensions": true,
     "noEmit": true,
     "strict": true,
-    "baseUrl": ".",
+    "allowJs": true,
+    "types": ["bun"],
     "paths": {
-      "@lintsight/*": ["./packages/*/src/index.ts"],
+      "@lintsight/cli": ["./packages/lintsight-cli/src/index.ts"],
       "@lintsight/cli/oxlint-bridge": [
         "./packages/lintsight-cli/src/oxlint-bridge.ts"
       ],
+      "@lintsight/config-bridge": [
+        "./packages/lintsight-config-bridge/src/index.ts"
+      ],
+      "@lintsight/diagnostic": ["./packages/lintsight-diagnostic/src/index.ts"],
+      "@lintsight/formatter": ["./packages/lintsight-formatter/src/index.ts"],
+      "@lintsight/rule-sdk": ["./packages/lintsight-rule-sdk/src/index.ts"],
       "@lintsight/rule-sdk/testing": [
         "./packages/lintsight-rule-sdk/src/testing.ts"
+      ],
+      "@lintsight/shared": ["./packages/lintsight-shared/src/index.ts"],
+      "@lintsight/vue-processor": [
+        "./packages/lintsight-vue-processor/src/index.ts"
       ]
     }
   },
