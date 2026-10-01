@@ -34,6 +34,7 @@ import {
   writeCacheEntry,
   type CacheContext
 } from './cache'
+import { resolveEngineBin, runEngine } from './engine-bridge'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
 const SCAN_EXTS = new Set([
@@ -66,6 +67,8 @@ export interface PipelineResult {
   exitCode: 0 | 1 | 2
   report: LintsightReport | null
   error?: string
+  /** M2 引擎降级标注（design-m2 M2-DR3 fail-open）：true = 本轮曾尝试引擎但失败，纯 M1 出结果（不进报告 JSON） */
+  degraded?: boolean
 }
 
 async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
@@ -179,7 +182,8 @@ export async function runPipeline(
     cacheCtx = await initCache({
       cwd,
       oxlintrcPath,
-      lintsightVersion: pkg.version
+      lintsightVersion: pkg.version,
+      engineBin: resolveEngineBin(cwd)
     })
   }
 
@@ -233,6 +237,7 @@ export async function runPipeline(
   try {
     const missMap = new Map(misses.map((m) => [m.scanRel, m]))
     let scannedFiles = 0
+    let degraded = false
     if (misses.length > 0) {
       let result
       try {
@@ -272,6 +277,16 @@ export async function runPipeline(
       }
 
       // 回映射（scanRel → storeRel）→ 统一模型 → 按文件分组（= 缓存条目粒度）
+      const engineResult = await runEngine(
+        misses.map((m) => m.scanRel),
+        { cwd }
+      )
+      if (engineResult.degraded) {
+        logger.warn(
+          'engine: M2 sidecar 降级（启动/协议失败），本轮为纯 M1 扫描'
+        )
+      }
+
       for (const d of normalizeDiagnostics(result.output, cwd)) {
         const storeRel = missMap.get(d.file)?.storeRel ?? d.file
         const diag = toLintsightDiagnostic({ ...d, file: storeRel })
@@ -279,6 +294,24 @@ export async function runPipeline(
         if (group) group.push(diag)
         else results.set(storeRel, [diag])
       }
+
+      // M2 引擎诊断合并（design-m2 §4.3；协议 file = --root 相对路径，missMap 键同口径）
+      if (engineResult.diagnostics) {
+        for (const ed of engineResult.diagnostics) {
+          const storeRel = missMap.get(ed.file)?.storeRel ?? ed.file
+          const diag = toLintsightDiagnostic({
+            ruleId: ed.ruleId,
+            severity: ed.severity,
+            message: ed.message,
+            file: storeRel,
+            span: ed.span
+          })
+          const group = results.get(storeRel)
+          if (group) group.push(diag)
+          else results.set(storeRel, [diag])
+        }
+      }
+      degraded = engineResult.degraded
 
       // 缓存回写：只写本次真实扫描且内容哈希可得的文件
       await Promise.all(
@@ -307,6 +340,7 @@ export async function runPipeline(
 
     return {
       exitCode: summary.error > 0 ? 1 : 0,
+      degraded,
       report: {
         contractVersion: diagnostics[0]?.contractVersion ?? '1',
         files: units.length,

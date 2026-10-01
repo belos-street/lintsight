@@ -37,6 +37,8 @@ export interface InitCacheOptions {
   /** 生成的 .oxlintrc 绝对路径；undefined = 无显式配置（回落 oxlint 自动发现） */
   oxlintrcPath?: string
   lintsightVersion: string
+  /** M2 引擎二进制路径（design-m2 §4.3）；其内容哈希并入引擎指纹——引擎升级必须击穿缓存 */
+  engineBin?: string | null
 }
 
 async function sha256File(absPath: string): Promise<string | null> {
@@ -126,10 +128,15 @@ export async function initCache(opts: InitCacheOptions): Promise<CacheContext> {
     path.join(opts.cwd, '.oxlintrc.json')
   ])
 
+  // M2 引擎指纹：bin 内容哈希（缺失 = none；fail-open 下引擎诊断本来就为空）
+  const engineBinFp = opts.engineBin
+    ? ((await sha256File(opts.engineBin))?.slice(0, 16) ?? 'none')
+    : 'none'
+
   return {
     enabled: true,
     dir,
-    engine: `lintsight@${opts.lintsightVersion}|oxlint@${version}`,
+    engine: `lintsight@${opts.lintsightVersion}|oxlint@${version}|engine@${engineBinFp}`,
     config,
     plugin
   }

@@ -9,6 +9,9 @@ const entry = 'packages/rules-core/src/index.js'
 const out = 'plugins/lintsight-rules/index.js'
 
 await Bun.$`bun build ${entry} --outfile ${out} --target=browser --format=esm`.quiet()
+// 产物也过 oxfmt（format 脚本覆盖 plugins/）——否则 test 重建（bun build 默认双引号）
+// 与 format（单引号）来回翻转，git 每次必漂移
+await Bun.$`bunx oxfmt ${out}`.quiet()
 
 const text = await Bun.file(out).text()
 if (/^\s*import\s/m.test(text)) {

@@ -47,7 +47,7 @@ export interface NormalizedDiagnostic {
 
 // —— 统一诊断模型（平台消费面） ——
 
-export type Owner = 'oxlint-native' | 'lintsight-js'
+export type Owner = 'oxlint-native' | 'lintsight-js' | 'lintsight-engine'
 
 export interface LintsightDiagnostic {
   contractVersion: string
@@ -117,7 +117,9 @@ export function computeFingerprint(d: NormalizedDiagnostic): string {
 }
 
 export function deriveOwner(ruleId: string): Owner {
-  return ruleId.startsWith('lintsight/') ? 'lintsight-js' : 'oxlint-native'
+  if (ruleId.startsWith('lintsight/')) return 'lintsight-js'
+  if (ruleId.startsWith('lintsight-engine/')) return 'lintsight-engine'
+  return 'oxlint-native'
 }
 
 export function toLintsightDiagnostic(
