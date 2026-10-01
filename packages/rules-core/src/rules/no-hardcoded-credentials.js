@@ -23,6 +23,7 @@ export default {
       goodExamples: ['const apiKey = process.env.API_KEY'],
       falsePositives: [
         '键名命中但值为占位/空/非凭证语义（长度 < 6 的字符串不触发）',
+        '裸 token 属性承载非凭证语义（语言学词元/设计 token 等）：值不含数字/非字母字符且长度 < 12 时不触发（Lexio 项目 diffTokens 词元误报实证，T1.19 #2）',
         '测试文件的样例凭证（后续可加 test 目录豁免选项）'
       ]
     }
@@ -34,12 +35,21 @@ export default {
     function isSuspectName(name) {
       return typeof name === 'string' && NAME.test(name)
     }
-    function isCredentialLiteral(value) {
-      return (
-        value?.type === 'Literal' &&
-        typeof value.value === 'string' &&
-        value.value.length >= 6
-      )
+    function isCredentialLiteral(value, name) {
+      if (
+        value?.type !== 'Literal' ||
+        typeof value.value !== 'string' ||
+        value.value.length < 6
+      ) {
+        return false
+      }
+      // 裸 token 多义（语言学词元/设计 token/会话 token）——要求值具备凭证形态：
+      // 含数字或非字母字符，或长度 ≥ 12；纯字母短词不触发（T1.19 #2 误报反哺）
+      if (/^token$/i.test(name ?? '')) {
+        const v = value.value
+        return v.length >= 12 || /\d/.test(v) || /[^a-zA-Z]/.test(v)
+      }
+      return true
     }
     function report(node, name) {
       context.report({ node, messageId: 'hardcoded', data: { name } })
@@ -50,7 +60,7 @@ export default {
         if (
           node.id?.type === 'Identifier' &&
           isSuspectName(node.id.name) &&
-          isCredentialLiteral(node.init)
+          isCredentialLiteral(node.init, node.id.name)
         ) {
           report(node, node.id.name)
         }
@@ -61,7 +71,7 @@ export default {
         if (
           node.kind === 'init' &&
           isSuspectName(keyName) &&
-          isCredentialLiteral(node.value)
+          isCredentialLiteral(node.value, keyName)
         ) {
           report(node, keyName)
         }
@@ -75,7 +85,7 @@ export default {
                 target.property?.type === 'Identifier'
               ? target.property.name
               : null
-        if (isSuspectName(name) && isCredentialLiteral(node.right)) {
+        if (isSuspectName(name) && isCredentialLiteral(node.right, name)) {
           report(node, name)
         }
       }

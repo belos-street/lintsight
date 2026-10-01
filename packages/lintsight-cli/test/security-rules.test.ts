@@ -35,7 +35,9 @@ describe('P0 安全规则契约', () => {
         expect: [{ line: 3, column: 3 }]
       },
       { file: 'fixtures/ts/no-hardcoded-credentials.good-1.ts', expect: [] },
-      { file: 'fixtures/ts/no-hardcoded-credentials.good-2.ts', expect: [] }
+      { file: 'fixtures/ts/no-hardcoded-credentials.good-2.ts', expect: [] },
+      // T1.19 #2 反哺：裸 token 承载词元语义（纯字母短值）不触发
+      { file: 'fixtures/ts/no-hardcoded-credentials.good-3.ts', expect: [] }
     ]
     const { tester, results } = await runCases(
       'lintsight/no-hardcoded-credentials',
