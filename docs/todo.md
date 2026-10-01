@@ -71,38 +71,48 @@
 - [x] spike ⑤ **taint 竖切预演** ✅ 2026-10-01：报告见 [spikes/taint-poc-spike5.md](spikes/taint-poc-spike5.md)；代码 `crates/oxc-poc/src/taint.rs` + `taint-fixture.ts`。三场景全过：参数→join→sink 命中、basename sanitizer 豁免、readdir→for-of→sink 循环回边（28 轮不动点收敛，sink offset 去重）。教训回填 design-m2：source/sink 函数表不得交叠（登记期校验）、for-of 迭代变量必须显式处理、API 修正（BindingPattern 是 enum 无 Kind 包装）
 - 设计评审通过后 T2.1~T2.6 升执行级开工
 
-### T2.1 Rust 工程脚手架（执行级锚点：`cargo test` + bun 侧 spawn 联通）
+### T2.1 Rust 工程脚手架（执行级锚点：`cargo test` + bun 侧 spawn 联通）✅ 2026-10-01 (fa36df7)
 
-- [ ] `crates/lintsight-engine` 独立 cargo 工程（不进 Bun workspaces；oxc crates `=0.150.0` 精确锁 + deny.toml 门禁承接 spike ①）
-- [ ] sidecar 桥接：`bun run cli` 检测/调用 Rust 引擎二进制（进程编排、失败降级为纯 M1 扫描——fail-open 与缓存同纪律）
-- [ ] 统一诊断流：Rust 侧输出 contractVersion=1 兼容 JSON（复用 @lintsight/diagnostic 归一化 + 指纹口径）
+- [x] `crates/lintsight-engine` 独立 cargo 工程：JSON Lines 协议（stdin files → stdout diagnostic/summary，exit 2 fatal 语义）+ no-eval 联通验证规则；oxc `=0.150.0` 精确锁
+- [x] sidecar 桥接 `engine-bridge.ts`：二进制解析链（OXLINT_ENGINE_BIN → node_modules/.bin → cargo 产物）+ spawn 桥接；引擎缺失 = 正常形态、启动/协议失败 = degraded 降级纯 M1（M2-DR3 fail-open）；降级路径 ×3 + spawn 联通测试
+- [x] 统一诊断流：Owner 三值扩展（+lintsight-engine）+ deriveOwner 命名空间路由；引擎诊断经 missMap 回映射并入统一模型（contractVersion=1）；引擎二进制内容哈希并入缓存引擎指纹（升级击穿缓存）
+- 附带修复：build-rules 产物补过 oxfmt（test 重建与 format 来回翻转的漂移根因）
 
-### T2.2 L1/L2 消费层（基建白捡区，spike ① 代码产品化）
+### T2.2 L1/L2 消费层（基建白捡区，spike ① 代码产品化）✅ 2026-10-01 (7f5ce97)
 
-- [ ] Semantic/CFG 消费封装：scope/symbol/reference 查询面 + CFG 前向遍历（`nodes.cfg_id` 桥 = DFG 挂载点）
-- [ ] 内存纪律落地：流式分批 + 每 batch `Allocator` drop（spike ① 实测 1.1KB/LOC → 百万行需流式）
+- [x] FileContext 消费面（`context.rs`）：parse→semantic（with_build_nodes+with_cfg，cfg feature 回归哨兵测试）+ LineMap + ref2sym 反向表 + AST→CFG 块分组（taint 挂载点）+ source_text；scope-and-run（`with_context`）= oxc 惯用 arena 模式
+- [x] EngineRule trait + registry() 登记处（规则唯一接入面，铁律 2 的 Rust 轨道对应物）；Summary.rules 动态生成
+- [x] 内存纪律：Allocator 移入文件循环（每文件独立 arena）；实测峰值 ≈ 最大单文件与批大小无关——92k 行单文件 98MB / 200 文件 10 万行 4.3MB / 400 文件 20 万行 4.1MB（批翻倍 RSS 持平）
 
-### T2.3 taint 竖切（首切片，单文件，价值验证优先于覆盖面）
+### T2.3 taint 竖切（首切片，单文件，价值验证优先于覆盖面）✅ 2026-10-01 (c93b3f4)
 
-- [ ] 污点状态机 + 沿 CFG 前向 worklist 传播（source→propagation→sanitizer→sink；Backedge 进不动点迭代）
-- [ ] 首条规则：no-path-traversal（CWE-22 数据流版，接管 M1 语法级的复核清单场景）；语料基线 diff 门禁同 M1 纪律
-- [ ] 验收：text-rpg 的 readdir→join→readFile 场景正确判定（db.ts 有 SAVE_FILE_RE 校验 = sanitizer，不误报）
+- [x] taint 引擎产品化（`taint.rs`）：CFG 块前向 worklist + SymbolId 污染集 + 证据链伴随传播；函数表注册表驱动（M2-DR5）+ 登记期两两交叠校验；传播面 = join/赋值/for-of/索引访问/模板串/拼接，sanitizer = path.basename（混合实参保留清洗痕迹）
+- [x] no-path-traversal（CWE-22 数据流版）+ 协议可选 pathEvents（source→propagation*→[sanitizer]→sink，skip_serializing_if 向后兼容）；bridge 透传类型（contract v1 不变，合并层 T2.5 接入）
+- [x] 验收：text-rpg db.ts readdir→join→readFileSync 两条流命中且链完整（L159/L188），字面量 join 未误报；basename sanitizer 流零误报（契约用例）；corpus 基线一致（no-eval/no-path-traversal 语料零命中）；CLI 端到端 owner=lintsight-engine 并入报告
+- v0 边界（已文档化）：命名导入别名、箭头函数参数污点、跨文件/跨过程传播归 M3；函数参数不作 source（真实项目误报风暴，spike ⑤ 保守近似不产品化）
 
-### T2.4 架构规则（requirements §1.1 优先级 3，oxlint module graph 白捡区）
+### T2.4 架构规则 ✅ 2026-10-01 (713764d)
 
-- [ ] 跨层 import / 依赖方向约束（消费 oxlint project-wide module graph）
-- [ ] 依赖清单约束声明（lintsight.config.json 扩展）
+- [x] arch-boundaries：词法 import 图（import/export-from[0.150 独立节点 ExportFromDeclaration]/动态 import/require 字面量）+ 段级 glob（自实现零新依赖）+ zone 首匹配；语义 = 同 zone 内聚恒允许、跨 zone 必须命中 allow；span = import source 字面量
+- [x] 配置面：lintsight.config.json `arch.zones`（name/match/allow，config-bridge 字段路径友好校验）→ generateOxlintrc 透传 → stdin 下发引擎（arch 缺省规则不注册，Summary.rules 动态反映）；arch 变更经 configFp 自动击穿缓存
+- [x] dogfood：rules-core 零依赖边界 + cli 依赖面（58 文件零违例）；顺带 no-empty-promise-catch dogfood severity error→warn（medium 置信规则策略，best-effort 清理 FP 模式入册）
+- 误报复核清单（v0 边界，arch.rs 模块文档 + 此处备案）：① 命名别名（@scope/pkg、tsconfig paths）按裸说明符跳过（漏报不误报）② require/动态 import 仅字面量 ③ 扩展名省略为词法 normalize（不 stat 文件系统）④ zone 首匹配顺序敏感
 
-### T2.5 双引擎合并与平台契约
+### T2.5 双引擎合并与平台契约 ✅ 2026-10-01 (9645831)
 
-- [ ] 诊断合并排序 + 双报消解落地（§3.6 归属矩阵）
-- [ ] SARIF 输出（FR-402）/ 平台路径事件流契约（附录 C）
-- [ ] type-aware 集成：`--type-aware` 规则集编排 + tsconfig-error 诊断降级过滤（spike ③ 结论）+ 别名兜底（FR-304）
+- [x] 注册表：lintsight-engine 条目入册 + supersedes 消解对登记（仅 engine 条目可用，目标必须是在册 lintsight-js 规则，CI 校验锁定）；no-path-traversal ⊃ no-non-literal-fs-filename
+- [x] suppressSuperseded：数据流版命中行抑制同文件同行语法级版本；行级口径（JS/引擎锚点 span 不同实测列差 4，span 精确匹配无效）；纯函数保序；端到端测试（命中行抑制/无命中行保留）
+- [x] type-aware 编排（spike ③ 结论落地）：typescript(tsconfig-error) 归一化降级 info（不进 exit code）；SARIF 2.1.0 报告器（--format sarif，level 映射 + rules 去重排序 + schema 结构测试）
+- [x] 验收：corpus 三 owner 双报率 0；SARIF schema 快照测试
+- ⚠️ 剩余（升 M2.5 执行级候选）：`--type-aware` 子编排接入 oxlint-bridge（需 opt-in 策略决策——开销 +23~38%，倾向 lintsight.config.json 显式开关）；FR-304 别名解析兜底
 
-### T2.6 性能验收（§3.5 预算）
+### T2.6 性能验收（§3.5 预算）✅ 2026-10-01
 
-- [ ] rayon 文件级并行（默认 min(cpu-1, 8)，--concurrency 可调）
-- [ ] 15 万 LOC/s 验收（none 类规则单 worker 折算；spike ① 实测 349 万 LOC/s 上限余量充足）+ 10 万行全量 <60s
+- [x] rayon 文件级并行（par_iter 保序 collect = 串行一致性，EngineRule: Send+Sync；确定性回归测试 ×12 文件）；默认全核（--concurrency 可调未做，按需后补）
+- [x] bench 门禁扩展到引擎：hyperfine 引擎直测（stdin 重定向方案，本机 hyperfine 不支持 --stdin 参数）；硬门禁 = 万行 <1s + NFR-1 吞吐报告 + 回退 >15% 双门禁（CLI/引擎分离基线字段 engineMeanMs）
+- [x] 实测：引擎直测 5.9ms/万行 = **181 万 LOC/s（NFR-1 预算 15 万的 12 倍）**；10 万行 20ms 墙钟（5 线程 512% CPU）；峰值 RSS 12.4MB（≈线程数×单文件，内存纪律并行下保持）；CLI 全管线 194ms（与 M1 基线持平）
+
+**M2 执行切片 T2.1~T2.6 全部完成（2026-10-01）。挂起项：Vue 真实项目试用（需用户提供项目路径）；unicorn/no-new-array 上游 issue；--type-aware opt-in 编排 + FR-304 别名兜底（M2.5 候选）。**
 
 ## 远期占位（M3+ / 择机）
 

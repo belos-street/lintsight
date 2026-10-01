@@ -20,7 +20,8 @@ pub struct RawDiag {
     pub path_events: Vec<PathEvent>,
 }
 
-pub trait EngineRule {
+/// Send+Sync：T2.6 rayon 文件级并行要求规则可跨线程共享（规则须无内部可变状态）
+pub trait EngineRule: Send + Sync {
     fn id(&self) -> &'static str;
     fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag>;
 }

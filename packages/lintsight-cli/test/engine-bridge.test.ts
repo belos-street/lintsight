@@ -94,6 +94,31 @@ describe.skipIf(!engineBin)('engine-bridge: spawn 联通（真实 sidecar）', (
       await rm(dir, { recursive: true, force: true })
     }
   })
+
+  test('rayon 并行确定性（T2.6）：多文件多次运行输出一致', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-engine-det-'))
+    try {
+      const files = Array.from({ length: 12 }, (_, i) => `f${i}.ts`)
+      await Promise.all(
+        files.map((name, i) =>
+          writeFile(
+            path.join(dir, name),
+            i % 3 === 0 ? `eval("x${i}")\n` : `const a${i} = ${i}\n`
+          )
+        )
+      )
+      const r1 = await runEngine(files, { cwd: dir })
+      const r2 = await runEngine(files, { cwd: dir })
+      expect(r1.degraded).toBe(false)
+      // JSON Lines 输出确定性：par_iter 保序 collect，与串行一致（M1-DR4）
+      expect(JSON.stringify(r2.diagnostics)).toBe(
+        JSON.stringify(r1.diagnostics)
+      )
+      expect(r1.diagnostics).toHaveLength(4) // i%3===0 的 4 个文件命中 eval
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
 })
 
 describe('engine-bridge: pipeline 集成（degraded 透传）', () => {

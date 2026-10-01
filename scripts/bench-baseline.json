@@ -1,7 +1,8 @@
 {
   "meanMs": 194,
+  "engineMeanMs": 6,
   "lines": 10700,
   "files": 100,
-  "commit": "c71eef5",
+  "commit": "9645831",
   "date": "2026-10-01"
 }

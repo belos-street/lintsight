@@ -17,6 +17,8 @@ oxc_span = "=0.150.0"
 oxc_syntax = "=0.150.0"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# 文件级并行（T2.6）：每文件独立 arena，峰值 ≈ 线程数 × 最大单文件
+rayon = "1"
 
 [profile.release]
 lto = "thin"

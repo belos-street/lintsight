@@ -21,6 +21,7 @@ mod taint;
 use std::io::{self, Read};
 
 use oxc_allocator::Allocator;
+use rayon::prelude::*;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
@@ -39,29 +40,37 @@ fn main() {
         .unwrap_or_else(|e| protocol::fatal(&format!("stdin JSON parse failed: {e}")));
 
     let rules = rules::registry(input.arch.as_ref());
+
+    // 文件级并行（T2.6）：rayon par_iter，collect 保序 → 诊断顺序与串行一致
+    //（M1-DR4 确定性）；每文件独立 arena，峰值 ≈ 线程数 × 最大单文件
+    let file_results: Vec<Option<Vec<protocol::Diagnostic>>> = input
+        .files
+        .par_iter()
+        .map(|file| {
+            let abs = if file.starts_with('/') {
+                std::path::PathBuf::from(file)
+            } else {
+                root.join(file)
+            };
+            let Ok(source) = std::fs::read_to_string(&abs) else {
+                return None; // 读不到的文件跳过（Bun 侧已做过存在性筛选）
+            };
+            let rel = abs
+                .strip_prefix(&root)
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|_| file.clone());
+            let allocator = Allocator::default();
+            Some(analyze::analyze_file(&allocator, &rel, &source, &rules))
+        })
+        .collect();
+
     let mut diagnostics = Vec::new();
     let mut scanned = 0usize;
-
-    for file in &input.files {
-        let abs = if file.starts_with('/') {
-            std::path::PathBuf::from(file)
-        } else {
-            root.join(file)
-        };
-        let Ok(source) = std::fs::read_to_string(&abs) else {
-            continue; // 读不到的文件跳过（Bun 侧已做过存在性筛选）
-        };
-        let rel = abs
-            .strip_prefix(&root)
-            .map(|p| p.to_string_lossy().to_string())
-            .unwrap_or_else(|_| file.clone());
-        // 内存纪律（T2.2）：每文件独立 arena，analyze_file 返回即 drop——
-        // 整批文件绝不共享 arena，否则峰值 = 全批 AST 之和
-        let allocator = Allocator::default();
-        let analyzed = analyze::analyze_file(&allocator, &rel, &source, &rules);
-        diagnostics.extend(analyzed);
-        scanned += 1;
-        // allocator、source 在此 drop
+    for result in file_results {
+        if let Some(d) = result {
+            diagnostics.extend(d);
+            scanned += 1;
+        }
     }
 
     for d in &diagnostics {
