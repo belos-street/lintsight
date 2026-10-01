@@ -41,5 +41,6 @@ fn shape_diag(rel_path: &str, ctx: &FileContext, raw: RawDiag) -> Diagnostic {
             line,
             column,
         },
+        path_events: raw.path_events,
     }
 }

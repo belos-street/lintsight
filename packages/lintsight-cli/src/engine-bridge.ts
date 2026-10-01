@@ -11,12 +11,22 @@
  */
 import { existsSync } from 'node:fs'
 
+export interface EnginePathEvent {
+  kind: 'source' | 'propagation' | 'sanitizer' | 'sink'
+  /** 如 "fs.readdirSync" / "path.join" */
+  node: string
+  offset: number
+}
+
 export interface EngineDiagnostic {
   ruleId: string
   severity: 'error' | 'warning'
   message: string
   file: string
   span: { offset: number; length: number; line: number; column: number }
+  /** taint 规则证据链（design-m2 §4.2）；普通规则无此字段。
+   * contract v1 的 LintsightDiagnostic 暂不承载（T2.5 合并与契约切片接入）。 */
+  pathEvents?: EnginePathEvent[]
 }
 
 export interface EngineRunResult {

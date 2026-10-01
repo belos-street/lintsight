@@ -15,6 +15,15 @@ pub struct Span {
     pub column: u32,
 }
 
+/// taint 证据链事件（design-m2 §4.2 附录 C v0）：kind ∈ source|propagation|sanitizer|sink
+#[derive(Debug, Clone, Serialize)]
+pub struct PathEvent {
+    pub kind: &'static str,
+    /// 如 "fs.readdirSync" / "path.join" / "path.basename"
+    pub node: String,
+    pub offset: u32,
+}
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Diagnostic {
     #[serde(rename = "type")]
@@ -25,6 +34,9 @@ pub struct Diagnostic {
     pub message: String,
     pub file: String,
     pub span: Span,
+    /// taint 规则必带（source→…→sink 证据链）；普通规则为空且不序列化（向后兼容）
+    #[serde(rename = "pathEvents", skip_serializing_if = "Vec::is_empty")]
+    pub path_events: Vec<PathEvent>,
 }
 
 #[derive(Debug, Serialize)]

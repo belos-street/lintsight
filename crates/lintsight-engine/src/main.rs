@@ -15,6 +15,7 @@ mod analyze;
 mod context;
 mod protocol;
 mod rules;
+mod taint;
 
 use std::io::{self, Read};
 
