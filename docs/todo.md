@@ -135,6 +135,10 @@
 - [x] corpus 基线一致（express 全仓对新规则零命中——框架库无应用层污点流，符合预期）；cargo 25/25（ssrf ×2 + proto ×3 + 表校验）
 - 引擎规则面终态：lintsight-engine/{no-eval, no-path-traversal, no-command-injection, no-ssrf, no-prototype-pollution-merge, arch-boundaries} ×6
 - [x] unicorn/no-new-array 上游 issue 已提交 ✅ 2026-10-02：[oxc-project/oxc#27280](https://github.com/oxc-project/oxc/issues/27280)——`new Array<number>(n).fill(0)` 合法 DP 初始化误报（Lexio lcs.ts 实测复现）；定位为 fill 链豁免请求（非移植 bug：上游 eslint-plugin-unicorn 文档亦无 carve-out），文中含 `Array(n).fill(0)` 无 new 变体不报的规则一致性论证
+- [x] **corpus 二批扩容（安全测试库）✅ 2026-10-02**：juice-shop@v19.2.1 + nodegoat@v1.4 + ghost@v5.130.6——基线 806→**5596 文件** / 590→**4890 诊断**：
+  - **召回初步命中**：no-ssrf 命中 juice-shop 官方 SSRF 埋洞文件（profileImageUrlUpload.ts#L24）；no-path-traversal 命中 vulnCodeFixes.ts；no-eval ×6 命中 juice-shop（captcha/userProfile）与 nodegoat（contributions ×3）的 eval 埋洞——埋洞对照召回验证的起点，完整对照清单待人工逐挑战核对
+  - **连带修复：normalizeRuleId 无 code 诊断细分**——36 条「插件崩溃」实为 **oxc parse error 误归类**（codefixes 故意残缺片段 / ghost .cjs 的 CJS-ESM 混用）；拆分 `internal/parse-error`（扫描对象问题）与 `internal/oxlint-plugin-error`（引擎侧缺陷，message 含 "Error running JS plugin" 标记），插件健壮性兜底语义恢复准确
+  - 构成速览：no-hardcoded-credentials 539（ghost/juice-shop test+data 大头）、no-floating-promise 272、no-innerhtml-assignment 70（juice-shop XSS 埋洞）、no-sensitive-storage 17（localStorage 埋洞）
 
 ### T1.19 补完：Vue 真实项目试用 + 三项目 M2 复扫 ✅ 2026-10-01
 

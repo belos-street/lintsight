@@ -19,6 +19,24 @@
       "repo": "https://github.com/expressjs/express.git",
       "tag": "4.21.2",
       "note": "企业级后端框架（JS）：req→路由→fs/exec 数据流密集，M2 taint 规则面代表（M2.6 扩容）"
+    },
+    {
+      "name": "juice-shop",
+      "repo": "https://github.com/juice-shop/juice-shop.git",
+      "tag": "v19.2.1",
+      "note": "OWASP 故意漏洞应用（Node+Angular）：100+ 埋洞挑战，可对照官方清单验证 taint 规则召回率（M2.6 扩容）"
+    },
+    {
+      "name": "nodegoat",
+      "repo": "https://github.com/OWASP/NodeGoat.git",
+      "tag": "v1.4",
+      "note": "OWASP Express 埋洞应用：命令注入/原型污染与 M2.6 新规则一一对应，小型竖切验证（M2.6 扩容）"
+    },
+    {
+      "name": "ghost",
+      "repo": "https://github.com/TryGhost/Ghost.git",
+      "tag": "v5.130.6",
+      "note": "企业级生产 CMS（Node，10 年历史）：大规模真实业务代码，误报率口径样本（M2.6 扩容）"
     }
   ]
 }

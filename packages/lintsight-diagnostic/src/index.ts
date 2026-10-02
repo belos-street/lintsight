@@ -21,8 +21,9 @@ export interface OxlintSpan {
 
 export interface OxlintDiagnostic {
   message: string
-  /** 原始 code，如 "eslint(no-debugger)"、"lintsight(no-empty-catch)" */
-  code: string
+  /** 原始 code，如 "eslint(no-debugger)"、"lintsight(no-empty-catch)"；
+   * **缺失** = oxc 解析错误或 JS plugin 崩溃（见 normalizeDiagnostics 的细分逻辑） */
+  code?: string
   severity: string
   filename: string
   labels: { span: OxlintSpan }[]
@@ -97,20 +98,36 @@ export function normalizeFilePath(
  * 非用户代码问题且不可阻断——统一降级为 info（不进 exit code）。 */
 export const TYPE_AWARE_ERROR_RULE_ID = 'typescript/tsconfig-error'
 
+/** 无 code 诊断细分（corpus 扩容 express/juice-shop 实测）：oxlint JSON 里 code 缺失
+ * 有两类——① oxc 解析错误（语法残缺片段 / CJS-ESM 混用，message 为解析器措辞）；
+ * ② JS plugin 崩溃（message = "Error running JS plugin"，spike 实测）。两类必须
+ * 分开归一：前者是扫描对象自身问题，后者是引擎侧缺陷。 */
+export const INTERNAL_PLUGIN_ERROR_RULE_ID = 'internal/oxlint-plugin-error'
+export const INTERNAL_PARSE_ERROR_RULE_ID = 'internal/parse-error'
+
+const PLUGIN_ERROR_MARKER = 'Error running JS plugin'
+
 export function normalizeDiagnostics(
   output: OxlintJsonOutput,
   projectRoot: string
 ): NormalizedDiagnostic[] {
-  return output.diagnostics.map((d) => ({
-    ruleId: normalizeRuleId(d.code),
-    severity:
-      normalizeRuleId(d.code) === TYPE_AWARE_ERROR_RULE_ID
-        ? 'info'
-        : d.severity,
-    message: d.message,
-    file: normalizeFilePath(d.filename, projectRoot),
-    span: d.labels[0]?.span ?? { offset: 0, length: 0, line: 0, column: 0 }
-  }))
+  return output.diagnostics.map((d) => {
+    let ruleId: string
+    if (d.code) {
+      ruleId = normalizeRuleId(d.code)
+    } else if (d.message.includes(PLUGIN_ERROR_MARKER)) {
+      ruleId = INTERNAL_PLUGIN_ERROR_RULE_ID
+    } else {
+      ruleId = INTERNAL_PARSE_ERROR_RULE_ID
+    }
+    return {
+      ruleId,
+      severity: ruleId === TYPE_AWARE_ERROR_RULE_ID ? 'info' : d.severity,
+      message: d.message,
+      file: normalizeFilePath(d.filename, projectRoot),
+      span: d.labels[0]?.span ?? { offset: 0, length: 0, line: 0, column: 0 }
+    }
+  })
 }
 
 // —— 指纹（M1-DR2） ——

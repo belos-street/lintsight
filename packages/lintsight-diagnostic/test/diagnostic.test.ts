@@ -184,6 +184,34 @@ describe('normalizeDiagnostics', () => {
     expect(out[0].ruleId).toBe(TYPE_AWARE_ERROR_RULE_ID)
     expect(out[0].severity).toBe('info')
   })
+
+  test('无 code 诊断细分（corpus 扩容实测）：parse 错误与插件崩溃分开归一', () => {
+    const out = normalizeDiagnostics(
+      {
+        diagnostics: [
+          {
+            // 解析错误（故意残缺片段 / CJS-ESM 混用）——非引擎侧缺陷
+            message: 'Cannot use import statement outside a module',
+            severity: 'error',
+            filename: 'a.cjs',
+            labels: [{ span: { offset: 0, length: 0, line: 1, column: 1 } }]
+          },
+          {
+            // JS plugin 崩溃（spike 实测形态）
+            message: 'Error running JS plugin',
+            severity: 'error',
+            filename: 'b.ts',
+            labels: []
+          }
+        ],
+        number_of_files: 2,
+        number_of_rules: 1
+      } as never,
+      ROOT
+    )
+    expect(out[0].ruleId).toBe('internal/parse-error')
+    expect(out[1].ruleId).toBe('internal/oxlint-plugin-error')
+  })
 })
 
 describe('suppressSuperseded（M2 T2.5 双报消解，design-m2 §4.4）', () => {
