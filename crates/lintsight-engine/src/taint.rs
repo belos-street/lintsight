@@ -75,6 +75,9 @@ pub struct TaintTables {
     pub sanitizers: &'static [FuncKey],
     /// sink 的 (obj, func)：obj 为空串 = 裸标识符调用（如 `import { exec } from 'node:child_process'`）
     pub sinks: &'static [FuncKey],
+    /// sink 检查的参数位（0-based）。多数规则 = 0（exec(cmd)/fetch(url)）；
+    /// 原型污染 = 1（Object.assign(target, 源)——污染点在第二个参数）。每规则一个值。
+    pub sink_arg_index: usize,
 }
 
 impl TaintTables {
@@ -94,11 +97,7 @@ impl TaintTables {
                     if tables[j].1.contains(a) {
                         return Err(format!(
                             "taint tables [{}] ∩ [{}] 交叠：{}::{}（{} 表）",
-                            tables[i].0,
-                            tables[j].0,
-                            a.0,
-                            a.1,
-                            self.name
+                            tables[i].0, tables[j].0, a.0, a.1, self.name
                         ));
                     }
                 }
@@ -270,29 +269,31 @@ impl<'a, 't> Analyzer<'a, 't> {
                     }
                 }
             }
-            // sink 检查：fs.readFileSync(<tainted>) 等
+            // sink 检查：fs.readFileSync(<tainted>) 等——参数位由表配置（sink_arg_index）
             oxc_ast::AstKind::CallExpression(call) => {
                 let key = member_name(&call.callee);
                 if self.tables.is_sink(key) {
-                    if let Some(arg) = call.arguments.first() {
-                        let mut extra = Vec::new();
-                        if let Some(chain) = arg
-                            .as_expression()
-                            .and_then(|e| self.eval(e, state, &mut extra))
-                        {
-                            // 证据链 = 污染链 + 混合实参中「已尝试清洗」的痕迹 + sink
-                            let mut full = chain;
-                            full.extend(extra);
-                            full.push(event(EventKind::Sink, key, call.span.start));
-                            let span: Span = call.span;
-                            // 回边不动点会重复进块 → 按 offset 去重（spike ⑤ 教训 #3）
-                            if !self.hits.iter().any(|h| h.span.start == span.start) {
-                                self.hits.push(SinkHit {
-                                    span,
-                                    func: (key.0.to_string(), key.1.to_string()),
-                                    events: full,
-                                });
-                            }
+                    let arg = call
+                        .arguments
+                        .get(self.tables.sink_arg_index)
+                        .or_else(|| call.arguments.first());
+                    let mut extra = Vec::new();
+                    if let Some(chain) = arg
+                        .and_then(|a| a.as_expression())
+                        .and_then(|e| self.eval(e, state, &mut extra))
+                    {
+                        // 证据链 = 污染链 + 混合实参中「已尝试清洗」的痕迹 + sink
+                        let mut full = chain;
+                        full.extend(extra);
+                        full.push(event(EventKind::Sink, key, call.span.start));
+                        let span: Span = call.span;
+                        // 回边不动点会重复进块 → 按 offset 去重（spike ⑤ 教训 #3）
+                        if !self.hits.iter().any(|h| h.span.start == span.start) {
+                            self.hits.push(SinkHit {
+                                span,
+                                func: (key.0.to_string(), key.1.to_string()),
+                                events: full,
+                            });
                         }
                     }
                 }
@@ -381,10 +382,9 @@ impl<'a, 't> Analyzer<'a, 't> {
                         Expression::Identifier(i) => {
                             pairs.push((i.name.as_str(), m.property.name.as_str()))
                         }
-                        Expression::StaticMemberExpression(inner) => pairs.push((
-                            inner.property.name.as_str(),
-                            m.property.name.as_str(),
-                        )),
+                        Expression::StaticMemberExpression(inner) => {
+                            pairs.push((inner.property.name.as_str(), m.property.name.as_str()))
+                        }
                         _ => {}
                     }
                     cur = &m.object;

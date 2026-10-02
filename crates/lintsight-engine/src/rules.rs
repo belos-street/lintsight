@@ -72,6 +72,7 @@ const PATH_TRAVERSAL_TABLES: TaintTables = TaintTables {
         ("fs", "appendFileSync"),
         ("fs", "appendFile"),
     ],
+    sink_arg_index: 0,
 };
 
 /// no-path-traversal：外部可控文件名（readdirSync）未消毒抵达 fs 读写 sink。
@@ -141,6 +142,7 @@ const COMMAND_INJECTION_TABLES: TaintTables = TaintTables {
         ("child_process", "spawn"),
         ("child_process", "spawnSync"),
     ],
+    sink_arg_index: 0,
 };
 
 /// no-command-injection：外部可控输入未验证抵达 shell 执行 sink。
@@ -174,6 +176,135 @@ impl EngineRule for NoCommandInjection {
     }
 }
 
+/// no-ssrf（CWE-918 服务端请求伪造，FR-303 stretch）：
+/// 用户可控 URL 抵达服务端出站请求——可打内网（169.254.169.254 元数据/内网 IP）。
+/// sink 覆盖 fetch（解构/全局）+ axios + node http/https 常用方法；URL 在 options
+/// 对象内的形态（axios({ url })）v0 不识别（复核清单）。
+const SSRF_TABLES: TaintTables = TaintTables {
+    name: "no-ssrf",
+    sources: &[],
+    member_sources: &[
+        ("req", "query"),
+        ("req", "body"),
+        ("req", "params"),
+        ("req", "headers"),
+        ("request", "query"),
+        ("request", "body"),
+        ("request", "params"),
+        ("ctx", "query"),
+        ("ctx", "request"),
+    ],
+    propagators: &[("path", "join")],
+    sanitizers: &[],
+    sinks: &[
+        ("", "fetch"),
+        ("axios", "get"),
+        ("axios", "post"),
+        ("axios", "put"),
+        ("axios", "delete"),
+        ("axios", "request"),
+        ("http", "get"),
+        ("http", "request"),
+        ("https", "get"),
+        ("https", "request"),
+    ],
+    sink_arg_index: 0,
+};
+
+/// no-ssrf：外部可控 URL 未验证（host allowlist）抵达服务端出站请求。
+struct NoSsrf;
+
+impl EngineRule for NoSsrf {
+    fn id(&self) -> &'static str {
+        "lintsight-engine/no-ssrf"
+    }
+
+    fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
+        crate::taint::run(ctx, &SSRF_TABLES)
+            .into_iter()
+            .map(|hit| RawDiag {
+                rule_id: self.id(),
+                severity: "error",
+                message: format!(
+                    "Untrusted input from {} reaches {}.{} without validation; validate the URL against a host allowlist (SSRF can reach internal networks). (no-ssrf)",
+                    hit.events
+                        .first()
+                        .map(|e| e.node.as_str())
+                        .unwrap_or("request input"),
+                    hit.func.0,
+                    hit.func.1,
+                ),
+                span: hit.span,
+                path_events: hit.events,
+            })
+            .collect()
+    }
+}
+
+/// no-prototype-pollution-merge（CWE-1321，FR-303 硬门槛第 3 条，taint 版接管
+/// M1 no-prototype-pollution-syntax 的动态合并面）：
+/// 外部可控对象（req.body 等，攻击者可控 `__proto__`/`constructor` 键）流入
+/// Object.assign / lodash merge·defaultsDeep·set 的合并目标——sink 污染点在
+/// 第二参数（sink_arg_index=1）。与 M1 语法版分工：语法版抓字面量 `__proto__`
+/// 键（确定性、不依赖污染源），本条抓动态可控源（互补不重叠，不登记 supersedes）。
+const PROTO_POLLUTION_TABLES: TaintTables = TaintTables {
+    name: "no-prototype-pollution-merge",
+    sources: &[],
+    member_sources: &[
+        ("req", "body"),
+        ("req", "query"),
+        ("req", "params"),
+        ("request", "body"),
+        ("request", "query"),
+        ("ctx", "request"),
+    ],
+    propagators: &[],
+    sanitizers: &[],
+    sinks: &[
+        ("Object", "assign"),
+        ("lodash", "merge"),
+        ("lodash", "mergeWith"),
+        ("lodash", "defaultsDeep"),
+        ("lodash", "set"),
+        ("_", "merge"),
+        ("_", "mergeWith"),
+        ("_", "defaultsDeep"),
+        ("_", "set"),
+    ],
+    sink_arg_index: 1,
+};
+
+/// no-prototype-pollution-merge：可控源流入合并/深写目标，攻击者可借
+/// `__proto__` 键污染原型链。span = 合并调用表达式。
+struct NoPrototypePollutionMerge;
+
+impl EngineRule for NoPrototypePollutionMerge {
+    fn id(&self) -> &'static str {
+        "lintsight-engine/no-prototype-pollution-merge"
+    }
+
+    fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
+        crate::taint::run(ctx, &PROTO_POLLUTION_TABLES)
+            .into_iter()
+            .map(|hit| RawDiag {
+                rule_id: self.id(),
+                severity: "error",
+                message: format!(
+                    "Untrusted input from {} reaches {}.{} as a merge source; attacker-controlled `__proto__`/`constructor` keys can pollute the prototype chain. Freeze the target or copy only allowlisted keys. (no-prototype-pollution-merge)",
+                    hit.events
+                        .first()
+                        .map(|e| e.node.as_str())
+                        .unwrap_or("request input"),
+                    hit.func.0,
+                    hit.func.1,
+                ),
+                span: hit.span,
+                path_events: hit.events,
+            })
+            .collect()
+    }
+}
+
 /// 全部引擎规则登记处（表交叠校验随登记执行——校验失败即引擎启动 panic，
 /// Bun 侧 fail-open 降级，cargo test 提前拦截）。
 /// arch 配置缺省时架构规则不注册（Summary.rules 亦不含）；ts_paths 同随 stdin 下发。
@@ -184,10 +315,16 @@ pub fn registry(arch: Option<&ArchConfig>, ts_paths: &[TsPathMapping]) -> Vec<Bo
     COMMAND_INJECTION_TABLES
         .validate()
         .expect("no-command-injection 函数表交叠");
+    SSRF_TABLES.validate().expect("no-ssrf 函数表交叠");
+    PROTO_POLLUTION_TABLES
+        .validate()
+        .expect("no-prototype-pollution-merge 函数表交叠");
     let mut rules: Vec<Box<dyn EngineRule>> = vec![
         Box::new(NoEval),
         Box::new(NoPathTraversal),
         Box::new(NoCommandInjection),
+        Box::new(NoSsrf),
+        Box::new(NoPrototypePollutionMerge),
     ];
     if let Some(cfg) = arch {
         rules.push(Box::new(ArchBoundaries {
@@ -309,6 +446,97 @@ fs.writeFileSync(files[0], 'x')
     fn tables_have_no_overlap() {
         assert!(PATH_TRAVERSAL_TABLES.validate().is_ok());
         assert!(COMMAND_INJECTION_TABLES.validate().is_ok());
+        assert!(SSRF_TABLES.validate().is_ok());
+        assert!(PROTO_POLLUTION_TABLES.validate().is_ok());
+    }
+
+    // —— no-ssrf（CWE-918） ——
+
+    fn ssrf_hits(source: &str) -> Vec<Vec<&'static str>> {
+        let allocator = oxc_allocator::Allocator::default();
+        let mut out = Vec::new();
+        crate::context::with_context(&allocator, "a.ts", source, |ctx| {
+            for d in NoSsrf.check(ctx) {
+                out.push(d.path_events.iter().map(|e| e.kind).collect());
+            }
+        });
+        out
+    }
+
+    #[test]
+    fn detects_ssrf_from_request_url() {
+        // 全局 fetch + 成员 source
+        let src = "\
+export async function proxy(req) {
+  return fetch(req.query.target)
+}
+";
+        assert_eq!(ssrf_hits(src), [vec!["source", "sink"]]);
+        // axios 命名空间形态
+        let src = "\
+import axios from 'axios'
+export async function pull(req) {
+  return axios.get(req.body.url)
+}
+";
+        assert_eq!(ssrf_hits(src), [vec!["source", "sink"]]);
+    }
+
+    #[test]
+    fn clean_ssrf_not_reported() {
+        let src = "\
+export async function ok(req) {
+  return fetch('https://api.internal/status')
+}
+";
+        assert!(ssrf_hits(src).is_empty());
+    }
+
+    // —— no-prototype-pollution-merge（CWE-1321，sink_arg_index=1 模型） ——
+
+    fn proto_hits(source: &str) -> Vec<Vec<&'static str>> {
+        let allocator = oxc_allocator::Allocator::default();
+        let mut out = Vec::new();
+        crate::context::with_context(&allocator, "a.ts", source, |ctx| {
+            for d in NoPrototypePollutionMerge.check(ctx) {
+                out.push(d.path_events.iter().map(|e| e.kind).collect());
+            }
+        });
+        out
+    }
+
+    #[test]
+    fn detects_proto_pollution_via_object_assign() {
+        // 经典 CVE 形态：body 可控对象 merge 进 config——污染点在第二参数
+        let src = "\
+export function updateConfig(req, config) {
+  Object.assign(config, req.body)
+  return config
+}
+";
+        assert_eq!(proto_hits(src), [vec!["source", "sink"]]);
+    }
+
+    #[test]
+    fn detects_proto_pollution_via_lodash() {
+        let src = "\
+import _ from 'lodash'
+export function patch(req, doc) {
+  return _.merge(doc, req.body)
+}
+";
+        assert_eq!(proto_hits(src), [vec!["source", "sink"]]);
+    }
+
+    #[test]
+    fn clean_merge_not_reported() {
+        let src = "\
+export function safe(req, config) {
+  Object.assign(config, { verbose: true })
+  return config
+}
+";
+        assert!(proto_hits(src).is_empty(), "非源实参不得报");
     }
 
     // —— no-command-injection（CWE-78，FR-303 硬门槛：成员表达式 source 模型首批） ——

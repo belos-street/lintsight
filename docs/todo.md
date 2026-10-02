@@ -127,6 +127,14 @@
 - [x] 教训：express tag 不带 v 前缀（ls-remote 先行验证 tag 格式）
 - 待办延伸：no-ssrf / no-prototype-pollution-merge（M2.6 后续批次）；express 应用层样例（examples/ 目录）可作 taint 场景补充验证
 
+### M2.6 后续批次：no-ssrf + no-prototype-pollution-merge ✅ 2026-10-02
+
+- [x] **no-ssrf**（CWE-918，FR-303 stretch）：sink = fetch（裸调用）+ axios get/post/put/delete/request + http/https get/request ×10；member source 复用（req.* / request.* / ctx.*）×9；URL 在 options 对象内的形态（axios({url})）v0 不识别（复核清单）
+- [x] **no-prototype-pollution-merge**（CWE-1321，FR-303 硬门槛第 3 条）：**sink_arg_index=1 模型**（Object.assign(target, 源) 污染点在第二参数，每规则可配参数位）；sink = Object.assign + lodash merge/mergeWith/defaultsDeep/set（`_` 与 `lodash` 双命名空间）×9；与 M1 语法版分工（语法版抓字面量 `__proto__` 键，taint 版抓动态可控源，互补不重叠不登记 supersedes）
+- [x] FR-303 硬门槛 3 条 + stretch 2 条全部落地（path-traversal ✅ / command-injection ✅ / prototype-pollution-merge ✅ / ssrf ✅ + sql-concat 保留 M1 语法级——模板串形态已覆盖主要面）
+- [x] corpus 基线一致（express 全仓对新规则零命中——框架库无应用层污点流，符合预期）；cargo 25/25（ssrf ×2 + proto ×3 + 表校验）
+- 引擎规则面终态：lintsight-engine/{no-eval, no-path-traversal, no-command-injection, no-ssrf, no-prototype-pollution-merge, arch-boundaries} ×6
+
 ### T1.19 补完：Vue 真实项目试用 + 三项目 M2 复扫 ✅ 2026-10-01
 
 - [x] ④ code-viewer（Vue 3.5 + Vite 组件库，pnpm，lib 组件源 / src 示例 app 双入口，43 文件含 14 .vue）：
