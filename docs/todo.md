@@ -153,8 +153,87 @@
   - hono（39 文件 10 条）：全部 no-hardcoded-credentials（1 真 seed-data.ts + 9 测试 fixture 惯例）；自指豁免后 ACCESS_TOKEN 零误报 ✓
   - 四项目结论：**M2 引擎能力（taint 数据流 + 双报消解）在真实项目形态下工作正常，自有规则误报率随三轮反哺持续下降（Lexio/hono 本轮零误报）**
 
+## M2.7 候选优化清单（M2 收官后的增强项，按价值排序）
+
+> 来源：各切片 v0 边界备案 + 四项目/语料试用反哺 + requirements §9「M1~M2 建议做」欠账盘点。均为增强非阻塞项，M3 期间穿插执行或按需触发。
+
+### 精度与规则面（反哺通道）
+
+- [ ] **测试文件口径豁免**：corpus 扩容后 no-hardcoded-credentials 539 条大头来自 `*.test.ts`/`*.spec.ts`/`data/`——测试 fixture 密码与敏感存储按惯例可接受（T1.19 三项目口径一致结论）→ 规则层加测试文件识别降级（severity 降级或独立 confidence 档），预计消减 ghost/juice-shop 误报面 60%+
+- [ ] juice-shop 待复核 4 条定性（vulnCodeFixes path-traversal 是否用户可控目录 / innerhtml ×2 / spec 口径）
+- [ ] taint v0 边界补齐：箭头函数参数污点（`files.map(f => read(f))`）、解构传播（`const { a } = tainted`）、命名导入别名（`import fs2 from 'fs'`）、axios({url}) options 形态（各切片备案汇总）
+- [ ] M1→M2 消解对扩充评估：no-child-process-nonliteral（语法级，任何非字面量都报）与 no-command-injection（taint，污染源才报）同位置消解——同 no-path-traversal ⊃ no-non-literal-fs-filename 模式，注册表 supersedes 登记评估
+
+### FR-304 完整化（架构规则）
+
+- [ ] 循环依赖检测（import 图环检测，T2.4 词法图已有地基）
+- [ ] 公共 API 泄漏（package exports 面约束）
+- [ ] 嵌套 tsconfig / per-package paths（monorepo 形态，现只读根 tsconfig）
+
+### 召回制度化
+
+- [ ] challenges.yml 解析 + codefixes 映射转正进 corpus-lib → CI 召回回归（每加规则自动出召回对照）
+- [ ] juice-shop 逐挑战人工核对（hint/mitigationUrl 语义对照，产出完整召回率数字——FR-303 验收「误报率 <15% 平台复核口径」的配套数据）
+- [ ] semgrep / codeql 规则测试语料校准参照制度化（source/sink 表形态漏配时的补表依据）
+
+### 平台契约与交付欠账（requirements §9「M1~M2 建议做」）
+
+- [ ] **pathEvents 进 contract**：EngineDiagnostic.pathEvents 已透传，LintsightDiagnostic（contract v1）未承载——contract v2 评审 + 快照更新（FR-601 平台 AI 研判依赖）
+- [ ] **迁移工具 v0**：eslint.config → lintsight.config 映射报告（FR-502 的 v0 部分）
+- [ ] GitLab CI 模板（SARIF 输出已有，补 CI 集成样例）
+- [ ] 平台对接协议评审（诊断指纹 / 抑制同步 / AI 研判字段——与平台团队联合评审）
+- [ ] 引擎 `--concurrency` 参数（T2.6 备案：默认全核，可调未做）
+
+## M3 深度分析引擎二期 + 平台化（域级 Todo · 起草 2026-10-02，design-m3 评审后升执行级）
+
+> 依据：[requirements-v0.2.md](requirements/requirements-v0.2.md) §2.2 修订②（type-aware taint 增强 = M3 方向）、§2.4 L4 调用图（M2~M3）、§6.2 LSP alpha、§9 可延后清单、M2-DR1（JSON Lines 协议 M3 服务化可平移）、FR-503（平台 worker 编排）。域级颗粒度，执行级拆解随 design-m3 评审滚动细化。
+
+### T3.0 门禁任务（不完成对应切片不得开工）
+
+- [ ] **design-m3-v0.1.md 起草 + 评审**：L4 CG 方案（调用图构建成本 vs 收益，oxc 现状核实）、LSP 协议选型（自实现 vs LSP 框架）、远端缓存键口径（复用 M1 内容哈希体系？）、平台 worker 编排协议（FR-503）——含备选与否决理由
+- [ ] spike ⑥：调用图 PoC（oxc 0.150 是否提供 CG 基础设施，跨文件直接调用 + 方法解析的成本实测）→ 定 L4 路线
+- [ ] spike ⑦：LSP alpha 技术选型实测（tower-lsp / lsp-server crate / Bun 侧实现），诊断推送与 M1/M2 诊断流对接成本
+
+### T3.1 L4 调用图 CG（M2~M3 交付，design-m2 §2.4 遗留）
+
+- [ ] 跨文件/跨包调用图构建（先直接调用后方法解析；与 L2 CFG 桥接复用 `cfg_id` 经验）
+- [ ] **跨文件 taint 传播**（M2 过程内 taint 的直接增量：source 在 A 文件、sink 在 B 文件）——no-path-traversal/no-command-injection 召回面直接扩大
+- [ ] 循环依赖 / 死代码检测（CG 消费面，FR-304 完整化的引擎侧承接）
+- [ ] 验收：text-rpg/express 应用层跨文件流召回（对照 M2 过程内基线增量）
+
+### T3.2 type-aware taint 增强（§2.2 修订② M3 方向）
+
+- [ ] 深度引擎消费 tsgolint 类型事实做 taint 增强（类型收窄消解误报：如 `typeof x === 'string'` 守卫、自定义 sanitizer 类型的识别）
+- [ ] source/sink 表的「类型感知模式」（识别业务自定义 source/sink 类——企业级项目的框架封装层）
+- [ ] 验收：真实业务项目误报率对照（type-aware on/off 差值，FR-302 口径）
+
+### T3.3 LSP alpha + VS Code 插件（§6.2）
+
+- [ ] `@lintsight/lsp`：诊断推送（M1/M2 统一诊断流复用）、hover 展示规则说明 + confidence/证据链、code action（safe fix / suggestion；M2 taint 规则带 pathEvents 的 hover 展示是差异化点）
+- [ ] VS Code 插件薄封装（配置冲突以项目配置为准）
+- [ ] 验收：lintsight 仓库自托管（dogfood LSP 编辑体验）
+
+### T3.4 fixer 高级策略（§9 可延后项）
+
+- [ ] dangerous 级 fix（引擎 taint 规则无 fix——本项属 M1 JS 规则面：no-var→let/const 已有 safe fix，dangerous 级按规则逐条评估）
+- [ ] fix 循环策略（fix → 复扫 → 再 fix 的收敛上限与死循环防护）
+
+### T3.5 远端缓存 + 分布式分片（§9：千万行场景触发）
+
+- [ ] 远端缓存协议（键口径复用 M1 内容哈希体系 + 引擎指纹，存储后端选型进 design-m3）
+- [ ] 分布式分片编排（FR-503 worker：文件分片 + 诊断聚合 + 双报消解的分布式语义——M1-DR4 确定性排序在分片边界的语义）
+- [ ] 触发条件：公司 monorepo（百万行）实测超时/内存瓶颈时启动——百万行级单机已达标（M2.2 内存纪律 + M2.6 并行），不强排期
+
+### T3.6 平台化闭环（FR-503 / FR-601 / 平台对接协议）
+
+- [ ] 平台长驻 worker 形态（JSON Lines 协议平移为长连接/服务化——M2-DR1 备选 a 的条件触发版）
+- [ ] 抑制同步（平台侧复核结论回写引擎的抑制机制——误报标注的闭环）
+- [ ] AI 研判字段对接（pathEvents 证据链 + confidence → FR-601 平台 AI 研判的输入契约）
+- [ ] 验收：与 SAST 平台团队联合验收（对接协议评审通过为准）
+
 ## 远期占位（M3+ / 择机）
 
-- `lintsight migrate --from eslint`（FR-502）
-- LSP（M3）/ 远端缓存 / 分布式分片（千万行场景）
-- 上游反馈：unicorn/no-new-array 对泛型+fill 合法初始化的误报（oxc 仓库提 issue）
+- `lintsight migrate` 完整版（FR-502；v0 映射报告见 M2.7 清单）
+- 多语言 IR 中立化 / WASM/Web 端运行 / 插件市场与规则平台联动（requirements §9 M3+ 清单）
+- 分布式分片（千万行场景触发；M3 T3.5 条件触发版）
+- 上游跟进：[oxc#27280](https://github.com/oxc-project/oxc/issues/27280)（unicorn/no-new-array fill 豁免请求，已提交待回复）
