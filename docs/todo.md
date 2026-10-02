@@ -134,6 +134,7 @@
 - [x] FR-303 硬门槛 3 条 + stretch 2 条全部落地（path-traversal ✅ / command-injection ✅ / prototype-pollution-merge ✅ / ssrf ✅ + sql-concat 保留 M1 语法级——模板串形态已覆盖主要面）
 - [x] corpus 基线一致（express 全仓对新规则零命中——框架库无应用层污点流，符合预期）；cargo 25/25（ssrf ×2 + proto ×3 + 表校验）
 - 引擎规则面终态：lintsight-engine/{no-eval, no-path-traversal, no-command-injection, no-ssrf, no-prototype-pollution-merge, arch-boundaries} ×6
+- [x] unicorn/no-new-array 上游 issue 已提交 ✅ 2026-10-02：[oxc-project/oxc#27280](https://github.com/oxc-project/oxc/issues/27280)——`new Array<number>(n).fill(0)` 合法 DP 初始化误报（Lexio lcs.ts 实测复现）；定位为 fill 链豁免请求（非移植 bug：上游 eslint-plugin-unicorn 文档亦无 carve-out），文中含 `Array(n).fill(0)` 无 new 变体不报的规则一致性论证
 
 ### T1.19 补完：Vue 真实项目试用 + 三项目 M2 复扫 ✅ 2026-10-01
 
