@@ -94,7 +94,11 @@ impl TaintTables {
                     if tables[j].1.contains(a) {
                         return Err(format!(
                             "taint tables [{}] ∩ [{}] 交叠：{}::{}（{} 表）",
-                            tables[i].0, tables[j].0, a.0, a.1, self.name
+                            tables[i].0,
+                            tables[j].0,
+                            a.0,
+                            a.1,
+                            self.name
                         ));
                     }
                 }
@@ -377,9 +381,10 @@ impl<'a, 't> Analyzer<'a, 't> {
                         Expression::Identifier(i) => {
                             pairs.push((i.name.as_str(), m.property.name.as_str()))
                         }
-                        Expression::StaticMemberExpression(inner) => {
-                            pairs.push((inner.property.name.as_str(), m.property.name.as_str()))
-                        }
+                        Expression::StaticMemberExpression(inner) => pairs.push((
+                            inner.property.name.as_str(),
+                            m.property.name.as_str(),
+                        )),
                         _ => {}
                     }
                     cur = &m.object;
