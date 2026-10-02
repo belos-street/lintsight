@@ -139,6 +139,7 @@
   - **召回初步命中**：no-ssrf 命中 juice-shop 官方 SSRF 埋洞文件（profileImageUrlUpload.ts#L24）；no-path-traversal 命中 vulnCodeFixes.ts；no-eval ×6 命中 juice-shop（captcha/userProfile）与 nodegoat（contributions ×3）的 eval 埋洞——埋洞对照召回验证的起点，完整对照清单待人工逐挑战核对
   - **连带修复：normalizeRuleId 无 code 诊断细分**——36 条「插件崩溃」实为 **oxc parse error 误归类**（codefixes 故意残缺片段 / ghost .cjs 的 CJS-ESM 混用）；拆分 `internal/parse-error`（扫描对象问题）与 `internal/oxlint-plugin-error`（引擎侧缺陷，message 含 "Error running JS plugin" 标记），插件健壮性兜底语义恢复准确
   - 构成速览：no-hardcoded-credentials 539（ghost/juice-shop test+data 大头）、no-floating-promise 272、no-innerhtml-assignment 70（juice-shop XSS 埋洞）、no-sensitive-storage 17（localStorage 埋洞）
+- [x] **juice-shop 召回对照报告 ✅ 2026-10-02**：[spikes/juice-shop-recall-v0.1.md](spikes/juice-shop-recall-v0.1.md)——111 官方挑战 ↔ 规则命中文件级对照：**7 条诊断确认召回**（SQL 拼接 login/search 路由 + 2 修复挑战片段、SSRF 埋洞路由、弱哈希 insecurity.ts、eval ×2），**零已知漏配**；待复核候选 4 条走反哺通道；challenges.yml 解析可制度化进 corpus-lib 做召回回归
 
 ### T1.19 补完：Vue 真实项目试用 + 三项目 M2 复扫 ✅ 2026-10-01
 
