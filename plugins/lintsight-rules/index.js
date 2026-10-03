@@ -778,6 +778,17 @@ var no_sync_io_in_async_default = {
   }
 }
 
+// packages/rules-core/src/is-test-file.js
+function isTestFile(filename) {
+  if (typeof filename !== 'string') return false
+  const segments = filename.toLowerCase().split('/')
+  const basename = segments[segments.length - 1]
+  if (basename.includes('.test.') || basename.includes('.spec.')) return true
+  return segments.some(
+    (s) => s === '__tests__' || s === 'test' || s === 'tests'
+  )
+}
+
 // packages/rules-core/src/rules/no-hardcoded-credentials.js
 var no_hardcoded_credentials_default = {
   meta: {
@@ -787,6 +798,15 @@ var no_hardcoded_credentials_default = {
     typeRequirement: 'none',
     tags: ['cwe-798', 'owasp-a07'],
     fixable: undefined,
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          testFiles: { type: 'string', enum: ['exempt', 'report'] }
+        },
+        additionalProperties: false
+      }
+    ],
     messages: {
       hardcoded:
         'Possible hardcoded credential for "{{name}}": move it to environment variables or a secret manager. (no-hardcoded-credentials)'
@@ -805,11 +825,17 @@ var no_hardcoded_credentials_default = {
         '键名命中但值为占位/空/非凭证语义（长度 < 6 的字符串不触发）',
         '值与键名自指（normalize 后相同，如 ACCESS_TOKEN = "access_token"）——值只是键名的机器形式复述，零信息量（T1.19 #3 误报反哺：hono 项目 cookie 名常量）',
         '裸 token 属性承载非凭证语义（语言学词元/设计 token 等）：值不含数字/非字母字符且长度 < 12 时不触发（Lexio 项目 diffTokens 词元误报实证，T1.19 #2）',
-        '测试文件的样例凭证（后续可加 test 目录豁免选项）'
+        "测试文件（*.test.* / *.spec.* / test(s)/ / __tests__/）默认豁免，options 传 { testFiles: 'report' } 恢复报告"
       ]
     }
   },
   create(context) {
+    const opts = Array.isArray(context.options)
+      ? (context.options[0] ?? {})
+      : (context.options ?? {})
+    const policy = opts.testFiles ?? 'exempt'
+    const testFile = isTestFile(context.filename)
+    if (testFile && policy === 'exempt') return {}
     const NAME =
       /(password|passwd|pwd|secret|token|api[_-]?key|apikey|private[_-]?key|access[_-]?key)/i
     function isSuspectName(name) {
@@ -1431,6 +1457,15 @@ var no_sensitive_storage_default = {
     typeRequirement: 'none',
     tags: ['cwe-312', 'owasp-a02'],
     fixable: undefined,
+    schema: [
+      {
+        type: 'object',
+        properties: {
+          testFiles: { type: 'string', enum: ['exempt', 'report'] }
+        },
+        additionalProperties: false
+      }
+    ],
     messages: {
       sensitiveStorage:
         'Storing sensitive data ("{{key}}") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)'
@@ -1442,11 +1477,18 @@ var no_sensitive_storage_default = {
       badExamples: ["localStorage.setItem('token', jwt)"],
       goodExamples: ['localStorage.setItem("ui-theme", theme)'],
       falsePositives: [
-        '非凭证语义的同名键（如 tokenType）可改命名或行内 ignore'
+        '非凭证语义的同名键（如 tokenType）可改命名或行内 ignore',
+        "测试文件（*.test.* / *.spec.* / test(s)/ / __tests__/）默认豁免，options 传 { testFiles: 'report' } 恢复报告"
       ]
     }
   },
   create(context) {
+    const opts = Array.isArray(context.options)
+      ? (context.options[0] ?? {})
+      : (context.options ?? {})
+    const policy = opts.testFiles ?? 'exempt'
+    const testFile = isTestFile(context.filename)
+    if (testFile && policy === 'exempt') return {}
     const SENSITIVE_KEY =
       /(token|secret|jwt|credential|password|passwd|refresh[_-]?token)/i
     return {

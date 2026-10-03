@@ -105,4 +105,20 @@ describe('规则注册表 CI 校验（T1.11）', () => {
       expect(['active', 'retired']).toContain(entry.status)
     }
   })
+
+  test('引擎规则面同步（M2.7 防漏登记）：引擎已实现规则必须在 JS 侧注册表在册', () => {
+    // ⚠️ 在 crates/lintsight-engine/src/rules.rs 新增引擎规则时，必须同步在此登记
+    // （M2.6 曾漏登记 no-command-injection/no-ssrf/no-prototype-pollution-merge，
+    // 因缺反向校验未红——本断言为最小防线，规则面变化时更新此清单）
+    for (const ruleId of [
+      'lintsight-engine/no-eval',
+      'lintsight-engine/no-path-traversal',
+      'lintsight-engine/no-command-injection',
+      'lintsight-engine/no-ssrf',
+      'lintsight-engine/no-prototype-pollution-merge',
+      'lintsight-engine/arch-boundaries'
+    ]) {
+      expect(getRegistryEntry(ruleId), `${ruleId} 未登记`).toBeDefined()
+    }
+  })
 })

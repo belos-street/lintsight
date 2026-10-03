@@ -11,6 +11,8 @@ const ROOT = new URL('../../../', import.meta.url).pathname
 interface Case {
   file: string
   expect: { line: number; column: number }[]
+  /** 规则选项组（如 { testFiles: 'report' }）；缺省 = 产品默认配置 */
+  options?: Record<string, unknown>
 }
 
 async function runCases(ruleId: string, cases: Case[]) {
@@ -39,7 +41,25 @@ describe('P0 安全规则契约', () => {
       // T1.19 #2 反哺：裸 token 承载词元语义（纯字母短值）不触发
       { file: 'fixtures/ts/no-hardcoded-credentials.good-3.ts', expect: [] },
       // T1.19 #3 反哺：值与键名自指（ACCESS_TOKEN = 'access_token'）不触发
-      { file: 'fixtures/ts/no-hardcoded-credentials.good-4.ts', expect: [] }
+      { file: 'fixtures/ts/no-hardcoded-credentials.good-4.ts', expect: [] },
+      // —— M2.7 testFiles 豁免选项组（RuleTester 按选项分组叠加 oxlintrc；fixtures/options/ 不进全量扫描面）——
+      {
+        // 测试文件（*.test. 后缀）内 fixture 凭证 → 默认豁免
+        file: 'fixtures/options/no-hardcoded-credentials.testfile.bad-1.test.ts',
+        expect: []
+      },
+      {
+        // 普通文件（非 test 名）硬编码凭证 → 默认仍报（豁免不误伤主口径）
+        file: 'fixtures/options/no-hardcoded-credentials.testfile.good-1.ts',
+        expect: [{ line: 3, column: 3 }]
+      },
+      {
+        // 测试文件 + { testFiles: 'report' } → 恢复报告
+        // （⚠️ 独立 fixture：tester 结果按 file 合并，同文件跨选项组会串组）
+        file: 'fixtures/options/no-hardcoded-credentials.testfile.report-1.test.ts',
+        expect: [{ line: 4, column: 3 }],
+        options: { testFiles: 'report' }
+      }
     ]
     const { tester, results } = await runCases(
       'lintsight/no-hardcoded-credentials',

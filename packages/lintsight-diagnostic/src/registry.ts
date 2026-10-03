@@ -220,6 +220,29 @@ export const registry: RegistryEntry[] = [
     supersedes: ['lintsight/no-non-literal-fs-filename']
   },
   {
+    ruleId: 'lintsight-engine/no-command-injection',
+    owner: 'lintsight-engine',
+    detection: 'taint',
+    status: 'active',
+    confidence: 'high',
+    // 同模式：taint 版（污染源才报）命中 → 抑制语法级超集（任何非字面量都报）同位置诊断
+    supersedes: ['lintsight/no-child-process-nonliteral']
+  },
+  {
+    ruleId: 'lintsight-engine/no-ssrf',
+    owner: 'lintsight-engine',
+    detection: 'taint',
+    status: 'active',
+    confidence: 'medium'
+  },
+  {
+    ruleId: 'lintsight-engine/no-prototype-pollution-merge',
+    owner: 'lintsight-engine',
+    detection: 'taint',
+    status: 'active',
+    confidence: 'medium'
+  },
+  {
     ruleId: 'lintsight-engine/arch-boundaries',
     owner: 'lintsight-engine',
     detection: 'local',

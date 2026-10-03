@@ -159,10 +159,10 @@
 
 ### 精度与规则面（反哺通道）
 
-- [ ] **测试文件口径豁免**：corpus 扩容后 no-hardcoded-credentials 539 条大头来自 `*.test.ts`/`*.spec.ts`/`data/`——测试 fixture 密码与敏感存储按惯例可接受（T1.19 三项目口径一致结论）→ 规则层加测试文件识别降级（severity 降级或独立 confidence 档），预计消减 ghost/juice-shop 误报面 60%+
-- [ ] juice-shop 待复核 4 条定性（vulnCodeFixes path-traversal 是否用户可控目录 / innerhtml ×2 / spec 口径）
-- [ ] taint v0 边界补齐：箭头函数参数污点（`files.map(f => read(f))`）、解构传播（`const { a } = tainted`）、命名导入别名（`import fs2 from 'fs'`）、axios({url}) options 形态（各切片备案汇总）
-- [ ] M1→M2 消解对扩充评估：no-child-process-nonliteral（语法级，任何非字面量都报）与 no-command-injection（taint，污染源才报）同位置消解——同 no-path-traversal ⊃ no-non-literal-fs-filename 模式，注册表 supersedes 登记评估
+- [x] **测试文件口径豁免**（2026-10-03 完成）：规则层 `testFiles: 'exempt'|'report'` options（默认 exempt），`isTestFile` 识别 `*.test.*`/`*.spec.*`/`__tests__|test|tests` 目录；no-hardcoded-credentials corpus 554→61（-89%）、no-sensitive-storage 17→6；`{ testFiles: 'report' }` 可恢复报告（fixtures/options/ 契约）
+- [x] juice-shop 待复核 4 条定性（2026-10-03 完成，见 recall 报告 §3）：vulnCodeFixes path-traversal = readdir-source 保守近似固有误报（⚠️ 试错记录：「实参字面量 → 非 source」优化曾实施后撤回——uploads/tmp 类真洞目录名同样是字面量，静态无法区分静态目录与动态内容目录，撤回会漏真洞）；innerhtml ×2 = 非考点文档化；spec 口径 = 测试豁免机制覆盖
+- [x] taint v0 边界补齐（2026-10-03 完成，cargo 25→33 用例）：①解构传播（ObjectPattern/ArrayPattern/默认值/rest 递归）②default/namespace 导入别名归一（`node:` 前缀剥除，KNOWN_MODULES 对齐函数表 obj 名）③axios options 形态（URL 语义键 url/uri/baseURL/hostname）④map 家族回调参数污染（容器驱动）。corpus 新命中 2 条均为 readdir 保守近似固有代价（dayjs keys.test.js / juice-shop Gruntfile.js checksum），无缺陷
+- [x] M1→M2 消解对扩充（2026-10-03 完成）：no-command-injection ⊃ no-child-process-nonliteral 登记注册表 supersedes；补登 M2.6 漏登记的 no-command-injection/no-ssrf/no-prototype-pollution-merge 三条件目 + registry.test.ts 防漏断言（引擎规则面 ↔ JS 注册表同步校验）
 
 ### FR-304 完整化（架构规则）
 

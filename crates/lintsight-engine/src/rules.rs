@@ -178,8 +178,9 @@ impl EngineRule for NoCommandInjection {
 
 /// no-ssrf（CWE-918 服务端请求伪造，FR-303 stretch）：
 /// 用户可控 URL 抵达服务端出站请求——可打内网（169.254.169.254 元数据/内网 IP）。
-/// sink 覆盖 fetch（解构/全局）+ axios + node http/https 常用方法；URL 在 options
-/// 对象内的形态（axios({ url })）v0 不识别（复核清单）。
+/// sink 覆盖 fetch（解构/全局）+ axios（方法调用 + options 对象裸调用）+ node
+/// http/https 常用方法；options 对象形态（axios({ url })）由引擎的
+/// options-object 污染形态识别（URL 语义键 url/uri/baseURL/hostname）。
 const SSRF_TABLES: TaintTables = TaintTables {
     name: "no-ssrf",
     sources: &[],
@@ -198,6 +199,7 @@ const SSRF_TABLES: TaintTables = TaintTables {
     sanitizers: &[],
     sinks: &[
         ("", "fetch"),
+        ("", "axios"),
         ("axios", "get"),
         ("axios", "post"),
         ("axios", "put"),
@@ -592,6 +594,148 @@ export function run(cmd) {
 }
 ";
         assert!(injection_hits(src).is_empty(), "字面量与非源变量不得报");
+    }
+
+    // —— v0 边界补齐：解构传播 / 导入别名 / options 对象 / 回调参数污点 ——
+
+    #[test]
+    fn detects_destructuring_propagation() {
+        // 对象解构：cmd 继承 req.query 污染（no-command-injection 轨）
+        let src = "\
+import { exec } from 'node:child_process'
+export function handler(req) {
+  const { cmd } = req.query
+  exec(cmd)
+}
+";
+        let hits = injection_hits(src);
+        assert_eq!(hits.len(), 1, "对象解构绑定应继承污染");
+        assert_eq!(hits[0].1, vec!["source", "sink"]);
+
+        // 数组解构：first 继承 readdir 清单污染（no-path-traversal 轨）
+        let src = "\
+import fs from 'node:fs'
+const files = fs.readdirSync('./data')
+const [first] = files
+fs.writeFileSync(first, 'x')
+";
+        let hits = traversal_hits(src);
+        assert_eq!(hits.len(), 1, "数组解构绑定应继承污染");
+        assert_eq!(hits[0].1, vec!["source", "sink"]);
+    }
+
+    #[test]
+    fn destructuring_from_clean_source_not_reported() {
+        // 负面：解构自非污染源（字面量对象/数组）不得报
+        let src = "\
+import fs from 'node:fs'
+const { a } = { a: './safe.txt' }
+const [x] = ['also-safe.txt']
+fs.readFileSync(a)
+fs.readFileSync(x)
+";
+        assert!(traversal_hits(src).is_empty(), "解构自非污染源不得报");
+    }
+
+    #[test]
+    fn detects_import_default_and_namespace_alias() {
+        // default 导入别名：fs2/p2 归一到 fs/path 标准名（source/propagator/sink 全链）
+        let src = "\
+import fs2 from 'node:fs'
+import p2 from 'node:path'
+const files = fs2.readdirSync('./data')
+fs2.readFileSync(p2.join('./data', files[0]))
+";
+        let hits = traversal_hits(src);
+        assert_eq!(hits.len(), 1, "default 导入别名应命中 sink");
+        assert_eq!(hits[0].1, vec!["source", "propagation", "sink"]);
+
+        // namespace 导入：fsp → fs
+        let src = "\
+import * as fsp from 'fs'
+const files = fsp.readdirSync('./data')
+fsp.writeFileSync(files[0], 'x')
+";
+        let hits = traversal_hits(src);
+        assert_eq!(hits.len(), 1, "namespace 导入别名应命中 sink");
+        assert_eq!(hits[0].1, vec!["source", "sink"]);
+    }
+
+    #[test]
+    fn alias_to_unknown_module_not_reported() {
+        // 负面：别名表只收录函数表涉及的标准模块——fs-extra 不归一，不产生幻影 sink
+        let src = "\
+import fake from 'fs-extra'
+fake.readFileSync('./config.json')
+";
+        assert!(traversal_hits(src).is_empty());
+    }
+
+    #[test]
+    fn detects_ssrf_via_axios_options_object() {
+        // 裸调用 + options 对象 url 键污染（复核清单项）
+        let src = "\
+import axios from 'axios'
+export async function pull(req) {
+  return axios({ url: req.body.target, method: 'get' })
+}
+";
+        assert_eq!(ssrf_hits(src), [vec!["source", "propagation", "sink"]]);
+
+        // baseURL 键形态
+        let src = "\
+import axios from 'axios'
+export async function pull(req) {
+  return axios({ baseURL: req.query.host })
+}
+";
+        assert_eq!(ssrf_hits(src), [vec!["source", "propagation", "sink"]]);
+    }
+
+    #[test]
+    fn clean_axios_options_not_reported() {
+        // 负面：url 值为字面量 / 污染值不在 URL 语义键下 → 不报
+        let src = "\
+import axios from 'axios'
+export async function ok(req) {
+  axios({ url: '/api/safe', method: 'get' })
+  axios({ timeout: req.query.ms })
+}
+";
+        assert!(ssrf_hits(src).is_empty());
+    }
+
+    #[test]
+    fn detects_arrow_callback_param_taint() {
+        // map 回调参数继承容器污染（容器 = readdir source）
+        let src = "\
+import fs from 'node:fs'
+const files = fs.readdirSync('./data')
+files.map((f) => fs.readFileSync(f))
+";
+        let hits = traversal_hits(src);
+        assert_eq!(hits.len(), 1, "map 回调参数应继承容器污染");
+        assert_eq!(hits[0].1, vec!["source", "sink"]);
+    }
+
+    #[test]
+    fn clean_arrow_callback_not_reported() {
+        // 负面：回调内未使用污染参数；容器非污染（字面量数组）不得驱动参数污点
+        let src = "\
+import fs from 'node:fs'
+const files = fs.readdirSync('./data')
+files.map((f) => fs.readFileSync('safe.txt'))
+";
+        assert!(traversal_hits(src).is_empty());
+        let src = "\
+import fs from 'node:fs'
+const names = ['a', 'b']
+names.forEach((n) => fs.readFileSync(n))
+";
+        assert!(
+            traversal_hits(src).is_empty(),
+            "非污染容器不得驱动回调参数污点"
+        );
     }
 
     // —— arch-boundaries（T2.4） ——

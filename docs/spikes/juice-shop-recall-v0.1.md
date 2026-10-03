@@ -29,13 +29,13 @@
 合计：**7 条诊断可确认对应官方挑战考点**（5 个挑战类别 × 8 个考点文件），
 外加 nodegoat 的 no-eval ×3（contributions.ts 为 NodeGoat 官方 eval 埋洞）。
 
-## 3. 待复核（可能是误报）
+## 3. 待复核定性（2026-10-03 M2.7 批次复核完成）
 
-| 规则 | 命中文件 | 疑点 |
+| 项 | 定性 | 处置 |
 | --- | --- | --- |
-| no-path-traversal | routes/vulnCodeFixes.ts#L29 | 该文件是修复挑战的**服务端**，读 codefixes 目录属功能实现；readdir 输入是否用户可控需人工定性 |
-| no-innerhtml-assignment | frontend/src/hacking-instructor/index.ts#L126 · three.js（库文件） | 前者教程组件、后者第三方库——非 XSS 挑战考点 |
-| no-sensitive-storage | *.spec.ts ×多数 | 测试文件口径 |
+| no-path-traversal × vulnCodeFixes.ts#L29 | **模型固有保守近似的误报**：`readdirSync(常量目录)` 的结果在「静态资源目录」场景非外部可控，但 uploads/tmp 等「目录名常量、内容用户可控」的真洞场景无法静态区分（M2.7 曾试「字面量实参 → 非 source」优化，因会漏报 uploads 类真洞而撤回） | 文档化备案，保持保守近似；M3 跨过程/类型感知方向再评估 |
+| no-innerhtml-assignment ×2 | 非考点合理使用（hacking-instructor 教程动画 / three.js 库文件） | 文档化，规则行为不变 |
+| no-sensitive-storage × spec 文件 | 测试文件惯例口径 | 已由 M2.7 测试文件豁免机制覆盖（规则层 `testFiles: 'exempt'` 默认豁免） |
 
 ## 4. 静态对照不可达的挑战（非漏报）
 
