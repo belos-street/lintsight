@@ -3,7 +3,13 @@
  * 端到端扫描门禁在 scripts/corpus-baseline.ts（需语料克隆，不进 bun test）。
  */
 import { describe, expect, test } from 'bun:test'
-import { buildDigest, detectDoubleReports, diffDigest } from './corpus-lib'
+import {
+  buildDigest,
+  detectDoubleReports,
+  diffDigest,
+  mapCodefixes,
+  parseChallengesYml
+} from './corpus-lib'
 import type { LintsightDiagnostic } from '@lintsight/diagnostic'
 
 function diag(
@@ -96,5 +102,68 @@ describe('corpus-lib: 摘要与 diff', () => {
     expect(diff.byRuleDelta).toEqual({ 'r/b': -1, 'r/c': 1 })
     expect(diff.newFingerprints).toEqual(['r/c-c.ts-20'])
     expect(diff.goneFingerprints).toEqual(['r/b-b.ts-10'])
+  })
+})
+
+describe('corpus-lib: challenges.yml 解析（juice-shop 召回制度化）', () => {
+  const YML = `-
+  name: 'Password Hash Leak'
+  category: 'Sensitive Data Exposure'
+  description: "Obtain the password (hash) of the currently logged-in user."
+  difficulty: 2
+  hints:
+    - 'You need to understand what happens "behind the scenes".'
+    - 'Look for an API endpoint that already returns some user information.'
+  mitigationUrl: 'https://owasp.org/API-Security/editions/2019/en/0xa3-excessive-data-exposure'
+  key: passwordHashLeakChallenge
+  disabledEnv:
+    - Docker
+-
+  name: 'CSRF' # FIXME No e2e test automation!
+  category: 'Broken Access Control'
+  description: 'Perform a CSRF attack.'
+  key: csrfChallenge
+-
+  name: 'No Key Item'
+  category: 'Misc'
+`
+
+  test('块分隔 - + 两空格字段 → key/name/category；嵌套列表跳过', () => {
+    const items = parseChallengesYml(YML)
+    expect(items).toHaveLength(2) // 第 3 项无 key 不入册
+    expect(items[0]).toEqual({
+      key: 'passwordHashLeakChallenge',
+      name: 'Password Hash Leak',
+      category: 'Sensitive Data Exposure'
+    })
+    expect(items[1].key).toBe('csrfChallenge')
+  })
+
+  test('引号剥离取成对引号内内容（YAML 注释尾巴不影响 name）', () => {
+    const items = parseChallengesYml(YML)
+    expect(items[1].name).toBe('CSRF')
+  })
+
+  test('末尾无块分隔符 → 最后一个完整 item 仍入册', () => {
+    const items = parseChallengesYml('-\n  key: aChallenge\n  name: A\n')
+    expect(items).toEqual([
+      { key: 'aChallenge', name: 'A', category: '' }
+    ])
+  })
+})
+
+describe('corpus-lib: codefixes 文件名映射', () => {
+  test('<key>_<n>.ts / <key>_<n>_correct.ts → key 归组', () => {
+    const map = mapCodefixes([
+      'data/static/codefixes/unionSqlInjectionChallenge_1.ts',
+      'data/static/codefixes/unionSqlInjectionChallenge_2.ts',
+      'data/static/codefixes/unionSqlInjectionChallenge_3_correct.ts',
+      'data/static/codefixes/dbSchemaChallenge_1.ts'
+    ])
+    expect(map.get('unionSqlInjectionChallenge')).toHaveLength(3)
+    expect(map.get('dbSchemaChallenge')).toEqual([
+      'data/static/codefixes/dbSchemaChallenge_1.ts'
+    ])
+    expect(map.size).toBe(2)
   })
 })

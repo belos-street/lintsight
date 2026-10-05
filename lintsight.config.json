@@ -32,6 +32,9 @@
     { "files": ["**/*.vue"], "processor": "@lintsight/vue" }
   ],
   // M2 架构规则（T2.4 dogfood）：自有规则源零运行时依赖——不得引用其他 packages/plugins
+  // FR-304②③ 能力已就绪（opt-in，typeAware 同款纪律——默认关闭保 corpus/golden 契约稳定）：
+  //   "importCycles": true   → lintsight-engine/no-import-cycle（词法 import 图 SCC）
+  //   "enforceExports": true → lintsight-engine/no-deep-import（本仓 packages 无 exports 字段，暂无约束面）
   "arch": {
     "zones": [
       { "name": "rules-core", "match": ["packages/rules-core/**"], "allow": [] },

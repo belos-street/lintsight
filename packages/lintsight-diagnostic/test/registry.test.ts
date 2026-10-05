@@ -116,7 +116,9 @@ describe('规则注册表 CI 校验（T1.11）', () => {
       'lintsight-engine/no-command-injection',
       'lintsight-engine/no-ssrf',
       'lintsight-engine/no-prototype-pollution-merge',
-      'lintsight-engine/arch-boundaries'
+      'lintsight-engine/arch-boundaries',
+      'lintsight-engine/no-import-cycle',
+      'lintsight-engine/no-deep-import'
     ]) {
       expect(getRegistryEntry(ruleId), `${ruleId} 未登记`).toBeDefined()
     }

@@ -17,7 +17,8 @@
     "bench": "bun run scripts/bench.ts",
     "bench:save": "bun run scripts/bench.ts --save",
     "corpus:sync": "bun run scripts/corpus-sync.ts",
-    "corpus:check": "bun run scripts/corpus-baseline.ts"
+    "corpus:check": "bun run scripts/corpus-baseline.ts",
+    "corpus:recall": "bun run scripts/corpus-recall.ts"
   },
   "engines": {
     "bun": ">=1.2"

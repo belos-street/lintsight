@@ -13,17 +13,27 @@ pub struct EngineInput {
     pub ts_paths: Option<Vec<TsPathMapping>>,
 }
 
-/// tsconfig paths 单条映射（pattern/targets 保留 `*` 通配）
+/// tsconfig paths 单条映射（pattern/targets 保留 `*` 通配）。
+/// `dir` = 拥有该 tsconfig 的目录（相对 root 的 POSIX 路径，"" = 根 tsconfig）——
+/// FR-304① 嵌套 tsconfig：引擎按 importer 的最近祖先 tsconfig 选映射集（TS 语义）。
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct TsPathMapping {
+    #[serde(default)]
+    pub dir: String,
     pub pattern: String,
     pub targets: Vec<String>,
 }
 
-/// 架构边界配置（design-m2 §4.1 arch-rules；shape 由 Bun config-bridge 校验保证）
+/// 架构边界配置（design-m2 §4.1 arch-rules；shape 由 Bun config-bridge 校验保证）。
+/// `import_cycles` / `enforce_exports` 为 opt-in 能力开关（FR-304②③，typeAware 同款
+/// 纪律：缺省关闭，corpus/golden 契约零漂移；试点后再评估默认值）。
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct ArchConfig {
     pub zones: Vec<ArchZone>,
+    #[serde(rename = "importCycles", default)]
+    pub import_cycles: bool,
+    #[serde(rename = "enforceExports", default)]
+    pub enforce_exports: bool,
 }
 
 #[derive(Debug, Clone, serde::Deserialize)]

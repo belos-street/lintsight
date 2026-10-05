@@ -248,6 +248,24 @@ export const registry: RegistryEntry[] = [
     detection: 'local',
     status: 'active',
     confidence: 'high'
+  },
+  {
+    ruleId: 'lintsight-engine/no-import-cycle',
+    owner: 'lintsight-engine',
+    detection: 'local',
+    status: 'active',
+    // FR-304② 循环依赖（opt-in）：词法解析口径（动态 import 非字面量/npm 包不解析）
+    // → 保守近似，环报告的语义本身确定性高，但覆盖有边界
+    confidence: 'medium'
+  },
+  {
+    ruleId: 'lintsight-engine/no-deep-import',
+    owner: 'lintsight-engine',
+    detection: 'local',
+    status: 'active',
+    // FR-304③ exports 面约束（opt-in）：只约束声明 exports 的 workspace 包，
+    // 条件分支不解析 → 键集超近似（凡键存在即放行）
+    confidence: 'medium'
   }
 ]
 

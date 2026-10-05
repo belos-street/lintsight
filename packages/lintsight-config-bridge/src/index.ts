@@ -31,6 +31,10 @@ export interface ArchZone {
 
 export interface ArchConfig {
   zones: ArchZone[]
+  /** 循环依赖检测（FR-304②，lintsight-engine/no-import-cycle）：opt-in，默认 false */
+  importCycles?: boolean
+  /** package exports 面约束（FR-304③，lintsight-engine/no-deep-import）：opt-in，默认 false */
+  enforceExports?: boolean
 }
 
 export interface LintsightConfig {
@@ -208,6 +212,16 @@ export function validateConfig(raw: unknown): {
             allow: zone.allow as string[]
           })
         })
+        // FR-304②③ opt-in 开关（缺省 false）
+        for (const key of ['importCycles', 'enforceExports'] as const) {
+          const v = (o.arch as Record<string, unknown>)[key]
+          if (v === undefined) continue
+          if (typeof v !== 'boolean') {
+            errors.push(`arch.${key}: 期望布尔值（默认 false）`)
+          } else {
+            config.arch![key] = v
+          }
+        }
         if (errors.length > 0) config.arch = undefined
       }
     }

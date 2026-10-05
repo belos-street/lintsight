@@ -217,8 +217,9 @@ describe('engine-bridge: arch 规则集成（T2.4）', () => {
       )
       const m = await resolveTsPaths(dir)
       expect(m).not.toBeNull()
-      // best-match：固定前缀长者优先
+      // 根 tsconfig 的 dir = ""；best-match：固定前缀长者优先
       expect(m!.map((x) => x.pattern)).toEqual(['@app/core/*', '@lib/*'])
+      expect(m![0].dir).toBe('')
       expect(m![1].targets).toEqual(['src/lib/*'])
 
       // 无 tsconfig / 无 paths → null（fail-open）
@@ -238,6 +239,46 @@ describe('engine-bridge: arch 规则集成（T2.4）', () => {
       } finally {
         await rm(empty, { recursive: true, force: true })
       }
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('FR-304① 嵌套 tsconfig：per-package paths 各归各 + node_modules 跳过', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-tspaths-nested-'))
+    try {
+      await mkdir(path.join(dir, 'packages/a'), { recursive: true })
+      await mkdir(path.join(dir, 'packages/b'), { recursive: true })
+      await mkdir(path.join(dir, 'packages/a/node_modules/x'), {
+        recursive: true
+      })
+      await writeFile(
+        path.join(dir, 'packages/a/tsconfig.json'),
+        JSON.stringify({
+          compilerOptions: { paths: { '@self/*': ['src/*'] } }
+        })
+      )
+      await writeFile(
+        path.join(dir, 'packages/b/tsconfig.json'),
+        JSON.stringify({
+          compilerOptions: { paths: { '@self/*': ['lib/*'] } }
+        })
+      )
+      // node_modules 内 tsconfig 必须跳过
+      await writeFile(
+        path.join(dir, 'packages/a/node_modules/x/tsconfig.json'),
+        JSON.stringify({
+          compilerOptions: { paths: { '@self/*': ['evil/*'] } }
+        })
+      )
+      // 发现范围 = cwd 根 tsconfig + 扫描根（'.' = dir 全树）
+      const m = await resolveTsPaths(dir, ['.'])
+      expect(m).not.toBeNull()
+      expect(m).toHaveLength(2) // node_modules 内的 evil tsconfig 必须被跳过
+      const a = m!.find((x) => x.dir === 'packages/a')
+      const b = m!.find((x) => x.dir === 'packages/b')
+      expect(a?.targets).toEqual(['packages/a/src/*'])
+      expect(b?.targets).toEqual(['packages/b/lib/*'])
     } finally {
       await rm(dir, { recursive: true, force: true })
     }
@@ -330,6 +371,121 @@ describe('engine-bridge: arch 规则集成（T2.4）', () => {
       expect(hits[0].file).toBe('src/core/a.ts')
       expect(hits[0].span.line).toBe(1)
       expect(hits[0].owner).toBe('lintsight-engine')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+})
+
+describe('engine-bridge: FR-304②③ opt-in 引擎能力（importCycles / enforceExports）', () => {
+  test('importCycles: a↔b 循环 → 每文件 1 条；菱形依赖不报；开关关闭零报告', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-cycles-'))
+    try {
+      await cp(path.join(PROJECT_ROOT, 'plugins'), path.join(dir, 'plugins'), {
+        recursive: true
+      })
+      await mkdir(path.join(dir, 'src'), { recursive: true })
+      await writeFile(
+        path.join(dir, 'lintsight.config.json'),
+        JSON.stringify({
+          rules: {},
+          arch: { zones: [], importCycles: true }
+        })
+      )
+      await writeFile(
+        path.join(dir, 'src/a.ts'),
+        "import { b } from './b'\nexport const a = 1\n"
+      )
+      await writeFile(
+        path.join(dir, 'src/b.ts'),
+        "import { a } from './a'\nexport const b = 2\n"
+      )
+      // 菱形（非环）：main → x / main → y / x → z / y → z
+      await writeFile(
+        path.join(dir, 'src/main.ts'),
+        "import './x'\nimport './y'\n"
+      )
+      await writeFile(path.join(dir, 'src/x.ts'), "import './z'\n")
+      await writeFile(path.join(dir, 'src/y.ts'), "import './z'\n")
+      await writeFile(path.join(dir, 'src/z.ts'), 'export const z = 3\n')
+
+      const r = await runPipeline(['.'], { cwd: dir })
+      const hits =
+        r.report?.diagnostics.filter(
+          (d) => d.ruleId === 'lintsight-engine/no-import-cycle'
+        ) ?? []
+      expect(hits).toHaveLength(2)
+      const files = hits.map((h) => h.file).sort()
+      expect(files).toEqual(['src/a.ts', 'src/b.ts'])
+      // message 携带确定性环链（真实路径口径）
+      expect(hits[0].message).toContain('src/a.ts → src/b.ts → src/a.ts')
+
+      // 开关关闭（默认）→ 零报告（opt-in 语义回归哨兵）
+      await writeFile(
+        path.join(dir, 'lintsight.config.json'),
+        JSON.stringify({ rules: {}, arch: { zones: [] } })
+      )
+      const r2 = await runPipeline(['.'], { cwd: dir })
+      expect(
+        r2.report?.diagnostics.some(
+          (d) => d.ruleId === 'lintsight-engine/no-import-cycle'
+        )
+      ).toBe(false)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('enforceExports: 深导入未在 exports 键集 → 报；根导入/键集命中/无 exports 包不报', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-exports-'))
+    try {
+      await cp(path.join(PROJECT_ROOT, 'plugins'), path.join(dir, 'plugins'), {
+        recursive: true
+      })
+      await mkdir(path.join(dir, 'packages/api/src'), { recursive: true })
+      await mkdir(path.join(dir, 'legacy'), { recursive: true })
+      await writeFile(
+        path.join(dir, 'lintsight.config.json'),
+        JSON.stringify({
+          rules: {},
+          arch: { zones: [], enforceExports: true }
+        })
+      )
+      await writeFile(
+        path.join(dir, 'packages/api/package.json'),
+        JSON.stringify({
+          name: '@corp/api',
+          exports: { '.': './src/index.ts', './public/*': './src/*.ts' }
+        })
+      )
+      await writeFile(
+        path.join(dir, 'legacy/package.json'),
+        JSON.stringify({ name: 'legacy-pkg' }) // 无 exports → 不约束
+      )
+      await writeFile(path.join(dir, 'packages/api/src/index.ts'), 'export {}')
+      await writeFile(path.join(dir, 'packages/api/src/util.ts'), 'export {}')
+      await writeFile(
+        path.join(dir, 'app.ts'),
+        [
+          "import { x } from '@corp/api/src/internal'", // 深导入 → 报
+          "import { y } from '@corp/api/public/util'", // 键集 ./public/* 命中 → 不报
+          "import api from '@corp/api'", // 根导入（键 .）→ 不报
+          "import l from 'legacy-pkg/anything'", // 无 exports 包 → 不报
+          "import './local'", // 相对导入 → 不报
+          ''
+        ].join('\n')
+      )
+
+      const r = await runPipeline(['.'], { cwd: dir })
+      const hits =
+        r.report?.diagnostics.filter(
+          (d) => d.ruleId === 'lintsight-engine/no-deep-import'
+        ) ?? []
+      expect(hits).toHaveLength(1)
+      expect(hits[0].file).toBe('app.ts')
+      expect(hits[0].span.line).toBe(1)
+      expect(hits[0].message).toContain("'@corp/api/src/internal'")
+      expect(hits[0].message).toContain('@corp/api')
     } finally {
       await rm(dir, { recursive: true, force: true })
     }

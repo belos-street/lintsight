@@ -107,6 +107,26 @@ describe('arch 配置校验（T2.4）', () => {
     expect(r.config!.arch).toBeUndefined()
   })
 
+  test('FR-304②③ arch opt-in 开关：布尔透传 / 非布尔报错 / 缺省 undefined', () => {
+    const ok = parseConfig(
+      '{ "arch": { "zones": [], "importCycles": true, "enforceExports": true } }'
+    )
+    expect(ok.ok).toBeTrue()
+    expect(ok.config!.arch!.importCycles).toBe(true)
+    expect(ok.config!.arch!.enforceExports).toBe(true)
+
+    const bad = parseConfig(
+      '{ "arch": { "zones": [], "importCycles": "yes" } }'
+    )
+    expect(bad.ok).toBeFalse()
+    expect(bad.errors[0]).toContain('arch.importCycles')
+
+    const missing = parseConfig('{ "arch": { "zones": [] } }')
+    expect(missing.ok).toBeTrue()
+    expect(missing.config!.arch!.importCycles).toBeUndefined()
+    expect(missing.config!.arch!.enforceExports).toBeUndefined()
+  })
+
   test('typeAware 校验（T2.5 剩余项）：布尔合法 / 非布尔报错 / 缺省 undefined', () => {
     const ok = parseConfig('{ "typeAware": true }')
     expect(ok.ok).toBeTrue()

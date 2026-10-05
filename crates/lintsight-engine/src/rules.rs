@@ -4,6 +4,8 @@
 //! source/sanitizer/sink 表交叠校验也挂在登记期）。规则 id 一律 `lintsight-engine/<name>`。
 //! RawDiag 必须 arena 无关（全 owned/'static）——FileContext drop 后诊断仍存活。
 
+use std::collections::BTreeMap;
+
 use oxc_ast::AstKind;
 use oxc_span::Span;
 
@@ -310,7 +312,12 @@ impl EngineRule for NoPrototypePollutionMerge {
 /// 全部引擎规则登记处（表交叠校验随登记执行——校验失败即引擎启动 panic，
 /// Bun 侧 fail-open 降级，cargo test 提前拦截）。
 /// arch 配置缺省时架构规则不注册（Summary.rules 亦不含）；ts_paths 同随 stdin 下发。
-pub fn registry(arch: Option<&ArchConfig>, ts_paths: &[TsPathMapping]) -> Vec<Box<dyn EngineRule>> {
+/// `packages` = exports 包表（main 按配置发现，None/空 → no-deep-import 不注册）。
+pub fn registry(
+    arch: Option<&ArchConfig>,
+    ts_paths: &[TsPathMapping],
+    packages: Option<&BTreeMap<String, crate::pkgexports::PackageInfo>>,
+) -> Vec<Box<dyn EngineRule>> {
     PATH_TRAVERSAL_TABLES
         .validate()
         .expect("no-path-traversal 函数表交叠");
@@ -334,6 +341,13 @@ pub fn registry(arch: Option<&ArchConfig>, ts_paths: &[TsPathMapping]) -> Vec<Bo
             ts_paths: ts_paths.to_vec(),
         }));
     }
+    if let Some(pkgs) = packages {
+        if !pkgs.is_empty() {
+            rules.push(Box::new(NoDeepImport {
+                packages: pkgs.clone(),
+            }));
+        }
+    }
     rules
 }
 
@@ -351,6 +365,22 @@ impl EngineRule for ArchBoundaries {
 
     fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
         crate::arch::run(ctx, &self.config, &self.ts_paths)
+    }
+}
+
+/// no-deep-import（FR-304③）：package exports 面约束，opt-in（arch.enforceExports）。
+/// 包表由 main 发现并克隆（Send+Sync 要求 owned 数据）。
+struct NoDeepImport {
+    packages: BTreeMap<String, crate::pkgexports::PackageInfo>,
+}
+
+impl EngineRule for NoDeepImport {
+    fn id(&self) -> &'static str {
+        crate::pkgexports::rule_id()
+    }
+
+    fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
+        crate::pkgexports::run(ctx, &self.packages)
     }
 }
 

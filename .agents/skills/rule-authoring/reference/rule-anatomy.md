@@ -76,6 +76,22 @@ export default {
   - [ ] 语料库 diff：无双报（FR-407），误报率 <15%（平台复核口径，FR-303 硬门槛）
   - [ ] confidence 上调依据写入 PR 描述
 
+## source/sink 表形态校准参照（M2.7 制度化）
+
+corpus 试用/召回对照（`bun run corpus:recall`）定性出「真漏报 = 表形态漏配」时，
+补表前先对照上游规则语料校准形态，禁止凭直觉补：
+
+1. **semgrep-contrib**：<https://github.com/semgrep/semgrep-rules>（lang/javascript/security/）——
+   按 CWE 找对应规则文件，`pattern-sinks`/`pattern-sources` 直接给出 API 形态清单
+   （如 CWE-22 的 sink 面：fs.readFile/writeFile/createWriteStream/…）。
+2. **CodeQL JS**：<https://github.com/github/codeql>（javascript/ql/src/Security/CWE-xxx/）——
+   语义建模精度最高，看 `*.qll` 的 source/sink 谓词定义（如 Ssrf.ql 的 url source 判定）。
+3. **吸收纪律**：
+   - 上游形态 → lintsight TaintTables 映射时按 M2-DR5 交叠校验过滤（不引入自指）；
+   - 上游 source 过宽（如任意函数参数）不符合 v0 保守口径的，备案不吸收；
+   - 每次补表在 PR 里列「上游依据 + 未吸收形态及理由」——表是规则承诺的一部分
+     （M2-DR5），变更视同规则行为变更，走语料库 diff 评审。
+
 ## 性能预算
 
 - 单规则单文件 O(n)；符号反查等索引用 ctx 懒构建索引。

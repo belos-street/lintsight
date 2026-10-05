@@ -307,7 +307,8 @@ export async function runPipeline(
 
       // 回映射（scanRel → storeRel）→ 统一模型 → 按文件分组（= 缓存条目粒度）
       // FR-304：tsconfig paths 归一化表随 stdin 下发引擎（arch 别名兜底；fail-open）
-      const tsPaths = await resolveTsPaths(cwd)
+      // 发现范围 = 扫描根 + cwd 根 tsconfig（不做全仓 IO）
+      const tsPaths = await resolveTsPaths(cwd, inputs)
       const engineResult = await runEngine(
         misses.map((m) => m.scanRel),
         {

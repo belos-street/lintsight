@@ -107,3 +107,67 @@ export function diffDigest(
 
   return { unchanged: false, byRuleDelta, newFingerprints, goneFingerprints }
 }
+
+// —— juice-shop 召回制度化（FR-303 验收配套，2026-10-05 转正） ——
+
+export interface JuiceChallenge {
+  key: string
+  name: string
+  category: string
+}
+
+/** challenges.yml 解析（juice-shop data/static/challenges.yml 实测格式）：
+ * 块分隔 = 行首独立 `-`；字段两空格缩进；hints/tags/disabledEnv 等嵌套列表行
+ * 不匹配 `  字段: 值` 形态自然跳过。只提取 key/name/category（召回对照所需）。
+ * 值的引号剥离取成对引号内内容（csrfChallenge 的 name 带 YAML 注释尾巴，实测）。 */
+export function parseChallengesYml(text: string): JuiceChallenge[] {
+  const out: JuiceChallenge[] = []
+  let cur: Partial<JuiceChallenge> | null = null
+  for (const line of text.split('\n')) {
+    if (line.trimEnd() === '-') {
+      if (cur?.key)
+        out.push({
+          key: cur.key,
+          name: cur.name ?? '',
+          category: cur.category ?? ''
+        })
+      cur = null
+      continue
+    }
+    if (!cur) cur = {}
+    const m = line.match(/^  (\w+): (.*)$/)
+    if (!m) continue
+    const quoted = m[2].match(/^(['"])(.*?)\1/)
+    const val = quoted ? quoted[2] : m[2]
+    if (m[1] === 'key') cur.key = val
+    else if (m[1] === 'name') cur.name = val
+    else if (m[1] === 'category') cur.category = val
+  }
+  if (cur?.key)
+    out.push({
+      key: cur.key,
+      name: cur.name ?? '',
+      category: cur.category ?? ''
+    })
+  return out
+}
+
+/** codefixes 文件名 → 挑战 key 映射：文件名（basename）内嵌挑战 key
+ * （`<key>_<n>.ts` / `<key>_<n>_correct.ts`——官方修复挑战片段语料）。
+ * 返回 key → 文件相对路径列表（保持输入序）。 */
+export function mapCodefixes(files: string[]): Map<string, string[]> {
+  const map = new Map<string, string[]>()
+  for (const f of files) {
+    const base = f
+      .split('/')
+      .pop()!
+      .replace(/\.ts$/, '')
+      .replace(/_correct$/, '')
+      .replace(/_\d+$/, '')
+    if (!base) continue
+    const list = map.get(base) ?? []
+    list.push(f)
+    map.set(base, list)
+  }
+  return map
+}

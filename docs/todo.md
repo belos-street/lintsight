@@ -166,15 +166,15 @@
 
 ### FR-304 完整化（架构规则）
 
-- [ ] 循环依赖检测（import 图环检测，T2.4 词法图已有地基）
-- [ ] 公共 API 泄漏（package exports 面约束）
-- [ ] 嵌套 tsconfig / per-package paths（monorepo 形态，现只读根 tsconfig）
+- [x] 循环依赖检测（2026-10-05 完成）：`lintsight-engine/no-import-cycle`——词法 import 图（口径同 arch-boundaries）+ 迭代式 Tarjan SCC；type-only import 过滤（TS 擦除无运行时环）；opt-in `arch.importCycles`。corpus 试点：ghost 81 条真环（admin-x design-system/framework），zod/dayjs/express/juice-shop/nodegoat 零命中
+- [x] 公共 API 泄漏（2026-10-05 完成）：`lintsight-engine/no-deep-import`——引擎侧发现 workspace 包 package.json exports 键集，子路径未命中即报；opt-in `arch.enforceExports`。corpus 试点零命中（零噪音）
+- [x] 嵌套 tsconfig / per-package paths（2026-10-05 完成）：resolveTsPaths 递归发现扫描根内嵌套 tsconfig，映射条目带 dir 归属；引擎 resolve_alias 按 importer 最近祖先 tsconfig 选集（TS 语义，兄弟包同 len 目录串扰已防）。⚠️ 发现范围必须收窄到扫描根——全 cwd 递归在大仓吃掉两位数 ms（bench 曾 +30.7% 触发回退门禁）
 
 ### 召回制度化
 
-- [ ] challenges.yml 解析 + codefixes 映射转正进 corpus-lib → CI 召回回归（每加规则自动出召回对照）
-- [ ] juice-shop 逐挑战人工核对（hint/mitigationUrl 语义对照，产出完整召回率数字——FR-303 验收「误报率 <15% 平台复核口径」的配套数据）
-- [ ] semgrep / codeql 规则测试语料校准参照制度化（source/sink 表形态漏配时的补表依据）
+- [x] challenges.yml 解析 + codefixes 映射转正进 corpus-lib（2026-10-05 完成）：parseChallengesYml / mapCodefixes 纯函数 + 单测；`bun run corpus:recall` 一键逐挑战对照（机器可读 recall-now.json + MD 表）；EXTRA_ANCHORS 沉淀 writeup 公认路由锚点（login.ts 同洞覆盖 login 三挑战 + unionSql）
+- [x] juice-shop 逐挑战人工核对 v0.2（2026-10-05 完成，见 recall 报告 v0.2）：111 挑战 = recalled 10 + pending-human 16（人工复核清单，逐条判定方向已注）+ no-static-anchor 85（不计入分母）；静态锚点可对照面召回率 10/26
+- [x] semgrep / codeql 规则测试语料校准参照制度化（2026-10-05 完成）：source/sink 补表前先对照 semgrep-rules（pattern-sinks/sources 形态清单）+ codeql *.qll 谓词定义，吸收纪律（交叠校验过滤 / 过宽 source 备案不吸收 / PR 列上游依据）挂入 rule-authoring skill rule-anatomy.md
 
 ### 平台契约与交付欠账（requirements §9「M1~M2 建议做」）
 
