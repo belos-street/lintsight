@@ -264,4 +264,4 @@ bun run format        # oxfmt
 
 ## License
 
-当前为私有项目，未附带开源协议。
+[MIT](LICENSE) © 2026 belos-street
