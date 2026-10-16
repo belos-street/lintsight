@@ -169,3 +169,50 @@ bun run cli -- $P/lib $P/src --format sarif --output .lintsight-cache/code-viewe
 引擎能力侧**已达可用状态**：能对真实 Vue 业务项目跑通、准确定位、给出带行号的可用诊断，且 M2 引擎按 fail-open 正常工作。阻塞「可直接用于真实项目」的是**输入面治理**（B1 / B2），而非分析能力本身。
 
 建议顺序：修 B1（ignore 生效）→ 补 B2 默认忽略策略 → 用同一项目复扫验收（预期 971 → ≈316，且 ignore 后再降到 ≈66）。
+
+## 10. 修复与复扫验收（2026-10-11 追加）
+
+B1 / B2 已修复并复扫验收。
+
+### B1 根因（实证，比 §7 原判断更精确）
+
+oxlint 报错原文锁定语义：**`ignorePatterns` 严格相对「配置文件所在目录」解析，且 `..` 形态被直接拒绝**：
+
+```
+Failed to parse oxlint configuration file.
+  × invalid config file …/.lintsight-cache/oxlintrc.json: Invalid pattern `../docs/assets/**`
+  in `ignorePatterns`: `..` is not supported, patterns are resolved within the config file's directory
+```
+
+lintsight 生成的 oxlintrc 位于 `.lintsight-cache/`（比项目根深一层）→ **任何项目根相对的用户 ignore 模式在 oxlint 侧都不可达**（属死配置）。受控实验对照（同模式、仅换配置文件位置）：
+
+| 实验 | oxlintrc 位置 | 模式 | 产物文件是否被排除 |
+| --- | --- | --- | --- |
+| ① | 项目根 | `docs/assets/**` | ✅ 排除 |
+| ② | 项目根 | `docs/assets/**`（显式文件传参） | ✅ 排除 |
+| ③ | `.lintsight-cache/`（真实布局） | `docs/assets/**` | ❌ 未排除 |
+| ④ | `.lintsight-cache/`（显式文件传参） | `docs/assets/**` | ❌ 未排除 |
+| ⑤ | `.lintsight-cache/` | `**/docs/assets/**`（非锚定） | ❌ 未排除 |
+
+**修复**：ignore 语义整体移到 pipeline 侧执行（`createIgnoreMatcher`：模式相对扫描根或项目根匹配，目录名模式按前缀语义），生成配置不再写 ignorePatterns——同时消除「配置笔误导致 oxlint 配置解析失败 → exit 2」的风险。
+
+### B2 默认忽略策略
+
+- 产物目录名：`dist` / `build` / `out` / `coverage` / `.next` / `.nuxt` / `.output` / `.svelte-kit` / `.turbo` / `.parcel-cache` / `.vercel`
+- 产物文件名：`*.min.js` / `*.min.mjs` / `*.min.cjs` / `*.bundle.js` / `*.bundle.mjs` / `*.chunk.js`
+- 打包产物长行启发式（`.js/.mjs/.cjs`，前 64KB 内 ≥1500 字符长行）——**阈值经真实语料校准**：corpus 手写长行文件最长 1316（ghost 邮件模板/setup.js），真压缩产物最短 1685（admin-auth.min.js）→ 1500 落在分界带；更小的压缩产物（stats.min.js 最长行 572）由文件名模式覆盖。跳过清单以 warn 日志列出，`ignoreGenerated: false` 可关闭。
+
+### 复扫结果（同一项目、同一配置）
+
+| 扫描 | 修复前 | 修复后 | 变化 |
+| --- | --- | --- | --- |
+| 项目根（默认） | 971 / 67 文件 | **326 / 59 文件** | 跳过 8 个产物（−645） |
+| 项目根 + `ignore: ["docs/assets/**"]` | 971（原 ignore 无效） | **316 / 49 文件**（docs 残留 0） | ignore 真正生效 |
+
+残留 10 条 `docs/` 诊断位于长行 292~374 的小体量 chunk（低于阈值，非压缩形态）——属设计边界，由 `ignore` 兜底（实测 docs 残留归零）。
+
+### 语料库回归（归因闭环）
+
+`corpus:check` 漂移 −979 条 / −10 文件，**100% 归因可解释**：5 个文件名模式命中 + 5 个启发式命中。对照实验（同配置、仅 `ignoreGenerated: false`）总诊断回到 4387 = 旧基线原值，被跳过的 9 个文件承载诊断数恰为 979（data-generator.js 369 / casper.js 244 / source.js 242 / bootstrap.js 124 / 其余 0）。
+
+10 个跳过文件全部为真实产物：juice-shop `stats.min.js`·`dat.gui.min.js`、ghost `admin-auth.min.js`·测试 fixture 主题 `assets/built/*.js`·`data-generator.js`、nodegoat `vendor/*`（bootstrap/jquery/morris/raphael）。**零手写源码被误跳**。基线已按评审纪律重建（5596 文件 / 4387 诊断 → 5586 文件 / 3408 诊断）。

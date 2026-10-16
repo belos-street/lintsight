@@ -5,6 +5,8 @@
 import { afterAll, describe, expect, test } from 'bun:test'
 import { rm } from 'node:fs/promises'
 import {
+  createIgnoreMatcher,
+  effectiveIgnorePatterns,
   equivalenceReport,
   generateOxlintrc,
   parseConfig,
@@ -159,12 +161,18 @@ describe('翻译器', () => {
     expect(oxlintrc.rules['lintsight/b']).toEqual(['error', { x: 1 }])
   })
 
-  test('builtin-mapping categories 合入；ignore 合并', () => {
+  test('builtin-mapping categories 合入；ignore 不进 oxlintrc（B1：pipeline 侧执行）', () => {
     const { oxlintrc } = translate(config, {
       rulesPluginPath: '/abs/rules/index.js'
     })
     expect(oxlintrc.categories).toEqual({ correctness: 'error' })
-    expect(oxlintrc.ignorePatterns).toEqual(['dist/**'])
+    // oxlint 的 ignorePatterns 相对 oxlintrc 所在目录解析（生成配置在 .lintsight-cache/
+    // 下一层）→ 写入即死配置，且 `..` 形态会致配置解析失败；故由 pipeline 侧过滤承担
+    expect('ignorePatterns' in oxlintrc).toBeFalse()
+    // 生效模式 = 内置默认 + 用户 ignore（供 pipeline 匹配）
+    const patterns = effectiveIgnorePatterns(config)
+    expect(patterns).toContain('dist/**')
+    expect(patterns).toContain('**/*.min.js')
   })
 
   test('overrides：processor 条目跳过（引擎侧行为），rules 条目照译', () => {
@@ -226,5 +234,55 @@ describe('文件面', () => {
     expect(
       out.equivalent.some((r) => r.rule === 'lintsight/no-empty-catch')
     ).toBeTrue()
+    // B1/B2：生效忽略模式与产物跳过开关随生成结果下发 pipeline
+    expect(out.ignore).toContain('**/*.min.js')
+    expect(out.ignoreGenerated).toBeTrue()
+    expect('ignorePatterns' in doc).toBeFalse()
+  })
+})
+
+describe('ignore 匹配器（B1：pipeline 侧执行）', () => {
+  test('目录 glob / 文件名 glob / 目录名前缀 三种形态', () => {
+    const m = createIgnoreMatcher(['docs/assets/**', '**/*.min.js', 'coverage'])
+    expect(m.matches('docs/assets/a.js')).toBeTrue()
+    expect(m.matches('docs/assets/sub/a.js')).toBeTrue()
+    expect(m.matches('docs/b.js')).toBeFalse()
+    expect(m.matches('a/b/x.min.js')).toBeTrue()
+    // 目录名前缀语义：'coverage' 亦命中其下文件
+    expect(m.matches('coverage/lcov-report/a.js')).toBeTrue()
+    expect(m.matches('src/coverage.ts')).toBeFalse()
+    expect(m.invalid).toEqual([])
+  })
+
+  test('锚定 vs 非锚定：docs/assets/** 不匹配更深的同名路径', () => {
+    const m = createIgnoreMatcher(['docs/assets/**'])
+    expect(m.matches('pkg/docs/assets/a.ts')).toBeFalse()
+    expect(
+      createIgnoreMatcher(['**/docs/assets/**']).matches('pkg/docs/assets/a.ts')
+    ).toBeTrue()
+  })
+
+  test('非法模式（..）记入 invalid 且不中断（fail-open）', () => {
+    const m = createIgnoreMatcher(['../out-of-root/**', 'src/gen/**'])
+    expect(m.invalid).toEqual(['../out-of-root/**'])
+    expect(m.matches('src/gen/a.ts')).toBeTrue()
+  })
+
+  test('空模式与 ./ 前缀归一', () => {
+    const m = createIgnoreMatcher(['', '  ', './dist/**'])
+    expect(m.matches('dist/a.js')).toBeTrue()
+    expect(m.invalid).toEqual([])
+  })
+
+  test('ignoreGenerated 校验：布尔透传 / 非布尔报错 / 缺省 true', () => {
+    expect(
+      parseConfig('{ "ignoreGenerated": false }').config!.ignoreGenerated
+    ).toBeFalse()
+    const bad = parseConfig('{ "ignoreGenerated": "yes" }')
+    expect(bad.ok).toBeFalse()
+    expect(bad.errors[0]).toContain('ignoreGenerated')
+    expect(
+      parseConfig('{ "rules": {} }').config!.ignoreGenerated
+    ).toBeUndefined()
   })
 })

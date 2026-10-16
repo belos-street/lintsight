@@ -39,7 +39,10 @@ export interface ArchConfig {
 
 export interface LintsightConfig {
   rules?: Record<string, RuleSetting>
+  /** 忽略的路径 glob（相对扫描根或项目根；pipeline 侧匹配执行——B1） */
   ignore?: string[]
+  /** 疑似打包/压缩产物跳过开关（B2，默认 true；false = 连产物一起扫） */
+  ignoreGenerated?: boolean
   overrides?: LintsightOverride[]
   /** M2 引擎架构规则（design-m2 §4.1 arch-rules）；undefined = 不启用 */
   arch?: ArchConfig
@@ -122,6 +125,13 @@ export function validateConfig(raw: unknown): {
       errors.push('ignore: 期望字符串数组（glob）')
     } else {
       config.ignore = o.ignore as string[]
+    }
+  }
+  if (o.ignoreGenerated !== undefined) {
+    if (typeof o.ignoreGenerated !== 'boolean') {
+      errors.push('ignoreGenerated: 期望布尔值（默认 true）')
+    } else {
+      config.ignoreGenerated = o.ignoreGenerated
     }
   }
   if (o.overrides !== undefined) {
@@ -293,7 +303,6 @@ export interface OxlintrcDoc {
   jsPlugins: string[]
   categories: Record<string, 'allow' | 'error' | 'warn'>
   rules: Record<string, unknown>
-  ignorePatterns: string[]
   overrides?: { files: string[]; rules?: Record<string, unknown> }[]
 }
 
@@ -325,13 +334,75 @@ export function translate(
     jsPlugins: [opts.rulesPluginPath],
     categories: { ...builtinMapping.categories },
     rules,
-    ignorePatterns: [
-      ...builtinMapping.ignorePatterns,
-      ...(config.ignore ?? [])
-    ],
     ...(overrides.length > 0 ? { overrides } : {})
   }
   return { oxlintrc, equivalent: equivalenceReport(config) }
+}
+
+// —— ignore 匹配（B1） ——
+
+/** 生效忽略模式 = 内置默认（builtinMapping.ignorePatterns）+ 用户 config.ignore */
+export function effectiveIgnorePatterns(config: LintsightConfig): string[] {
+  return [...builtinMapping.ignorePatterns, ...(config.ignore ?? [])]
+}
+
+export interface IgnoreMatcher {
+  /** relPath（相对扫描根或项目根的 POSIX 路径）是否命中忽略模式 */
+  matches(relPath: string): boolean
+  /** 非法模式（`..` 等，Bun.Glob 拒绝）——调用方负责告警；不因配置笔误中断扫描 */
+  invalid: string[]
+}
+
+/**
+ * ignore 模式匹配器（B1：pipeline 侧执行）。
+ *
+ * 语义：
+ * - 模式相对**扫描根或项目根**匹配（`docs/assets/**` 命中 `docs/assets/a.js`）；
+ * - 无通配结尾的模式额外按**目录前缀**匹配（`dist` 亦命中 `dist/a.js`），
+ *   避免用户写目录名时不生效；
+ * - 模式含 `..` 等非法形态 → 记入 invalid（fail-open：不抛出、不中断扫描）。
+ *
+ * ⚠️ 不可依赖 oxlint 的 ignorePatterns 承担此职责：其模式严格相对「oxlintrc 所在
+ * 目录」解析（实测报错原文 "patterns are resolved within the config file's
+ * directory"），而生成配置在 .lintsight-cache/ 下一层 → 项目根相对模式不可达。
+ */
+export function createIgnoreMatcher(patterns: string[]): IgnoreMatcher {
+  const globs: Bun.Glob[] = []
+  const invalid: string[] = []
+  for (const raw of patterns) {
+    if (typeof raw !== 'string') continue
+    const norm = raw.trim().replace(/\\/g, '/')
+    if (!norm) continue
+    // 绝对路径 / 越根的相对形态：相对路径匹配语义下永不命中 → 显式记为 invalid，
+    // 避免「配了但静默不生效」的失败模式（Bun.Glob 本身不拒绝这类模式，会静默吞掉）
+    if (norm.startsWith('/') || /^[A-Za-z]:\//.test(norm)) {
+      invalid.push(raw)
+      continue
+    }
+    const rel = norm.replace(/^\.\//, '')
+    if (rel.split('/').includes('..')) {
+      invalid.push(raw)
+      continue
+    }
+    const candidates = rel.endsWith('/**')
+      ? [rel]
+      : [rel, `${rel.replace(/\/+$/, '')}/**`] // 目录名前缀语义
+    for (const c of candidates) {
+      try {
+        globs.push(new Bun.Glob(c))
+      } catch {
+        invalid.push(raw)
+        break
+      }
+    }
+  }
+  return {
+    invalid,
+    matches(relPath: string): boolean {
+      const rel = relPath.replace(/\\/g, '/').replace(/^\/+/, '')
+      return globs.some((g) => g.match(rel))
+    }
+  }
 }
 
 // —— 文件面 ——
@@ -371,6 +442,10 @@ export interface GeneratedConfig {
   arch?: ArchConfig
   /** type-aware 编排（FR-305）；oxlint spawn 参数，不进 .oxlintrc */
   typeAware?: boolean
+  /** 生效忽略模式（内置默认 + 用户 ignore）；pipeline 侧匹配执行（B1） */
+  ignore: string[]
+  /** 疑似打包产物跳过开关（B2）；缺省 true */
+  ignoreGenerated: boolean
 }
 
 /** 生成 .oxlintrc 到 .lintsight-cache/（不污染项目根），返回路径与等价报告 */
@@ -394,7 +469,9 @@ export async function generateOxlintrc(
     oxlintrcPath,
     equivalent,
     arch: parsed.config.arch,
-    typeAware: parsed.config.typeAware
+    typeAware: parsed.config.typeAware,
+    ignore: effectiveIgnorePatterns(parsed.config),
+    ignoreGenerated: parsed.config.ignoreGenerated ?? true
   }
 }
 

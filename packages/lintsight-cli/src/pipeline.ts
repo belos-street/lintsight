@@ -26,9 +26,11 @@ import {
   type VirtualVueFile
 } from '@lintsight/vue-processor'
 import {
+  createIgnoreMatcher,
   generateOxlintrc,
   resolveConfigFile,
-  type ArchConfig
+  type ArchConfig,
+  type IgnoreMatcher
 } from '@lintsight/config-bridge'
 import { createLogger, type Logger } from '@lintsight/shared'
 import {
@@ -55,11 +57,39 @@ const IGNORED_DIRS = new Set([
   'node_modules',
   '.git',
   CACHE_DIR_NAME,
+  // 常规构建产物目录（B2：默认不进扫描面）
   'dist',
   'build',
   'out',
-  'coverage'
+  'coverage',
+  '.next',
+  '.nuxt',
+  '.output',
+  '.svelte-kit',
+  '.turbo',
+  '.parcel-cache',
+  '.vercel'
 ])
+
+/** 打包产物判据（B2）：只对 JS 产物扩展名生效，探针前 64KB 内出现 ≥1500 字符长行。
+ * 打包产物（Vite/webpack/rollup）本质是「极少数超长行」；阈值经语料实测校准——
+ * corpus 内手写长行文件（ghost 邮件模板/setup.js 等）最长 1316，真压缩产物最短 1685，
+ * 1500 落在分界带上；压缩但整体行较短的产物（如 stats.min.js 572）由文件名模式覆盖。
+ * .ts/.tsx/.vue 永不参与（手写源码不存在压缩形态）；探针窗口是性能折衷（只读文件头）。
+ * 读取失败一律 false（fail-open：宁可多扫，不可静默漏扫）。 */
+const BUNDLE_EXTS = new Set(['.js', '.mjs', '.cjs'])
+const GENERATED_PROBE_BYTES = 64 * 1024
+const GENERATED_MIN_LINE = 1500
+
+async function looksLikeGeneratedBundle(abs: string): Promise<boolean> {
+  if (!BUNDLE_EXTS.has(path.extname(abs))) return false
+  try {
+    const head = await Bun.file(abs).slice(0, GENERATED_PROBE_BYTES).text()
+    return head.split('\n').some((l) => l.length >= GENERATED_MIN_LINE)
+  } catch {
+    return false
+  }
+}
 
 export interface LintsightReport {
   contractVersion: string
@@ -76,7 +106,28 @@ export interface PipelineResult {
   degraded?: boolean
 }
 
-async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
+interface Collected {
+  files: string[]
+  /** 被 ignore 模式排除的候选文件数（无可扫文件时用于给出可操作提示） */
+  ignored: number
+}
+
+/** 收集扫描目标（B1：ignore 在此落地——pipeline 侧过滤，模式相对扫描根或项目根匹配） */
+async function collectFiles(
+  inputs: string[],
+  cwd: string,
+  ignore: IgnoreMatcher | null
+): Promise<Collected> {
+  const toPosix = (p: string) => p.split(path.sep).join('/')
+  // 扫描根相对路径优先（`bun run cli -- packages/foo` 时 src/gen/** 这类根相对模式才有意义），
+  // 同时接受项目根相对路径（cwd 场景）；两者任一命中即忽略
+  const ignored = (abs: string, rootRel?: string): boolean => {
+    if (!ignore) return false
+    if (rootRel !== undefined && ignore.matches(rootRel)) return true
+    const relCwd = toPosix(path.relative(cwd, abs))
+    return !relCwd.startsWith('..') && ignore.matches(relCwd)
+  }
+  let ignoredCount = 0
   const groups = await Promise.all(
     inputs.map(async (input) => {
       const abs = path.resolve(cwd, input)
@@ -88,7 +139,12 @@ async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
       }
       if (st.isFile()) {
         if (isInPlaceVirtualPath(abs)) return []
-        return SCAN_EXTS.has(path.extname(abs)) ? [abs] : []
+        if (!SCAN_EXTS.has(path.extname(abs))) return []
+        if (ignored(abs)) {
+          ignoredCount++
+          return []
+        }
+        return [abs]
       }
       if (!st.isDirectory()) throw new Error(`unsupported input type: ${input}`)
       const glob = new Bun.Glob('**/*')
@@ -96,13 +152,18 @@ async function collectFiles(inputs: string[], cwd: string): Promise<string[]> {
       for (const rel of glob.scanSync({ cwd: abs, onlyFiles: true })) {
         if (rel.split('/').some((seg) => IGNORED_DIRS.has(seg))) continue
         if (isInPlaceVirtualPath(rel)) continue // 本次/历史运行的就地临时文件不重复扫描
-        if (SCAN_EXTS.has(path.extname(rel)))
-          matched.push(path.resolve(abs, rel))
+        if (!SCAN_EXTS.has(path.extname(rel))) continue
+        const fileAbs = path.resolve(abs, rel)
+        if (ignored(fileAbs, rel)) {
+          ignoredCount++
+          continue
+        }
+        matched.push(fileAbs)
       }
       return matched
     })
   )
-  return groups.flat().sort()
+  return { files: groups.flat().sort(), ignored: ignoredCount }
 }
 
 export async function runPipeline(
@@ -126,6 +187,8 @@ export async function runPipeline(
   let oxlintrcPath: string | undefined
   let arch: ArchConfig | undefined
   let typeAware: boolean | undefined
+  let ignoreMatcher: IgnoreMatcher | null = null
+  let ignoreGenerated = true
   try {
     const configFile = resolveConfigFile(cwd, opts.config)
     if (configFile) {
@@ -133,6 +196,13 @@ export async function runPipeline(
       oxlintrcPath = generated.oxlintrcPath
       arch = generated.arch
       typeAware = generated.typeAware
+      // B1：ignore 由 pipeline 侧匹配（oxlint 的 ignorePatterns 相对 oxlintrc 目录
+      // 解析，而生成配置在 .lintsight-cache/ → 用户模式不可达，见 config-bridge 注释）
+      ignoreMatcher = createIgnoreMatcher(generated.ignore)
+      for (const p of ignoreMatcher.invalid) {
+        logger.warn(`ignore: 模式无法解析，已跳过 → '${p}'（不支持 .. 等形态）`)
+      }
+      ignoreGenerated = generated.ignoreGenerated
       logger.info(`config: ${configFile} → ${oxlintrcPath}`)
     } else {
       logger.info(
@@ -144,13 +214,43 @@ export async function runPipeline(
   }
 
   let files: string[]
+  let ignoredCount = 0
+  let skippedGenerated = 0
   try {
-    files = await collectFiles(inputs, cwd)
+    const collected = await collectFiles(inputs, cwd, ignoreMatcher)
+    files = collected.files
+    ignoredCount = collected.ignored
+    // B2：疑似打包/压缩产物跳过（可见 + 可关：ignoreGenerated: false）
+    if (ignoreGenerated) {
+      const flags = await Promise.all(
+        files.map((f) => looksLikeGeneratedBundle(f))
+      )
+      const skipped = files.filter((_, i) => flags[i])
+      skippedGenerated = skipped.length
+      if (skipped.length > 0) {
+        logger.warn(
+          `generated: 跳过 ${skipped.length} 个疑似打包/压缩产物（长行 ≥ ${GENERATED_MIN_LINE} 字符；ignoreGenerated: false 可关闭）`
+        )
+        for (const f of skipped.slice(0, 10)) {
+          logger.info(`generated: ${normalizeFilePath(f, cwd)}`)
+        }
+      }
+      files = files.filter((_, i) => !flags[i])
+    }
   } catch (e) {
     return { exitCode: 2, report: null, error: (e as Error).message }
   }
   if (files.length === 0) {
-    return { exitCode: 2, report: null, error: 'no scannable files found' }
+    // 有过滤发生时给出可操作提示；否则保持原契约文案（exit 2 契约测试锁定）
+    const filtered = ignoredCount + skippedGenerated
+    return {
+      exitCode: 2,
+      report: null,
+      error:
+        filtered > 0
+          ? `no scannable files found（${filtered} 个候选文件被 ignore / ignoreGenerated 过滤）`
+          : 'no scannable files found'
+    }
   }
 
   // .vue → 就地临时虚拟块（同目录保 import 解析上下文；行号 1:1 对齐）；各文件互相独立，并行虚拟化

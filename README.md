@@ -108,6 +108,11 @@ json 报告（`--format json` 默认输出）节选：
   },
   // Vue SFC 处理器
   "overrides": [{ "files": ["**/*.vue"], "processor": "@lintsight/vue" }],
+  // 忽略路径（glob，相对扫描根或项目根；目录名亦可，如 "coverage"）
+  // 项目特有的提交产物（如 docs/assets）由此排除——带内容哈希的构建目录很常见
+  "ignore": ["docs/assets/**", "src/generated/**"],
+  // 疑似打包/压缩产物默认跳过（长行形态启发式）；false = 连产物一起扫
+  "ignoreGenerated": true,
   // M2 架构规则（opt-in 能力见下）
   "arch": {
     "zones": [
@@ -126,6 +131,11 @@ json 报告（`--format json` 默认输出）节选：
 
 要点：
 
+- **扫描面治理**（信噪比的前提）：
+  - `ignore`：glob 相对**扫描根或项目根**匹配；无通配结尾的模式按目录名语义处理（`coverage` 亦排除 `coverage/**`）。模式不进 oxlint 配置——oxlint 的 `ignorePatterns` 严格相对其配置文件目录解析，而 lintsight 生成的配置在 `.lintsight-cache/` 下一层，故由 pipeline 侧统一过滤（含扫描外部目录的形态）。
+  - 默认忽略：`node_modules` / `.git` / `.lintsight-cache` / `dist` / `build` / `out` / `coverage` / `.next` / `.nuxt` / `.output` / `.svelte-kit` / `.turbo` / `.parcel-cache` / `.vercel` 目录名，以及 `*.min.js` / `*.bundle.js` / `*.chunk.js` 等产物文件名。
+  - `ignoreGenerated`（默认 true）：`.js/.mjs/.cjs` 文件若前 64KB 出现 ≥1500 字符长行（打包/压缩产物形态）则跳过，跳过清单以 warn 日志列出，置 false 可关闭。阈值经真实语料校准（手写长行文件最长 1316，真压缩产物最短 1685），`.ts/.tsx/.vue` 永不参与。
+  - 被过滤后的候选文件数为 0 时以 exit 2 报错并在文案中给出过滤计数，不会静默空扫。
 - `zones` 文件按 `match` 首匹配归 zone，同 zone 互引恒允许；跨 zone 目标必须命中 `allow` glob。裸说明符走 tsconfig paths 别名兜底（支持嵌套 tsconfig / per-package paths，最近祖先语义）。
 - `importCycles` / `enforceExports` 默认关闭（契约稳定性优先，试点后自定开启）。
 - 测试文件口径：安全规则默认豁免 `*.test.*` / `*.spec.*` / `__tests__|test|tests`，`testFiles: "report"` 可恢复。

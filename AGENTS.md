@@ -65,7 +65,7 @@ bun run corpus:check        # 语料库基线：全量扫描 + 双报率 0 断�
 
 - oxfmt：单引号 / 无分号 / 无尾逗号 / 2 空格 / 80 列 / LF（`.oxfmtrc.jsonc`）。
 - oxlint dev-lint：correctness=error、suspicious=warn、perf=warn（`.oxlintrc.json`）；0 警告基线，新警告必须修复或显式豁免。
-- ⚠️ **oxlint `ignorePatterns` 对显式传入的路径同样生效**（实测）——不要用它排除 `.lintsight-cache` 等运行时产物目录。
+- ⚠️ **oxlint `ignorePatterns` 严格相对「配置文件所在目录」解析**（实测报错原文：`patterns are resolved within the config file's directory`，且 `..` 形态会被直接拒绝）——lintsight 生成的 oxlintrc 位于 `.lintsight-cache/`（比项目根深一层），故**任何项目根相对的用户 ignore 模式在 oxlint 侧都不可达**。`lintsight.config.json` 的 `ignore` / 内置默认忽略 / 打包产物启发式一律由 pipeline 侧过滤执行（`packages/lintsight-cli/src/pipeline.ts`）；不要往生成配置里写 ignorePatterns。
 
 ## 开发纪律
 

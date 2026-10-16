@@ -176,6 +176,12 @@
 - [x] juice-shop 逐挑战人工核对 v0.2（2026-10-05 完成，见 recall 报告 v0.2）：111 挑战 = recalled 10 + pending-human 16（人工复核清单，逐条判定方向已注）+ no-static-anchor 85（不计入分母）；静态锚点可对照面召回率 10/26
 - [x] semgrep / codeql 规则测试语料校准参照制度化（2026-10-05 完成）：source/sink 补表前先对照 semgrep-rules（pattern-sinks/sources 形态清单）+ codeql *.qll 谓词定义，吸收纪律（交叠校验过滤 / 过宽 source 备案不吸收 / PR 列上游依据）挂入 rule-authoring skill rule-anatomy.md
 
+### 扫描面治理（真实项目验证反哺，2026-10-11 完成）
+
+- [x] **B1 `ignore` 静默失效修复**（2026-10-11, code-viewer 试用报告 §10）：根因实证 = oxlint `ignorePatterns` 严格相对「配置文件所在目录」解析（报错原文 "patterns are resolved within the config file's directory"），而生成配置在 `.lintsight-cache/` 下一层 → 用户模式属死配置，且 `..` 会被拒绝致配置解析失败。修复 = ignore 语义整体移到 pipeline 侧（`createIgnoreMatcher`，相对扫描根或项目根匹配 + 目录名前缀语义 + 非法模式记 invalid 不中断），生成配置不再写 ignorePatterns
+- [x] **B2 构建产物默认忽略**（2026-10-11）：产物目录名（dist/build/out/coverage/.next/.nuxt/.output/.svelte-kit/.turbo/.parcel-cache/.vercel）+ 产物文件名（*.min.js/*.bundle.js/*.chunk.js）+ 打包产物长行启发式（.js/.mjs/.cjs 前 64KB ≥1500 字符，阈值经语料校准：手写最长 1316 vs 产物最短 1685）；跳过清单 warn 可见，`ignoreGenerated: false` 可关
+- 验收：code-viewer 971 → 326（默认）/ 316（+ignore，docs 残留 0）；corpus 漂移 −979 条 100% 归因（10 个产物文件，零手写源码误跳），基线已评审重建（4387 → 3408）；新增 13 用例（153 → 154 全绿）
+
 ### 平台契约与交付欠账（requirements §9「M1~M2 建议做」）
 
 - [ ] **pathEvents 进 contract**：EngineDiagnostic.pathEvents 已透传，LintsightDiagnostic（contract v1）未承载——contract v2 评审 + 快照更新（FR-601 平台 AI 研判依赖）
