@@ -40,6 +40,18 @@ const EXTRA_ANCHORS: Record<string, string[]> = {
   loginJimChallenge: ['routes/login.ts'],
   dbSchemaChallenge: ['routes/search.ts'],
   ssrfChallenge: ['routes/profileImageUrlUpload.ts'],
+  // M3 召回扩充：redirect 两挑战同洞（routes/redirect.ts 的 res.redirect(toUrl)，
+  // allowlist 子串匹配可绕过 = 开放重定向）——codefixes 只映射 allowlist 模块
+  // （insecurity.ts），sink 不在锚点文件，照 ssrfChallenge 先例补路由级锚点。
+  redirectChallenge: ['routes/redirect.ts'],
+  redirectCryptoCurrencyChallenge: ['routes/redirect.ts'],
+  // XSS 三挑战同文件不同行：官方 vuln-code-snippet vuln-line 标记（writeup 公认洞位）
+  // L170 = localXss+xssBonus（searchValue = bypassSecurityTrustHtml(queryParam)），
+  // L132 = restfulXss（description = bypassSecurityTrustHtml(tableData[i].description)）。
+  // codefixes 片段是方法体片段（结构残缺不可解析），照 ssrfChallenge 先例补组件级锚点。
+  localXssChallenge: ['frontend/src/app/search-result/search-result.component.ts'],
+  xssBonusChallenge: ['frontend/src/app/search-result/search-result.component.ts'],
+  restfulXssChallenge: ['frontend/src/app/search-result/search-result.component.ts'],
   weirdCryptoChallenge: ['lib/insecurity.ts'],
   captchaBypassChallenge: ['routes/captcha.ts']
 }

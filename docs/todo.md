@@ -208,6 +208,15 @@
 - [x] 二进制分发说明（`build:binary` 产物 / `OXLINT_BIN` `OXLINT_ENGINE_BIN` 平台 worker 场景 / release 打包约定）——README 同节：release 附件命名 `lintsight-<os>-<arch>` / `lintsight-engine-<os>-<arch>`、oxlint 解析链、engine 缺失 fail-open 降级纯 M1
 - [x] 验收：CI 模板在试点项目可直接复用（FR-601 最小版）——模板为可直接抄用的 YAML 片段
 
+### T3.3 规则面扩充：juice-shop 召回收敛（2026-10-16 拍板「仅补规则提召回」，验收线 recalled ≥ 15）
+
+- [x] **pending-human 16 条定性**：6 条可静态化（redirect×2 / localXss / xssBonus / restfulXss / directoryListing+accessLog）+ 10 条静态不可达（业务逻辑/鉴权缺失/模板插值类：adminSection/changeProduct/exposedMetrics/registerAdmin/weakPassword/resetPasswordMorty/scoreBoard/tokenSale/web3Sandbox——照实标注退出目标）
+- [x] **引擎 taint `lintsight-engine/no-open-redirect`**（CWE-601，P0 提案正名落地）：member_sources 请求源 + `res.redirect`/`res.location` sink；配套 taint 能力补齐——**TS as/satisfies/!/() 剥离**（`query.to as string` 形态）、**解构请求源回退**（`({ query }: Request)` → `query.to`，REQUEST_SCOPE_NAMES 保守近似）
+- [x] **JS `lintsight/no-unsafe-trust-bypass`**（CWE-79）：`bypassSecurityTrust*` 非字面量实参 = 绕过 Angular XSS 防护（单 severity 口径对齐 no-innerhtml-assignment）；**JS `lintsight/no-serve-index`**（CWE-548）：serveIndex 目录浏览
+- [x] **误报门禁评审**（FR-303 硬门槛）：首扫 open-redirect 误报 1/4=25% 超线——express mvc `res.redirect('/user/' + id)` 字面量前缀锚定拼接无法逃逸为站外 URL → 反哺实现「锚定拼接清洁」表语义（`anchored_concat_clean`，仅 open-redirect 开启），修复后 **0/3=0%**（3 TP：juice-shop 埋洞 / nodegoat 埋洞 / express 测试演示漏洞）。连带诚实记录：REQUEST_SCOPE_NAMES 撞名回退在 ghost 测试文件 +1 条「测试响应体复制」误报（1/45=2.2% < 15% 硬门槛，文档化接受）
+- [x] **召回对照 v0.3**（[spikes/juice-shop-recall-v0.3.md](spikes/juice-shop-recall-v0.3.md)）：recalled 10 → **17**（+redirect×2、+localXss/xssBonus/restfulXss（同组件不同 vuln-line）、+directoryListing/accessLog），pending-human 16 → 9；静态可对照面召回率 **65%**（17/26）。EXTRA_ANCHORS 补 5 挑战锚点（redirect×2 → routes/redirect.ts；XSS×3 → search-result.component.ts，依据官方 vuln-code-snippet vuln-line 标记，照 ssrfChallenge 先例；codefixes 方法体片段结构残缺不可解析是 v0.2 对照的盲区）
+- [x] 验收：corpus 基线 3408 → 3453（+45 全归因：no-serve-index 32 + trust-bypass 9 + open-redirect 3 + pp 撞名连带 1），golden +8 全为新 fixture 预期诊断零回归，双报率 0，全门禁绿（bun 164+1 golden 重生成 / cargo 51 / bench Δ6.2% 无回退）
+
 ## 远期占位（原 M3 草案整体移入 · 择机，不排期）
 
 > 2026-10-15 评审结论：以下均为「企业级规模化」方向，超出最小闭环诉求，随需求触发再立项（届时按需起草 design-m4）。

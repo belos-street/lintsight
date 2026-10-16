@@ -25,7 +25,7 @@
 
 ## 特性
 
-- **双引擎，一份报告**：oxlint 内置规则面（865+）+ 自有规则 33 条（JS 轨道 25 + 引擎轨道 8），合并层按指纹去重、按 `supersedes` 消解同位置双报。
+- **双引擎，一份报告**：oxlint 内置规则面（865+）+ 自有规则 36 条（JS 轨道 27 + 引擎轨道 9），合并层按指纹去重、按 `supersedes` 消解同位置双报。
 - **污点分析带证据链**：引擎 taint 规则输出 `source → propagation → [sanitizer] → sink` 的 pathEvents 证据链，供平台 AI 研判与人工复核。
 - **误报治理是工程纪律**：每条规则强制 `falsePositives` 自证；6 个真实仓库（zod / dayjs / express / juice-shop / nodegoat / ghost，5596 文件）作为语料库基线，诊断面漂移即评审信号；OWASP juice-shop 官方挑战清单逐挑战召回对照制度化。
 - **fail-open**：引擎二进制缺失或崩溃 → 自动降级纯 M1 扫描，绝不阻塞业务流水线。
@@ -142,7 +142,7 @@ json 报告（`--format json` 默认输出）节选：
 
 ## 规则面
 
-### JS 轨道（`lintsight/<name>`，25 条）
+### JS 轨道（`lintsight/<name>`，27 条）
 
 **正确性（11）**
 
@@ -160,7 +160,7 @@ json 报告（`--format json` 默认输出）节选：
 | no-json-structured-clone | 用 `JSON.parse(JSON.stringify())` 深拷贝 |
 | no-sync-io-in-async | async 函数内的同步 IO |
 
-**安全（14）**
+**安全（16）**
 
 | 规则 | 说明 |
 | --- | --- |
@@ -172,14 +172,16 @@ json 报告（`--format json` 默认输出）节选：
 | no-non-literal-require | 动态 require/import 装载任意模块 |
 | no-prototype-pollution-syntax | 字面量 `__proto__`/`constructor` 键合并 |
 | no-innerhtml-assignment | innerHTML 赋值 |
+| no-unsafe-trust-bypass | Angular `bypassSecurityTrust*` 绑定非字面量（绕过 XSS 防护） |
 | no-unsafe-regex | 用户输入直接进 RegExp（ReDoS 面） |
 | no-math-random-secret | `Math.random` 用于凭证/令牌 |
 | no-weak-hash | MD5/SHA1 弱哈希 |
 | no-insecure-cookie | cookie 未设 HttpOnly/Secure |
 | no-cors-wildcard | CORS `Access-Control-Allow-Origin: *` |
 | no-vm-dynamic-code | `vm.runInNewContext` 等动态代码执行 |
+| no-serve-index | `serveIndex` 开启目录浏览（文件名/元数据暴露，CWE-548） |
 
-### 引擎轨道（`lintsight-engine/<name>`，8 条）
+### 引擎轨道（`lintsight-engine/<name>`，9 条）
 
 | 规则 | 检测层 | 说明 |
 | --- | --- | --- |
@@ -188,6 +190,7 @@ json 报告（`--format json` 默认输出）节选：
 | no-command-injection | taint | 外部可控输入抵达 shell 执行（CWE-78） |
 | no-ssrf | taint | 外部可控 URL 抵达服务端出站请求（CWE-918） |
 | no-prototype-pollution-merge | taint | 可控对象流入合并/深写目标（CWE-1321） |
+| no-open-redirect | taint | 外部可控 URL 未精确校验即重定向（CWE-601） |
 | arch-boundaries | local | zone 依赖方向约束（配置驱动） |
 | no-import-cycle | graph | 循环依赖（Tarjan SCC；type-only 边不计） |
 | no-deep-import | graph | 绕过 package.json exports 公共 API 的深导入 |
@@ -261,7 +264,7 @@ bun run bench           # hyperfine 万行基准：<10s 硬门禁 + 引擎/端�
 ```
 
 - 基线漂移必须逐条评审后显式重建（`corpus:check -- --save`），与 version-policy 同款纪律。
-- juice-shop 召回对照：recalled 10 / pending-human 16（人工复核清单）/ 无静态锚点 85，见 `docs/spikes/juice-shop-recall-v0.2.md`。
+- juice-shop 召回对照：recalled 17 / pending-human 9（静态不可达，退出目标）/ 无静态锚点 85，静态可对照面召回率 65%，见 `docs/spikes/juice-shop-recall-v0.3.md`。
 - 规则行为变更视同破坏性变更：message 文案参与指纹计算，改动走显式评审。
 
 ## 开发

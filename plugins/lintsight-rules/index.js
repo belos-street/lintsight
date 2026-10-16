@@ -1884,6 +1884,125 @@ var no_insecure_cookie_default = {
   }
 }
 
+// packages/rules-core/src/rules/no-unsafe-trust-bypass.js
+var no_unsafe_trust_bypass_default = {
+  meta: {
+    category: 'security',
+    severity: 'error',
+    confidence: 'medium',
+    typeRequirement: 'none',
+    tags: ['cwe-79', 'owasp-a03'],
+    fixable: undefined,
+    messages: {
+      trustBypass:
+        'Passing non-literal content to "{{sink}}" disables the framework XSS defense; sanitize instead of marking untrusted input as safe. (no-unsafe-trust-bypass)'
+    },
+    docs: {
+      description:
+        '禁止向 Angular bypassSecurityTrust* 传入非字面量内容（绕过 XSS 防护）',
+      rationale:
+        'bypassSecurityTrust* 把动态内容标记为可信，框架不再净化；与 no-innerhtml-assignment 互补——后者管 DOM sink，本条管「信任标记」入口。',
+      badExamples: [
+        'this.sanitizer.bypassSecurityTrustResourceUrl(queryParam)',
+        'this.sanitizer.bypassSecurityTrustHtml(`<b>${userInput}</b>`)'
+      ],
+      goodExamples: [
+        "this.sanitizer.bypassSecurityTrustHtml('<b>static</b>')",
+        'this.sanitizer.sanitize(SecurityContext.HTML, dirty)'
+      ],
+      falsePositives: [
+        '实参已过净化器（DOMPurify 等）的场景不可静态判定——保守报告，可配 allow 豁免',
+        'Service Worker/富文本编辑器等有意信任边界处（安全评审后 allow）'
+      ]
+    }
+  },
+  create(context) {
+    const TRUST_METHODS = new Set([
+      'bypassSecurityTrustHtml',
+      'bypassSecurityTrustScript',
+      'bypassSecurityTrustStyle',
+      'bypassSecurityTrustUrl',
+      'bypassSecurityTrustResourceUrl'
+    ])
+    function isStaticContent(node) {
+      if (!node) return true
+      if (node.type === 'Literal') return true
+      if (node.type === 'TemplateLiteral') return node.expressions.length === 0
+      return false
+    }
+    return {
+      CallExpression(node) {
+        const callee = node.callee
+        if (
+          callee?.type !== 'MemberExpression' ||
+          callee.property?.type !== 'Identifier' ||
+          !TRUST_METHODS.has(callee.property.name)
+        ) {
+          return
+        }
+        const arg0 = node.arguments?.[0]
+        if (!isStaticContent(arg0)) {
+          context.report({
+            node,
+            messageId: 'trustBypass',
+            data: { sink: callee.property.name }
+          })
+        }
+      }
+    }
+  }
+}
+
+// packages/rules-core/src/rules/no-serve-index.js
+var no_serve_index_default = {
+  meta: {
+    category: 'security',
+    severity: 'warning',
+    confidence: 'high',
+    typeRequirement: 'none',
+    tags: ['cwe-548', 'owasp-a05'],
+    fixable: undefined,
+    messages: {
+      serveIndex:
+        'Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)'
+    },
+    docs: {
+      description:
+        '禁止用 serveIndex/serve-index 开启目录浏览（文件名/元数据暴露）',
+      rationale:
+        '目录浏览是信息暴露面（CWE-548）：暴露文件名、大小、修改时间供攻击者枚举；应仅按已知文件名提供下载（:file 路由）。',
+      badExamples: [
+        "app.use('/ftp', serveIndex('ftp'))",
+        "app.use('/logs', serveIndex('logs', { icons: true }))"
+      ],
+      goodExamples: [
+        "app.use('/ftp/:file', servePublicFiles())",
+        "app.use('/assets', express.static('assets'))"
+      ],
+      falsePositives: [
+        '内网管理后台有意开启目录浏览的场景（安全评审后可配 ignore）'
+      ]
+    }
+  },
+  create(context) {
+    return {
+      CallExpression(node) {
+        const callee = node.callee
+        const name =
+          callee?.type === 'Identifier'
+            ? callee.name
+            : callee?.type === 'MemberExpression' &&
+                callee.property?.type === 'Identifier'
+              ? callee.property.name
+              : null
+        if (name === 'serveIndex') {
+          context.report({ node, messageId: 'serveIndex' })
+        }
+      }
+    }
+  }
+}
+
 // packages/rules-core/src/index.js
 var src_default = {
   name: 'lintsight',
@@ -1913,7 +2032,9 @@ var src_default = {
     'no-sql-concat': no_sql_concat_default,
     'no-cors-wildcard': no_cors_wildcard_default,
     'no-vm-dynamic-code': no_vm_dynamic_code_default,
-    'no-insecure-cookie': no_insecure_cookie_default
+    'no-insecure-cookie': no_insecure_cookie_default,
+    'no-unsafe-trust-bypass': no_unsafe_trust_bypass_default,
+    'no-serve-index': no_serve_index_default
   }
 }
 export { src_default as default }

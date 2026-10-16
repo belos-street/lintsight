@@ -28,6 +28,8 @@ import noSqlConcat from './rules/no-sql-concat.js'
 import noCorsWildcard from './rules/no-cors-wildcard.js'
 import noVmDynamicCode from './rules/no-vm-dynamic-code.js'
 import noInsecureCookie from './rules/no-insecure-cookie.js'
+import noUnsafeTrustBypass from './rules/no-unsafe-trust-bypass.js'
+import noServeIndex from './rules/no-serve-index.js'
 
 export default {
   name: 'lintsight',
@@ -57,6 +59,8 @@ export default {
     'no-sql-concat': noSqlConcat,
     'no-cors-wildcard': noCorsWildcard,
     'no-vm-dynamic-code': noVmDynamicCode,
-    'no-insecure-cookie': noInsecureCookie
+    'no-insecure-cookie': noInsecureCookie,
+    'no-unsafe-trust-bypass': noUnsafeTrustBypass,
+    'no-serve-index': noServeIndex
   }
 }

@@ -25,7 +25,9 @@
     "lintsight/no-sql-concat": "error",
     "lintsight/no-cors-wildcard": "warn",
     "lintsight/no-vm-dynamic-code": "error",
-    "lintsight/no-insecure-cookie": "warn"
+    "lintsight/no-insecure-cookie": "warn",
+    "lintsight/no-unsafe-trust-bypass": "error",
+    "lintsight/no-serve-index": "warn"
   },
   "ignore": [],
   "overrides": [

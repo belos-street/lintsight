@@ -75,6 +75,7 @@ const PATH_TRAVERSAL_TABLES: TaintTables = TaintTables {
         ("fs", "appendFile"),
     ],
     sink_arg_index: 0,
+    anchored_concat_clean: false,
 };
 
 /// no-path-traversal：外部可控文件名（readdirSync）未消毒抵达 fs 读写 sink。
@@ -145,6 +146,7 @@ const COMMAND_INJECTION_TABLES: TaintTables = TaintTables {
         ("child_process", "spawnSync"),
     ],
     sink_arg_index: 0,
+    anchored_concat_clean: false,
 };
 
 /// no-command-injection：外部可控输入未验证抵达 shell 执行 sink。
@@ -213,6 +215,7 @@ const SSRF_TABLES: TaintTables = TaintTables {
         ("https", "request"),
     ],
     sink_arg_index: 0,
+    anchored_concat_clean: false,
 };
 
 /// no-ssrf：外部可控 URL 未验证（host allowlist）抵达服务端出站请求。
@@ -276,6 +279,7 @@ const PROTO_POLLUTION_TABLES: TaintTables = TaintTables {
         ("_", "set"),
     ],
     sink_arg_index: 1,
+    anchored_concat_clean: false,
 };
 
 /// no-prototype-pollution-merge：可控源流入合并/深写目标，攻击者可借
@@ -309,6 +313,73 @@ impl EngineRule for NoPrototypePollutionMerge {
     }
 }
 
+/// no-open-redirect（CWE-601 开放重定向，M3 召回扩充，P0 提案 no-open-redirect
+/// 正名落地）：外部可控 URL 未以「精确匹配」校验即进入重定向 sink。
+/// 注意：allowlist 子串/includes 匹配（juice-shop 埋洞形态）不阻止
+/// `https://allowed.com.evil.io` 绕过——本规则对「可变量直达 sink」报，
+/// 报告文案强调精确匹配；经 `===` 校验的分支控制流不可判（v0 过程内口径），
+/// 保守报告 + confidence medium。
+/// 解构形态（`({ query }, res) => res.redirect(query.to)`）由 taint.rs
+/// REQUEST_SCOPE_NAMES 回退承载。
+const OPEN_REDIRECT_TABLES: TaintTables = TaintTables {
+    name: "no-open-redirect",
+    sources: &[],
+    member_sources: &[
+        ("req", "query"),
+        ("req", "body"),
+        ("req", "params"),
+        ("req", "headers"),
+        ("request", "query"),
+        ("request", "body"),
+        ("request", "params"),
+        ("ctx", "query"),
+        ("ctx", "request"),
+    ],
+    propagators: &[],
+    sanitizers: &[],
+    sinks: &[
+        ("res", "redirect"),
+        ("response", "redirect"),
+        ("ctx", "redirect"),
+        ("c", "redirect"),
+        ("res", "location"),
+        ("response", "location"),
+    ],
+    sink_arg_index: 0,
+    anchored_concat_clean: true,
+};
+
+/// no-open-redirect：用户可控 URL 直达重定向 sink。
+/// span = 重定向调用表达式；pathEvents = source→sink 证据链。
+struct NoOpenRedirect;
+
+impl EngineRule for NoOpenRedirect {
+    fn id(&self) -> &'static str {
+        "lintsight-engine/no-open-redirect"
+    }
+
+    fn check<'a>(&self, ctx: &FileContext<'a>) -> Vec<RawDiag> {
+        crate::taint::run(ctx, &OPEN_REDIRECT_TABLES)
+            .into_iter()
+            .map(|hit| RawDiag {
+                rule_id: self.id(),
+                severity: "warning",
+                message: format!(
+                    "Untrusted input from {} reaches {}.{} without exact-match validation; open redirect enables phishing—allowlist with === on the full URL (substring/includes matching is bypassable). (no-open-redirect)",
+                    hit.events
+                        .first()
+                        .map(|e| e.node.as_str())
+                        .unwrap_or("request input"),
+                    hit.func.0,
+                    hit.func.1,
+                ),
+                span: hit.span,
+                path_events: hit.events,
+            })
+            .collect()
+    }
+}
+
 /// 全部引擎规则登记处（表交叠校验随登记执行——校验失败即引擎启动 panic，
 /// Bun 侧 fail-open 降级，cargo test 提前拦截）。
 /// arch 配置缺省时架构规则不注册（Summary.rules 亦不含）；ts_paths 同随 stdin 下发。
@@ -328,12 +399,16 @@ pub fn registry(
     PROTO_POLLUTION_TABLES
         .validate()
         .expect("no-prototype-pollution-merge 函数表交叠");
+    OPEN_REDIRECT_TABLES
+        .validate()
+        .expect("no-open-redirect 函数表交叠");
     let mut rules: Vec<Box<dyn EngineRule>> = vec![
         Box::new(NoEval),
         Box::new(NoPathTraversal),
         Box::new(NoCommandInjection),
         Box::new(NoSsrf),
         Box::new(NoPrototypePollutionMerge),
+        Box::new(NoOpenRedirect),
     ];
     if let Some(cfg) = arch {
         rules.push(Box::new(ArchBoundaries {
@@ -411,6 +486,65 @@ mod tests {
         assert!(hits("const e = 1\nconsole.log(e)\n").is_empty());
     }
 
+    // —— no-open-redirect（M3 召回扩充，juice-shop redirect 埋洞三形态） ——
+
+    fn redirect_hits(source: &str) -> Vec<(u32, Vec<String>)> {
+        let allocator = oxc_allocator::Allocator::default();
+        let mut out = Vec::new();
+        crate::context::with_context(&allocator, "a.ts", source, |ctx| {
+            for d in NoOpenRedirect.check(ctx) {
+                out.push((
+                    d.span.start,
+                    d.path_events.iter().map(|e| e.node.clone()).collect(),
+                ));
+            }
+        });
+        out
+    }
+
+    #[test]
+    fn detects_destructured_query_to_redirect() {
+        // juice-shop routes/redirect.ts 实况形态：({ query }: Request) 解构 + query.to as string
+        let hits = redirect_hits(
+            "export function f() {\n  return ({ query }, res) => {\n    const toUrl = query.to as string\n    res.redirect(toUrl)\n  }\n}\n",
+        );
+        assert_eq!(hits.len(), 1, "解构请求源 + TS as 剥离后应命中");
+        let chain = &hits[0].1;
+        assert_eq!(chain.first().map(String::as_str), Some("query.to"));
+        assert_eq!(chain.last().map(String::as_str), Some("res.redirect"));
+    }
+
+    #[test]
+    fn detects_member_source_redirect() {
+        // req.query.to 直达形态（member_sources 命中，无需回退）
+        let hits = redirect_hits("res.redirect(req.query.to)\n");
+        assert_eq!(hits.len(), 1);
+    }
+
+    #[test]
+    fn redirect_ignores_literal_and_sanitized() {
+        // 字面量目标（静态配置跳转）不报
+        assert!(redirect_hits("res.redirect('/profile')\n").is_empty());
+        // 未污染变量不报
+        assert!(redirect_hits("res.redirect(url)\n").is_empty());
+    }
+
+    #[test]
+    fn redirect_ignores_anchored_concat() {
+        // M3 误报分析反哺（express mvc 实况）：字面量前缀锚定拼接无法逃逸为站外
+        // URL（`//evil.com` 拼进 `/user/` 前缀后仍是相对路径）→ 非开放重定向
+        assert!(
+            redirect_hits("res.redirect('/user/' + id)\n").is_empty(),
+            "字面量前缀锚定 concat 清洁"
+        );
+        assert!(
+            redirect_hits("res.redirect(`/user/${id}`)\n").is_empty(),
+            "模板串首段锚定清洁"
+        );
+        // 对照：整段可变量仍报（锚定语义只豁免拼接形态）
+        assert_eq!(redirect_hits("res.redirect(req.query.url)\n").len(), 1);
+    }
+
     // —— no-path-traversal（taint 竖切验收用例，对应 text-rpg readdir→join→readFile 场景） ——
 
     fn traversal_hits(source: &str) -> Vec<(u32, Vec<&'static str>)> {
@@ -439,6 +573,33 @@ for (const f of files) {
         assert_eq!(hits.len(), 1, "回边不动点收敛后 sink 只报一次");
         // 证据链完整：source → propagation(join) → sink
         assert_eq!(hits[0].1, vec!["source", "propagation", "sink"]);
+    }
+
+    #[test]
+    fn path_events_carry_line_col() {
+        // M3 T3.1：SARIF relatedLocations 依赖事件级 line/column（1-based）。
+        // REaddir_JOIN_READ：source=readdirSync(L3) → join(L5) → sink=readFileSync(L5)。
+        // 走 analyze_file（shape_diag 是换算点），非 check() 的 RawDiag。
+        let allocator = oxc_allocator::Allocator::default();
+        let rules = registry(None, &[], None);
+        let out = crate::analyze::analyze_file(
+            &allocator,
+            "a.ts",
+            REaddir_JOIN_READ,
+            rules.as_slice(),
+            false,
+        );
+        let chain: Vec<(u32, u32)> = out.diagnostics[0]
+            .path_events
+            .iter()
+            .map(|e| (e.line, e.column))
+            .collect();
+        assert_eq!(out.diagnostics.len(), 1);
+        let lines: Vec<u32> = chain.iter().map(|(l, _)| *l).collect();
+        assert_eq!(lines, vec![3, 5, 5], "事件行号 1-based 且与源码对应");
+        for (line, col) in &chain {
+            assert!(*line > 0 && *col > 0, "line/column 均已换算（非 0 占位）");
+        }
     }
 
     #[test]

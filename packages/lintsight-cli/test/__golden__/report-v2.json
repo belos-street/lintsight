@@ -1,9 +1,9 @@
 {
   "contractVersion": "2",
-  "files": 131,
+  "files": 141,
   "summary": {
-    "error": 68,
-    "warning": 33,
+    "error": 73,
+    "warning": 36,
     "info": 0
   },
   "diagnostics": [
@@ -1119,6 +1119,51 @@
     },
     {
       "contractVersion": "2",
+      "ruleId": "lintsight/no-serve-index",
+      "severity": "warning",
+      "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
+      "file": "fixtures/ts/no-serve-index.bad-1.ts",
+      "span": {
+        "offset": 115,
+        "length": 35,
+        "line": 2,
+        "column": 26
+      },
+      "fingerprint": "872be95b61d03f8b1f82b86f343a5eb517731d5fabf2070219cb903ceb35fe8d",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-serve-index",
+      "severity": "warning",
+      "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
+      "file": "fixtures/ts/no-serve-index.bad-2.ts",
+      "span": {
+        "offset": 135,
+        "length": 51,
+        "line": 2,
+        "column": 39
+      },
+      "fingerprint": "097c8516e18e1caa7dbb02f1c15b9cf18b99dae09e0c663f8f05600a331dd494",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-serve-index",
+      "severity": "warning",
+      "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
+      "file": "fixtures/ts/no-serve-index.bad-3.ts",
+      "span": {
+        "offset": 131,
+        "length": 18,
+        "line": 3,
+        "column": 18
+      },
+      "fingerprint": "51da39310aa7e3bb3580e99ee4ea1e35393d4f7f570712eac76e4be890b26b5e",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sql-concat",
       "severity": "error",
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
@@ -1385,6 +1430,81 @@
         "column": 10
       },
       "fingerprint": "3290429c8c67c0d1c38ac79df4717c44c1847aa0e3e6bc3a8dba12f0508fc365",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-unsafe-trust-bypass",
+      "severity": "error",
+      "message": "Passing non-literal content to \"bypassSecurityTrustResourceUrl\" disables the framework XSS defense; sanitize instead of marking untrusted input as safe. (no-unsafe-trust-bypass)",
+      "file": "fixtures/ts/no-unsafe-trust-bypass.bad-1.ts",
+      "span": {
+        "offset": 179,
+        "length": 57,
+        "line": 3,
+        "column": 23
+      },
+      "fingerprint": "a3e7ad8ec1eed057c22322d443f78374fe22ab27cc6c25c7e4d3c9750c6d71a7",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-innerhtml-assignment",
+      "severity": "error",
+      "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
+      "file": "fixtures/ts/no-unsafe-trust-bypass.bad-2.ts",
+      "span": {
+        "offset": 167,
+        "length": 76,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "a6946362e764ac9b896b16bf98873bc24ca1d9be9fced0ad11e7b9ffb690ebd7",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-unsafe-trust-bypass",
+      "severity": "error",
+      "message": "Passing non-literal content to \"bypassSecurityTrustHtml\" disables the framework XSS defense; sanitize instead of marking untrusted input as safe. (no-unsafe-trust-bypass)",
+      "file": "fixtures/ts/no-unsafe-trust-bypass.bad-2.ts",
+      "span": {
+        "offset": 182,
+        "length": 61,
+        "line": 3,
+        "column": 18
+      },
+      "fingerprint": "bd963ccf96f1492dff9568785965cb25bb0e19bb7713ddb9b8049eaee1fbc6d8",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-unsafe-trust-bypass",
+      "severity": "error",
+      "message": "Passing non-literal content to \"bypassSecurityTrustScript\" disables the framework XSS defense; sanitize instead of marking untrusted input as safe. (no-unsafe-trust-bypass)",
+      "file": "fixtures/ts/no-unsafe-trust-bypass.bad-3.ts",
+      "span": {
+        "offset": 177,
+        "length": 44,
+        "line": 3,
+        "column": 19
+      },
+      "fingerprint": "0461ac5d0264498cf4c251042823d30d7957eeca6b7f203e6ccbbff360a5cbae",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-innerhtml-assignment",
+      "severity": "error",
+      "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
+      "file": "fixtures/ts/no-unsafe-trust-bypass.good-2.ts",
+      "span": {
+        "offset": 207,
+        "length": 20,
+        "line": 4,
+        "column": 3
+      },
+      "fingerprint": "cb6e09100cf80701fd5444d81feae3d4257b3baaa653fa0953af7e05286f46e7",
       "owner": "lintsight-js"
     },
     {

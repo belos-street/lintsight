@@ -262,6 +262,28 @@ export const registry: RegistryEntry[] = [
     description: 'Set-Cookie 缺少 HttpOnly/Secure 标志',
     defaultSeverity: 'warning'
   },
+  // —— M3 召回扩充（juice-shop pending-human 收敛） ——
+  {
+    ruleId: 'lintsight/no-unsafe-trust-bypass',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active',
+    confidence: 'medium',
+    description:
+      '禁止向 Angular bypassSecurityTrust* 传入非字面量内容（绕过 XSS 防护）',
+    defaultSeverity: 'error'
+  },
+  {
+    ruleId: 'lintsight/no-serve-index',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active',
+    confidence: 'high',
+    description:
+      '禁止用 serveIndex/serve-index 开启目录浏览（文件名/元数据暴露）',
+    defaultSeverity: 'warning'
+  },
+
   // —— M2 引擎规则（T2.3~T2.4 起；design-m2 §4.2 ruleId 命名空间 lintsight-engine/<name>） ——
   {
     ruleId: 'lintsight-engine/no-eval',
@@ -342,6 +364,18 @@ export const registry: RegistryEntry[] = [
     confidence: 'medium',
     description: '绕过 package.json exports 公共 API 的深导入',
     defaultSeverity: 'error'
+  },
+  {
+    ruleId: 'lintsight-engine/no-open-redirect',
+    owner: 'lintsight-engine',
+    detection: 'taint',
+    status: 'active',
+    // M3 召回扩充（CWE-601）：可变量直达重定向 sink 即报；=== 精确校验的
+    // 分支控制流不可判（v0 过程内口径），allowlist 子串匹配绕过属语义级——
+    // 保守报告面，confidence 不上 high
+    confidence: 'medium',
+    description: '外部可控 URL 未精确匹配校验即进入重定向（开放重定向/钓鱼）',
+    defaultSeverity: 'warning'
   }
 ]
 

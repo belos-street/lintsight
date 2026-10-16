@@ -386,4 +386,62 @@ describe('P0 安全规则契约', () => {
     )
     for (const c of cases) tester.expect(results, c)
   })
+
+  test('no-unsafe-trust-bypass (CWE-79, M3 召回扩充)', async () => {
+    const cases: Case[] = [
+      {
+        // juice-shop localXss 形态：bypassSecurityTrustResourceUrl(动态值)
+        file: 'fixtures/ts/no-unsafe-trust-bypass.bad-1.ts',
+        expect: [{ line: 3, column: 23 }]
+      },
+      {
+        // 模板串插值 + Html 信任（另一 trust 方法 + 另一实参形态）
+        file: 'fixtures/ts/no-unsafe-trust-bypass.bad-2.ts',
+        expect: [{ line: 3, column: 18 }]
+      },
+      {
+        // Script 信任方法族（全集覆盖）
+        file: 'fixtures/ts/no-unsafe-trust-bypass.bad-3.ts',
+        expect: [{ line: 3, column: 19 }]
+      },
+      // safe case：纯字面量实参（与 no-innerhtml-assignment 单 severity 口径一致）
+      { file: 'fixtures/ts/no-unsafe-trust-bypass.good-1.ts', expect: [] },
+      // safe case：走 sanitize() 正道（净化而非信任绕过）
+      { file: 'fixtures/ts/no-unsafe-trust-bypass.good-2.ts', expect: [] }
+    ]
+    const { tester, results } = await runCases(
+      'lintsight/no-unsafe-trust-bypass',
+      cases
+    )
+    for (const c of cases) tester.expect(results, c)
+  })
+
+  test('no-serve-index (CWE-548, M3 召回扩充)', async () => {
+    const cases: Case[] = [
+      {
+        // juice-shop accessLog 形态：serveIndex('logs')
+        file: 'fixtures/ts/no-serve-index.bad-1.ts',
+        expect: [{ line: 2, column: 26 }]
+      },
+      {
+        // juice-shop directoryListing 形态：中间件链 + details 视图
+        file: 'fixtures/ts/no-serve-index.bad-2.ts',
+        expect: [{ line: 2, column: 39 }]
+      },
+      {
+        // require 形态 + 最少参数
+        file: 'fixtures/ts/no-serve-index.bad-3.ts',
+        expect: [{ line: 3, column: 18 }]
+      },
+      // safe case：:file 路由按名下载（无目录列表）
+      { file: 'fixtures/ts/no-serve-index.good-1.ts', expect: [] },
+      // safe case：express.static 不列举目录
+      { file: 'fixtures/ts/no-serve-index.good-2.ts', expect: [] }
+    ]
+    const { tester, results } = await runCases(
+      'lintsight/no-serve-index',
+      cases
+    )
+    for (const c of cases) tester.expect(results, c)
+  })
 })

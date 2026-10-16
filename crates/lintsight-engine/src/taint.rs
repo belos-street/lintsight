@@ -29,8 +29,8 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use oxc_ast::ast::{
-    AssignmentTarget, BindingPattern, CallExpression, Expression, ForStatementLeft,
-    ImportDeclarationSpecifier, ObjectPropertyKind,
+    AssignmentTarget, BindingPattern, Expression, ForStatementLeft, ImportDeclarationSpecifier,
+    ObjectPropertyKind,
 };
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::symbol::SymbolId;
@@ -49,6 +49,13 @@ const CALLBACK_ITER_METHODS: &[&str] = &["map", "forEach", "filter", "flatMap"];
 /// options 对象的 URL 语义键：任一键的 value 污染 → 整个对象视为污染（v0 补齐③，
 /// `axios({ url: tainted })` 形态）
 const URL_KEYS: &[&str] = &["url", "uri", "baseURL", "hostname"];
+
+/// 请求作用域解构语义名（M3 召回扩充，juice-shop redirect 埋洞实证）：
+/// Express/Koa/Hono 处理器 `({ query }, res)` 把请求体解构成局部绑定，
+/// 之后 `query.to` 形态的成员访问链根即这些短名。v0 无跨函数绑定分析，
+/// 以「链根名 ∈ 本表」保守视为外部可控 source（成员表匹配的解构回退）。
+/// 撞名代价文档化于 no-open-redirect/no-ssrf 的 falsePositives。
+const REQUEST_SCOPE_NAMES: &[&str] = &["query", "body", "params", "headers", "cookies"];
 
 /// 导入别名归一收录的标准模块（`node:` 前缀剥除后匹配；对齐 rules.rs 各函数表
 /// 的 obj 名——fs/cp/child_process/axios/http/https/lodash/_/path）
@@ -106,6 +113,12 @@ pub struct TaintTables {
     /// sink 检查的参数位（0-based）。多数规则 = 0（exec(cmd)/fetch(url)）；
     /// 原型污染 = 1（Object.assign(target, 源)——污染点在第二个参数）。每规则一个值。
     pub sink_arg_index: usize,
+    /// 字面量前缀锚定拼接视为清洁（M3 误报分析反哺，仅 no-open-redirect 开启）：
+    /// `'/user/' + id` / `` `/user/${id}` `` 的字面量前缀锚定目标路径，无法
+    /// 逃逸为站外 URL（`//evil.com` 拼进前缀后仍是相对路径）→ 不构成开放重定向。
+    /// 整段可变量（`req.query.url`）照报。路径穿越/SSRF 等规则不开此开关
+    /// （锚定拼接照样可注入 `../` / 撞内网 host）。
+    pub anchored_concat_clean: bool,
 }
 
 impl TaintTables {
@@ -153,6 +166,16 @@ impl TaintTables {
     fn is_sink(&self, key: (&str, &str)) -> bool {
         self.sinks.iter().any(|k| k.0 == key.0 && k.1 == key.1)
     }
+
+    /// 字面量字符串锚定形态（anchored_concat_clean 的判定点）：
+    /// 纯字符串字面量，或从首元素起连续铺开的模板串静态段。
+    fn is_anchored_prefix(expr: &Expression) -> bool {
+        match expr {
+            Expression::StringLiteral(_) => true,
+            Expression::TemplateLiteral(t) => t.quasis.first().is_some_and(|q| !q.span.is_empty()),
+            _ => false,
+        }
+    }
 }
 
 pub struct SinkHit {
@@ -186,7 +209,7 @@ impl BlockState {
 /// `fs.readFileSync` → ("fs","readFileSync")；`c.req.query` → ("req","query")；
 /// 裸标识符 `exec(...)` → ("","exec")（obj 空串约定 = 无命名空间形态）。
 fn member_name<'a>(expr: &'a Expression<'a>) -> (&'a str, &'a str) {
-    let mut cur = expr;
+    let cur = expr;
     loop {
         match cur {
             Expression::StaticMemberExpression(m) => {
@@ -489,6 +512,17 @@ impl<'a, 't> Analyzer<'a, 't> {
         events: &mut Vec<PathEvent>,
     ) -> Option<Vec<PathEvent>> {
         match expr {
+            // TS 类型语法包装剥离（M3）：`query.to as string` / `x!` / `(x)` 不改变值语义，
+            // 污点穿透——juice-shop redirect 埋洞实参是 `query.to as string` 形态
+            Expression::TSAsExpression(t) => return self.eval(&t.expression, state, events),
+            Expression::TSSatisfiesExpression(t) => return self.eval(&t.expression, state, events),
+            Expression::TSNonNullExpression(t) => return self.eval(&t.expression, state, events),
+            Expression::TSInstantiationExpression(t) => {
+                return self.eval(&t.expression, state, events)
+            }
+            Expression::ParenthesizedExpression(p) => {
+                return self.eval(&p.expression, state, events)
+            }
             Expression::Identifier(ident) => {
                 let sid = self.sym_of_ref(ident.reference_id())?;
                 state.chain_of(sid).cloned().or_else(|| {
@@ -566,6 +600,23 @@ impl<'a, 't> Analyzer<'a, 't> {
                         )]);
                     }
                 }
+                // 解构请求作用域回退（M3）：`({ query }: Request)` 解构后 `query.to` 的
+                // 相邻段对是 (query,to)，member 表不收录任意属性名——以链根短名命中
+                // REQUEST_SCOPE_NAMES 判定 source。仅在规则配置了 member_sources 时生效
+                // （该字段是「外部请求输入」语义标志，avoid 影响纯 fs 型规则）。
+                if !self.tables.member_sources.is_empty() {
+                    if let Expression::StaticMemberExpression(m) = expr {
+                        if let Expression::Identifier(root) = &m.object {
+                            if REQUEST_SCOPE_NAMES.contains(&root.name.as_str()) {
+                                return Some(vec![event(
+                                    EventKind::Source,
+                                    (root.name.as_str(), m.property.name.as_str()),
+                                    oxc_span::GetSpan::span(expr).start,
+                                )]);
+                            }
+                        }
+                    }
+                }
                 None
             }
             // files[i]：索引访问继承容器污染
@@ -598,6 +649,10 @@ impl<'a, 't> Analyzer<'a, 't> {
             }
             // `${dir}/${f}`——模板串传播点记入证据链（平台研判依赖传播节点）
             Expression::TemplateLiteral(t) => {
+                // 锚定清洁（anchored_concat_clean）：`/user/${id}` 首静态段锚定路径
+                if self.tables.anchored_concat_clean && TaintTables::is_anchored_prefix(expr) {
+                    return None;
+                }
                 let mut merged: Option<Vec<PathEvent>> = None;
                 for e in &t.expressions {
                     if let Some(chain) = self.eval(e, state, events) {
@@ -609,14 +664,18 @@ impl<'a, 't> Analyzer<'a, 't> {
                         kind: "propagation",
                         node: "template-literal".into(),
                         offset: t.span.start,
-                                line: 0,
-                                column: 0,
+                        line: 0,
+                        column: 0,
                     });
                     chain
                 })
             }
             // dir + '/' + f——字符串拼接传播点
             Expression::BinaryExpression(b) => {
+                // 锚定清洁（anchored_concat_clean）：`'/user/' + id` 左字面量锚定路径
+                if self.tables.anchored_concat_clean && TaintTables::is_anchored_prefix(&b.left) {
+                    return None;
+                }
                 let l = self.eval(&b.left, state, events);
                 let r = self.eval(&b.right, state, events);
                 let mut merged = match (l, r) {
@@ -632,8 +691,8 @@ impl<'a, 't> Analyzer<'a, 't> {
                         kind: "propagation",
                         node: "concat".into(),
                         offset: b.span.start,
-                                line: 0,
-                                column: 0,
+                        line: 0,
+                        column: 0,
                     });
                 }
                 merged
