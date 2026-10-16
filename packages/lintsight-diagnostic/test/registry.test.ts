@@ -18,6 +18,8 @@ const plugin = pluginDefault as unknown as {
         typeRequirement: string
         category: string
         confidence: Confidence
+        severity: 'error' | 'warning'
+        docs: { description: string }
       }
     }
   >
@@ -55,6 +57,28 @@ describe('规则注册表 CI 校验（T1.11）', () => {
       const entry = getRegistryEntry(`${PLUGIN_PREFIX}${key}`)
       expect(entry!.confidence, `${PLUGIN_PREFIX}${key}`).toBe(
         rule.meta.confidence
+      )
+    }
+  })
+
+  test('注册表 description/defaultSeverity 与插件 meta 逐字一致（M3 SARIF rules[] 元数据源）', () => {
+    for (const [key, rule] of Object.entries(plugin.rules)) {
+      const entry = getRegistryEntry(`${PLUGIN_PREFIX}${key}`)
+      expect(entry!.description, `${PLUGIN_PREFIX}${key}.description`).toBe(
+        rule.meta.docs.description
+      )
+      expect(entry!.defaultSeverity, `${PLUGIN_PREFIX}${key}`).toBe(
+        rule.meta.severity
+      )
+    }
+    // engine 条目（无插件承载）同样必须有元数据：SARIF rules[] 从注册表构建
+    for (const entry of registry) {
+      expect(
+        entry.description.length,
+        `${entry.ruleId}.description`
+      ).toBeGreaterThan(0)
+      expect(['error', 'warning'], `${entry.ruleId}.defaultSeverity`).toContain(
+        entry.defaultSeverity
       )
     }
   })

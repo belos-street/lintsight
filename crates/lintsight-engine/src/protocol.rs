@@ -55,13 +55,17 @@ pub struct Span {
     pub column: u32,
 }
 
-/// taint 证据链事件（design-m2 §4.2 附录 C v0）：kind ∈ source|propagation|sanitizer|sink
+/// taint 证据链事件（design-m2 §4.2 附录 C v0）：kind ∈ source|propagation|sanitizer|sink。
+/// line/column（1-based）随 offset 由 FileContext 行号表换算——SARIF
+/// relatedLocations 消费面需要行号定位（M3 T3.1）。
 #[derive(Debug, Clone, Serialize)]
 pub struct PathEvent {
     pub kind: &'static str,
     /// 如 "fs.readdirSync" / "path.join" / "path.basename"
     pub node: String,
     pub offset: u32,
+    pub line: u32,
+    pub column: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]

@@ -1,7 +1,7 @@
 /**
  * T1.4 JSON 报告 golden file：schema 或规则面变化 → diff → 显式 review（design-m1 §4.4/§7）。
  * 用手工 golden file（CI 环境下 bun 内置 snapshot 禁用；golden file 可提交、可 review）。
- * 重新生成：删除 __golden__/report-v1.json 后重跑 bun test。
+ * 重新生成：删除 __golden__/report-v2.json 后重跑 bun test。
  */
 import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'node:fs'
@@ -9,9 +9,9 @@ import { runPipeline } from '../src/pipeline'
 import { formatJson } from '@lintsight/formatter'
 
 const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
-const GOLDEN = new URL('./__golden__/report-v1.json', import.meta.url).pathname
+const GOLDEN = new URL('./__golden__/report-v2.json', import.meta.url).pathname
 
-describe('JSON 报告 golden（contractVersion=1）', () => {
+describe('JSON 报告 golden（contractVersion=2）', () => {
   test('fixtures 全量扫描报告', async () => {
     // ⚠️ 显式列出子目录：fixtures/options/ 是选项组用例（不进全量扫描面，见 closed-loop 注释）
     const r = await runPipeline(['fixtures/ts', 'fixtures/vue'], {

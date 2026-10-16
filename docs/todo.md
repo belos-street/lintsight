@@ -3,7 +3,7 @@
 > 依据：[design-m1-v0.1.md](design/design-m1-v0.1.md) §8 里程碑切片 + §9 风险与开放问题
 > 分级滚动：执行级（当前在做，任务拆到可验收）→ 域级（下一个切片，任务到模块）→ 占位（远期，一行带过）
 > 前序阶段：最小闭环验证（SV1~SV7）✅ 已完成，报告见 [spikes/vertical-slice-m1.md](spikes/vertical-slice-m1.md)
-> 状态：进行中 · 更新：2026-09-15
+> 状态：进行中 · 更新：2026-10-15
 
 ## 门禁任务（不完成对应切片不得开工）✅ 2026-09-16
 
@@ -184,62 +184,40 @@
 
 ### 平台契约与交付欠账（requirements §9「M1~M2 建议做」）
 
-- [ ] **pathEvents 进 contract**：EngineDiagnostic.pathEvents 已透传，LintsightDiagnostic（contract v1）未承载——contract v2 评审 + 快照更新（FR-601 平台 AI 研判依赖）
+- [x] **pathEvents 进 contract**（M3 T3.1 一并完成）：契约 v2——`PathEvent` 定义在 @lintsight/diagnostic，`LintsightDiagnostic.pathEvents` 承载（空省略），golden 重生成为 report-v2.json（diff 仅 contractVersion 口径，无诊断面漂移）
 - [ ] **迁移工具 v0**：eslint.config → lintsight.config 映射报告（FR-502 的 v0 部分）
-- [ ] GitLab CI 模板（SARIF 输出已有，补 CI 集成样例）
+- [x] GitLab CI 模板（SARIF 输出已有，补 CI 集成样例）——M3 T3.2 一并完成（README「CI 集成与分发」）
 - [ ] 平台对接协议评审（诊断指纹 / 抑制同步 / AI 研判字段——与平台团队联合评审）
 - [ ] 引擎 `--concurrency` 参数（T2.6 备案：默认全核，可调未做）
 
-## M3 深度分析引擎二期 + 平台化（域级 Todo · 起草 2026-10-02，design-m3 评审后升执行级）
+## M3 最小收口（执行级 · 2026-10-15 拍板收敛）
 
-> 依据：[requirements-v0.2.md](requirements/requirements-v0.2.md) §2.2 修订②（type-aware taint 增强 = M3 方向）、§2.4 L4 调用图（M2~M3）、§6.2 LSP alpha、§9 可延后清单、M2-DR1（JSON Lines 协议 M3 服务化可平移）、FR-503（平台 worker 编排）。域级颗粒度，执行级拆解随 design-m3 评审滚动细化。
+> **范围拍板（2026-10-15）**：M3 收敛为「最小化闭环」交付收口——目标形态 = 编译出引擎 CLI 单文件，调用输出 SARIF 报告即可被平台/CI 消费。原 M3 草案（LSP/VS Code、远端缓存+分布式分片、平台化闭环、调用图/跨文件 taint、type-aware taint、fixer 高级策略）整体移入远期占位，不排期。核心链路（`bun run build:binary` + `--format sarif`）已成立，M3 只补交付缺口。
+>
+> **bug-trace 验收线（2026-10-15 确认）**：过程内 trace 即可——taint 缺陷的 `pathEvents` 证据链（source→propagation*→[sanitizer]→sink，M2 已实现）即为验收面，T3.1 映射进 SARIF `relatedLocations` 后闭环成立；跨文件/调用图级 bug-trace 留在远期占位，不阻塞 M3。
 
-### T3.0 门禁任务（不完成对应切片不得开工）
+### T3.1 SARIF 消费面补强（code-viewer 试用报告 §7 B3）
 
-- [ ] **design-m3-v0.1.md 起草 + 评审**：L4 CG 方案（调用图构建成本 vs 收益，oxc 现状核实）、LSP 协议选型（自实现 vs LSP 框架）、远端缓存键口径（复用 M1 内容哈希体系？）、平台 worker 编排协议（FR-503）——含备选与否决理由
-- [ ] spike ⑥：调用图 PoC（oxc 0.150 是否提供 CG 基础设施，跨文件直接调用 + 方法解析的成本实测）→ 定 L4 路线
-- [ ] spike ⑦：LSP alpha 技术选型实测（tower-lsp / lsp-server crate / Bun 侧实现），诊断推送与 M1/M2 诊断流对接成本
+- [x] SARIF 字段补强：`version`/`semanticVersion`、`partialFingerprints`（指纹并入，供 Code Scanning 去重）、`helpUri`/规则文档链接、`relatedLocations`（taint 证据链 pathEvents → SARIF 相关位置）——契约 v2（`pathEvents` 进 `LintsightDiagnostic`）+ SARIF 重写（rules 元数据 / codeFlows+relatedLocations 双写 / partialFingerprints / toolVersion），sarif.test.ts 7 组结构断言锁定
+- [ ] 用 GitHub Code Scanning / GitLab SAST 消费面做一次上传实测（字段完备性以真实平台接收为准）
+- [x] 验收（代码面）：SARIF schema 结构测试更新完成；平台无警告实测待上一条
 
-### T3.1 L4 调用图 CG（M2~M3 交付，design-m2 §2.4 遗留）
+### T3.2 交付欠账收口
 
-- [ ] 跨文件/跨包调用图构建（先直接调用后方法解析；与 L2 CFG 桥接复用 `cfg_id` 经验）
-- [ ] **跨文件 taint 传播**（M2 过程内 taint 的直接增量：source 在 A 文件、sink 在 B 文件）——no-path-traversal/no-command-injection 召回面直接扩大
-- [ ] 循环依赖 / 死代码检测（CG 消费面，FR-304 完整化的引擎侧承接）
-- [ ] 验收：text-rpg/express 应用层跨文件流召回（对照 M2 过程内基线增量）
+- [x] GitLab CI 模板（SARIF 输出已有，补 CI 集成样例——GitHub Actions 同理）——README「CI 集成与分发」：GitHub Actions（upload-sarif@v3 + `if: always()`）/ GitLab（`artifacts: when: always` 制品归档，GitLab 原生 SAST schema 非 SARIF 不走 reports:sast）
+- [x] 二进制分发说明（`build:binary` 产物 / `OXLINT_BIN` `OXLINT_ENGINE_BIN` 平台 worker 场景 / release 打包约定）——README 同节：release 附件命名 `lintsight-<os>-<arch>` / `lintsight-engine-<os>-<arch>`、oxlint 解析链、engine 缺失 fail-open 降级纯 M1
+- [x] 验收：CI 模板在试点项目可直接复用（FR-601 最小版）——模板为可直接抄用的 YAML 片段
 
-### T3.2 type-aware taint 增强（§2.2 修订② M3 方向）
+## 远期占位（原 M3 草案整体移入 · 择机，不排期）
 
-- [ ] 深度引擎消费 tsgolint 类型事实做 taint 增强（类型收窄消解误报：如 `typeof x === 'string'` 守卫、自定义 sanitizer 类型的识别）
-- [ ] source/sink 表的「类型感知模式」（识别业务自定义 source/sink 类——企业级项目的框架封装层）
-- [ ] 验收：真实业务项目误报率对照（type-aware on/off 差值，FR-302 口径）
+> 2026-10-15 评审结论：以下均为「企业级规模化」方向，超出最小闭环诉求，随需求触发再立项（届时按需起草 design-m4）。
 
-### T3.3 LSP alpha + VS Code 插件（§6.2）
-
-- [ ] `@lintsight/lsp`：诊断推送（M1/M2 统一诊断流复用）、hover 展示规则说明 + confidence/证据链、code action（safe fix / suggestion；M2 taint 规则带 pathEvents 的 hover 展示是差异化点）
-- [ ] VS Code 插件薄封装（配置冲突以项目配置为准）
-- [ ] 验收：lintsight 仓库自托管（dogfood LSP 编辑体验）
-
-### T3.4 fixer 高级策略（§9 可延后项）
-
-- [ ] dangerous 级 fix（引擎 taint 规则无 fix——本项属 M1 JS 规则面：no-var→let/const 已有 safe fix，dangerous 级按规则逐条评估）
-- [ ] fix 循环策略（fix → 复扫 → 再 fix 的收敛上限与死循环防护）
-
-### T3.5 远端缓存 + 分布式分片（§9：千万行场景触发）
-
-- [ ] 远端缓存协议（键口径复用 M1 内容哈希体系 + 引擎指纹，存储后端选型进 design-m3）
-- [ ] 分布式分片编排（FR-503 worker：文件分片 + 诊断聚合 + 双报消解的分布式语义——M1-DR4 确定性排序在分片边界的语义）
-- [ ] 触发条件：公司 monorepo（百万行）实测超时/内存瓶颈时启动——百万行级单机已达标（M2.2 内存纪律 + M2.6 并行），不强排期
-
-### T3.6 平台化闭环（FR-503 / FR-601 / 平台对接协议）
-
-- [ ] 平台长驻 worker 形态（JSON Lines 协议平移为长连接/服务化——M2-DR1 备选 a 的条件触发版）
-- [ ] 抑制同步（平台侧复核结论回写引擎的抑制机制——误报标注的闭环）
-- [ ] AI 研判字段对接（pathEvents 证据链 + confidence → FR-601 平台 AI 研判的输入契约）
-- [ ] 验收：与 SAST 平台团队联合验收（对接协议评审通过为准）
-
-## 远期占位（M3+ / 择机）
-
+- **LSP alpha + VS Code 插件**（原 T3.3 / FR-602）：诊断推送、hover 规则说明 + 证据链、code action
+- **远端缓存 + 分布式分片**（原 T3.5）：千万行场景触发才启动（万行冷扫 194ms，余量充足）
+- **平台化闭环**（原 T3.6 / FR-503）：长驻 worker、抑制同步、AI 研判对接——随平台团队需求触发
+- **L4 调用图 + 跨文件 taint**（原 T3.1）：SAST 精度核心竞争力，M2 过程内 taint 的直接增量（source 在 A 文件、sink 在 B 文件）
+- **type-aware taint 增强**（原 T3.2）：类型事实消解误报、业务自定义 source/sink 类识别
+- **fixer 高级策略**（原 T3.4）：dangerous 级 fix、fix 循环收敛防护
 - `lintsight migrate` 完整版（FR-502；v0 映射报告见 M2.7 清单）
 - 多语言 IR 中立化 / WASM/Web 端运行 / 插件市场与规则平台联动（requirements §9 M3+ 清单）
-- 分布式分片（千万行场景触发；M3 T3.5 条件触发版）
 - 上游跟进：[oxc#27280](https://github.com/oxc-project/oxc/issues/27280)（unicorn/no-new-array fill 豁免请求，已提交待回复）

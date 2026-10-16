@@ -11,6 +11,7 @@ import { stat, unlink } from 'node:fs/promises'
 import pkg from '../package.json'
 import { runOxlint } from './oxlint-bridge'
 import {
+  CONTRACT_VERSION,
   normalizeDiagnostics,
   normalizeFilePath,
   sortDiagnostics,
@@ -440,7 +441,9 @@ export async function runPipeline(
             severity: ed.severity,
             message: ed.message,
             file: storeRel,
-            span: ed.span
+            span: ed.span,
+            // 契约 v2：taint 证据链透传（SARIF codeFlows/relatedLocations 消费）
+            pathEvents: ed.pathEvents
           })
           const group = results.get(storeRel)
           if (group) group.push(diag)
@@ -481,7 +484,7 @@ export async function runPipeline(
       exitCode: summary.error > 0 ? 1 : 0,
       degraded,
       report: {
-        contractVersion: diagnostics[0]?.contractVersion ?? '1',
+        contractVersion: diagnostics[0]?.contractVersion ?? CONTRACT_VERSION,
         files: units.length,
         summary,
         diagnostics

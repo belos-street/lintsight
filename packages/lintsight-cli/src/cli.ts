@@ -1,7 +1,12 @@
 import pkg from '../package.json'
 import path from 'node:path'
 import { runPipeline } from './pipeline'
-import { formatters, type FormatName } from '@lintsight/formatter'
+import {
+  formatters,
+  type FormatName,
+  type SarifRuleMeta
+} from '@lintsight/formatter'
+import { registry } from '@lintsight/diagnostic/registry'
 import { createLogger, type LogLevel } from '@lintsight/shared'
 
 const args = process.argv.slice(2)
@@ -54,7 +59,20 @@ const result = await runPipeline(paths, {
 })
 if (result.error) logger.error(result.error)
 if (result.report) {
-  const formatted = formatters[format as FormatName](result.report)
+  // SARIF 规则目录：注册表 → SarifRuleMeta（helpUri 仅自有规则给规则面锚点）
+  const ruleCatalog: SarifRuleMeta[] = registry.map((e) => ({
+    id: e.ruleId,
+    name: e.ruleId.split('/').pop()!,
+    shortDescription: e.description,
+    defaultLevel: e.defaultSeverity === 'error' ? 'error' : 'warning',
+    ...(e.ruleId.startsWith('lintsight')
+      ? { helpUri: 'https://github.com/belos-street/lintsight#规则面' }
+      : {})
+  }))
+  const formatted = formatters[format as FormatName](result.report, {
+    toolVersion: pkg.version,
+    rules: ruleCatalog
+  })
   const output = readOption('--output')
   if (output) {
     // 报告落盘（平台对接 / IDE 浏览）；stdout 行为不变

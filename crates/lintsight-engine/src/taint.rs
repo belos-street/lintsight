@@ -86,6 +86,8 @@ fn event(kind: EventKind, key: (&str, &str), offset: u32) -> PathEvent {
         kind: kind.as_str(),
         node: format!("{}.{}", key.0, key.1),
         offset,
+        line: 0,
+        column: 0,
     }
 }
 
@@ -585,6 +587,8 @@ impl<'a, 't> Analyzer<'a, 't> {
                                 kind: "propagation",
                                 node: "options-object".into(),
                                 offset: obj.span.start,
+                                line: 0,
+                                column: 0,
                             });
                             return Some(chain);
                         }
@@ -605,6 +609,8 @@ impl<'a, 't> Analyzer<'a, 't> {
                         kind: "propagation",
                         node: "template-literal".into(),
                         offset: t.span.start,
+                                line: 0,
+                                column: 0,
                     });
                     chain
                 })
@@ -626,6 +632,8 @@ impl<'a, 't> Analyzer<'a, 't> {
                         kind: "propagation",
                         node: "concat".into(),
                         offset: b.span.start,
+                                line: 0,
+                                column: 0,
                     });
                 }
                 merged

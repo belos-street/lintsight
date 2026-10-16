@@ -1,11 +1,12 @@
 /**
  * @lintsight/diagnostic —— 统一诊断模型、oxlint JSON 归一化、指纹、规则注册表（design-m1 §4.4/§4.6）。
- * contractVersion="1"：字段变更必须递增并以快照测试锁定。
+ * contractVersion="2"（M3）：字段变更必须递增并以快照测试锁定。
+ * v2 变更：诊断可携带 pathEvents（引擎证据链 → SARIF codeFlows/relatedLocations）。
  */
 
 import { getRegistryEntry } from './registry'
 
-export const CONTRACT_VERSION = '1'
+export const CONTRACT_VERSION = '2'
 
 // —— oxlint 原始 JSON 形状（`-f json`，oxlint 1.83.0 实测，见 docs/spikes/vertical-slice-m1.md） ——
 
@@ -39,6 +40,21 @@ export interface OxlintJsonOutput {
 
 // —— 归一化后的桥接 DTO ——
 
+/** 引擎证据链事件（M3 契约 v2）：过程内 taint path 的有序步骤，
+ * 消费面映射为 SARIF codeFlows（threadFlows.locations）与 relatedLocations。
+ * 行/列为 1-based（与 OxlintSpan 口径一致）。 */
+export interface PathEvent {
+  kind: 'source' | 'propagation' | 'sanitizer' | 'sink'
+  /** AST 节点描述文本（如 "CallExpression readFile"） */
+  node: string
+  /** 字节偏移（文件内锚点） */
+  offset: number
+  /** 1-based */
+  line: number
+  /** 1-based */
+  column: number
+}
+
 export interface NormalizedDiagnostic {
   ruleId: string
   severity: string
@@ -61,6 +77,8 @@ export interface LintsightDiagnostic {
   span: OxlintSpan
   fingerprint: string
   owner: Owner
+  /** 引擎数据流证据链（taint path）；JS 语法级诊断无此字段 */
+  pathEvents?: PathEvent[]
 }
 
 // —— 归一化 ——
@@ -181,7 +199,7 @@ export function suppressSuperseded<T extends LintsightDiagnostic>(
 }
 
 export function toLintsightDiagnostic(
-  d: NormalizedDiagnostic
+  d: NormalizedDiagnostic & { pathEvents?: PathEvent[] }
 ): LintsightDiagnostic {
   return {
     contractVersion: CONTRACT_VERSION,
@@ -191,7 +209,9 @@ export function toLintsightDiagnostic(
     file: d.file,
     span: d.span,
     fingerprint: computeFingerprint(d),
-    owner: deriveOwner(d.ruleId)
+    owner: deriveOwner(d.ruleId),
+    // 空数组等同无证据链：省略字段保持 JSON 报告面干净（SARIF 侧同口径）
+    ...(d.pathEvents?.length ? { pathEvents: d.pathEvents } : {})
   }
 }
 

@@ -142,7 +142,9 @@ SARIF 2.1.0 输出通过结构自校验：`results` 引用的 ruleId 集合 ⊆ 
 
 `docs/assets` 类提交产物无默认忽略策略，单项目即产生 67% 噪音。建议：默认忽略常见产物特征（`*.min.js`、`dist|build|out|assets` 下带内容哈希的 bundle），或在文档/README 明确「先配 ignore」——但**必须先修 B1**，否则 ignore 形同虚设。
 
-### B3（打磨，低）SARIF 字段偏薄
+### B3（缺口，低）SARIF 字段偏薄
+
+> **✅ 已关闭（2026-10-16，M3 T3.1）**：`version`/`semanticVersion`（toolVersion 传入）、`rules[]` 元数据（name/shortDescription/defaultConfiguration/helpUri，注册表来源）、`partialFingerprints.lintsightFingerprintV1`、`informationUri` 改真实 remote；另补 `codeFlows`+`relatedLocations`（pathEvents 证据链，契约 v2）。结构断言见 formatter/test/sarif.test.ts。
 
 - `tool.driver.version` 缺失（输出为 `undefined`）；
 - `tool.driver.rules[]` 仅含 `id`，缺 `name` / `shortDescription` / `helpUri` / `defaultConfiguration` → GitHub Code Scanning 告警页缺描述与文档链接；

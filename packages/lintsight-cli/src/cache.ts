@@ -12,7 +12,10 @@
  */
 import path from 'node:path'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import type { LintsightDiagnostic } from '@lintsight/diagnostic'
+import {
+  CONTRACT_VERSION,
+  type LintsightDiagnostic
+} from '@lintsight/diagnostic'
 import { parseJsonc } from '@lintsight/config-bridge'
 import { createLogger } from '@lintsight/shared'
 import { resolveOxlintBin } from './oxlint-bridge'
@@ -139,7 +142,8 @@ export async function initCache(opts: InitCacheOptions): Promise<CacheContext> {
   return {
     enabled: true,
     dir,
-    engine: `lintsight@${opts.lintsightVersion}|oxlint@${version}|engine@${engineBinFp}`,
+    // contract 盐：诊断模型字段变更（如 v2 的 pathEvents）必须击穿旧缓存条目
+    engine: `lintsight@${opts.lintsightVersion}|oxlint@${version}|engine@${engineBinFp}|contract@${CONTRACT_VERSION}`,
     config,
     plugin
   }

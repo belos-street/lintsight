@@ -1,5 +1,5 @@
 {
-  "contractVersion": "1",
+  "contractVersion": "2",
   "files": 131,
   "summary": {
     "error": 68,
@@ -8,7 +8,7 @@
   },
   "diagnostics": [
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-array-map-side-effect",
       "severity": "warning",
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
@@ -23,7 +23,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-array-map-side-effect",
       "severity": "warning",
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
@@ -38,7 +38,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-array-map-side-effect",
       "severity": "warning",
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
@@ -53,7 +53,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-async-array-method",
       "severity": "error",
       "message": "Array.prototype.forEach does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
@@ -68,7 +68,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-async-array-method",
       "severity": "error",
       "message": "Array.prototype.map does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
@@ -83,7 +83,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-async-array-method",
       "severity": "error",
       "message": "Array.prototype.reduce does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
@@ -98,7 +98,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Client' is declared but never used.",
@@ -113,7 +113,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-async-constructor-call",
       "severity": "warning",
       "message": "Async method \"connect\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
@@ -128,7 +128,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -143,7 +143,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Pool' is declared but never used.",
@@ -158,7 +158,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-async-constructor-call",
       "severity": "warning",
       "message": "Async method \"open\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
@@ -173,7 +173,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -188,7 +188,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Cache' is declared but never used.",
@@ -203,7 +203,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-async-constructor-call",
       "severity": "warning",
       "message": "Async method \"load\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
@@ -218,7 +218,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -233,7 +233,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Client2' is declared but never used.",
@@ -248,7 +248,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Pool2' is declared but never used.",
@@ -263,7 +263,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-child-process-nonliteral",
       "severity": "error",
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
@@ -278,7 +278,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-child-process-nonliteral",
       "severity": "error",
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
@@ -293,7 +293,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-child-process-nonliteral",
       "severity": "error",
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
@@ -308,7 +308,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-closure-loop-var",
       "severity": "error",
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
@@ -323,7 +323,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-closure-loop-var",
       "severity": "error",
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
@@ -338,7 +338,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-closure-loop-var",
       "severity": "error",
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
@@ -353,7 +353,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-cors-wildcard",
       "severity": "warning",
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
@@ -368,7 +368,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-cors-wildcard",
       "severity": "warning",
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
@@ -383,7 +383,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-cors-wildcard",
       "severity": "warning",
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
@@ -398,7 +398,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -413,7 +413,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -428,7 +428,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -443,7 +443,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'e' is caught but never used.",
@@ -458,7 +458,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -473,7 +473,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -488,7 +488,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -503,7 +503,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'e' is caught but never used.",
@@ -518,7 +518,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-promise-catch",
       "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
@@ -533,7 +533,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-promise-catch",
       "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
@@ -548,7 +548,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-promise-catch",
       "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
@@ -563,7 +563,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -578,7 +578,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -593,7 +593,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -608,7 +608,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-hardcoded-credentials",
       "severity": "error",
       "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
@@ -623,7 +623,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-hardcoded-credentials",
       "severity": "error",
       "message": "Possible hardcoded credential for \"apiKey\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
@@ -638,7 +638,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-hardcoded-credentials",
       "severity": "error",
       "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
@@ -653,7 +653,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-ignored-reduce-result",
       "severity": "error",
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
@@ -668,7 +668,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-ignored-reduce-result",
       "severity": "error",
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
@@ -683,7 +683,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-ignored-reduce-result",
       "severity": "error",
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
@@ -698,7 +698,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -713,7 +713,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -728,7 +728,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"document.write\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -743,7 +743,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-insecure-cookie",
       "severity": "warning",
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
@@ -758,7 +758,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-insecure-cookie",
       "severity": "warning",
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
@@ -773,7 +773,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-insecure-cookie",
       "severity": "warning",
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
@@ -788,7 +788,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-json-structured-clone",
       "severity": "warning",
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
@@ -803,7 +803,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-json-structured-clone",
       "severity": "warning",
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
@@ -818,7 +818,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-json-structured-clone",
       "severity": "warning",
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
@@ -833,7 +833,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-math-random-secret",
       "severity": "error",
       "message": "\"token\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
@@ -848,7 +848,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-math-random-secret",
       "severity": "error",
       "message": "\"otpSeed\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
@@ -863,7 +863,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-math-random-secret",
       "severity": "error",
       "message": "\"nonce\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
@@ -878,7 +878,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -893,7 +893,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -908,7 +908,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -923,7 +923,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Function 'loadFromUser' is declared but never used.",
@@ -938,7 +938,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -953,7 +953,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Function 'readMdFile' is declared but never used.",
@@ -968,7 +968,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Function 'listPosts' is declared but never used.",
@@ -983,7 +983,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-require",
       "severity": "error",
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
@@ -998,7 +998,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-require",
       "severity": "error",
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
@@ -1013,7 +1013,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-require",
       "severity": "error",
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
@@ -1028,7 +1028,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-prototype-pollution-syntax",
       "severity": "error",
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
@@ -1043,7 +1043,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-prototype-pollution-syntax",
       "severity": "error",
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
@@ -1058,7 +1058,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-prototype-pollution-syntax",
       "severity": "error",
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
@@ -1073,7 +1073,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sensitive-storage",
       "severity": "error",
       "message": "Storing sensitive data (\"token\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
@@ -1088,7 +1088,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sensitive-storage",
       "severity": "error",
       "message": "Storing sensitive data (\"userPassword\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
@@ -1103,7 +1103,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sensitive-storage",
       "severity": "error",
       "message": "Storing sensitive data (\"STORED_JWT\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
@@ -1118,7 +1118,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sql-concat",
       "severity": "error",
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
@@ -1133,7 +1133,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sql-concat",
       "severity": "error",
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
@@ -1148,7 +1148,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sql-concat",
       "severity": "error",
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
@@ -1163,7 +1163,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -1178,7 +1178,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'e' is caught but never used.",
@@ -1193,7 +1193,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"err\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -1208,7 +1208,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'err' is caught but never used.",
@@ -1223,7 +1223,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"error\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -1238,7 +1238,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'error' is caught but never used.",
@@ -1253,7 +1253,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-useless-catch",
       "severity": "error",
       "message": "Unnecessary try/catch wrapper",
@@ -1268,7 +1268,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"readFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1283,7 +1283,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -1298,7 +1298,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"writeFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1313,7 +1313,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1328,7 +1328,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1343,7 +1343,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-unsafe-regex",
       "severity": "warning",
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
@@ -1358,7 +1358,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-unsafe-regex",
       "severity": "warning",
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
@@ -1373,7 +1373,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-unsafe-regex",
       "severity": "warning",
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
@@ -1388,7 +1388,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-vm-dynamic-code",
       "severity": "error",
       "message": "\"runInContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
@@ -1403,7 +1403,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-vm-dynamic-code",
       "severity": "error",
       "message": "\"runInNewContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
@@ -1418,7 +1418,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-vm-dynamic-code",
       "severity": "error",
       "message": "\"runInThisContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
@@ -1433,7 +1433,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Parameter 'body' is declared but never used. Unused parameters should start with a '_'.",
@@ -1448,7 +1448,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-weak-hash",
       "severity": "warning",
       "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
@@ -1463,7 +1463,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-weak-hash",
       "severity": "warning",
       "message": "\"sha1\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
@@ -1478,7 +1478,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-weak-hash",
       "severity": "warning",
       "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
@@ -1493,7 +1493,7 @@
       "owner": "lintsight-js"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Function 'load' is declared but never used.",
@@ -1508,7 +1508,7 @@
       "owner": "oxlint-native"
     },
     {
-      "contractVersion": "1",
+      "contractVersion": "2",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",

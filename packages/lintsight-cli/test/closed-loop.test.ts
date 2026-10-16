@@ -21,7 +21,7 @@ describe('竖切闭环（§11.3）', () => {
     expect(JSON.stringify(r2.report)).toBe(JSON.stringify(r1.report))
 
     // contractVersion 契约
-    expect(r1.report!.contractVersion).toBe('1')
+    expect(r1.report!.contractVersion).toBe('2')
 
     const own = r1.report!.diagnostics.filter(
       (d) => d.ruleId === 'lintsight/no-empty-catch'

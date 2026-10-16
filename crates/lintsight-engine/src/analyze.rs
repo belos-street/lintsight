@@ -47,8 +47,14 @@ pub fn analyze_file(
     })
 }
 
-fn shape_diag(rel_path: &str, ctx: &FileContext, raw: RawDiag) -> Diagnostic {
+fn shape_diag(rel_path: &str, ctx: &FileContext, mut raw: RawDiag) -> Diagnostic {
     let (line, column) = ctx.line_col(raw.span.start);
+    // 证据链事件的 line/column 统一在整形点换算（M3 T3.1：SARIF relatedLocations 消费面）
+    for ev in &mut raw.path_events {
+        let (l, c) = ctx.line_col(ev.offset);
+        ev.line = l;
+        ev.column = c;
+    }
     Diagnostic {
         kind: "diagnostic",
         rule_id: raw.rule_id.into(),

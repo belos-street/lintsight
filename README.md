@@ -203,13 +203,53 @@ lintsight <paths...> [--config <lintsight.config.json>] [--format json|text|sari
 
 | 参数 | 说明 |
 | --- | --- |
-| `--format` | `json`（默认）/ `text` / `sarif`（GitLab/GitHub Code Scanning 可直接消费） |
+| `--format` | `json`（默认）/ `text` / `sarif`（SARIF 2.1.0：GitHub Code Scanning 可直接上传；GitLab 作制品沉淀） |
 | `--output` | 报告写入文件（不污染 stdout） |
 | `--fix` | oxlint safe fix 就地改写；Vue 虚拟块行数不变时差量回写；自动绕过缓存 |
 | `--no-cache` | 关闭内容哈希缓存（冷扫） |
 | `--config` | 显式指定 lintsight.config.json |
 
 环境变量：`OXLINT_BIN` 显式指定 oxlint 可执行文件；`OXLINT_ENGINE_BIN` 显式指定深度引擎二进制（CI 镜像 / 平台分发场景）。
+
+## CI 集成与分发
+
+### GitHub Actions（SARIF 上传 Code Scanning）
+
+```yaml
+- name: Install oxlint
+  run: bun add -d oxlint@1.83.0   # 解析链伴生供给（版本精确锁定，铁律 5）
+- name: Download lintsight
+  run: curl -fsSL -o lintsight <release-url>/lintsight-linux-x64 && chmod +x lintsight
+- name: Scan
+  run: ./lintsight src --format sarif --output lintsight.sarif
+  # exit 1（有 error 级诊断）即门禁失败；报告仍已落盘
+- name: Upload SARIF
+  if: always()                    # 扫描失败也上传，便于失败诊断面回看
+  uses: github/codeql-action/upload-sarif@v3
+  with:
+    sarif_file: lintsight.sarif
+```
+
+### GitLab CI（SARIF 作制品沉淀）
+
+GitLab 原生 SAST schema 非 SARIF，故不走 `artifacts:reports:sast`，按制品归档：
+
+```yaml
+lintsight:
+  script:
+    - bun add -d oxlint@1.83.0
+    - ./lintsight src --format sarif --output lintsight.sarif
+  artifacts:
+    when: always                  # job 失败仍归档报告
+    paths: [lintsight.sarif]
+```
+
+### 二进制分发
+
+- 构建：`bun run build:binary` → `dist/lintsight`（`bun build --compile` 单文件，约 59MB；dist/ 不入库）。
+- Release 附件命名约定：`lintsight-<os>-<arch>`（CLI）/ `lintsight-engine-<os>-<arch>`（Rust 引擎）。
+- oxlint 解析链：`OXLINT_BIN` → `cwd/node_modules/.bin/oxlint` → 开发态路径；业务项目用 `bun add -d oxlint@1.83.0` 伴生供给最稳。
+- `OXLINT_ENGINE_BIN` 指定深度引擎二进制；缺失时 fail-open 降级为纯 M1 扫描（引擎诊断面为空，不阻塞）。
 
 ## 语料库与质量门禁
 

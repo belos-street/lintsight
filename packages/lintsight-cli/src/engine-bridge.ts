@@ -13,6 +13,7 @@ import { existsSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
 import { parseJsonc } from '@lintsight/config-bridge'
 import type { ArchConfig } from '@lintsight/config-bridge'
+import type { PathEvent } from '@lintsight/diagnostic'
 
 /** tsconfig paths 映射（FR-304 别名兜底）：pattern/targets 均为相对 root 的 POSIX 路径，
  * 保留 `*` 通配；`dir` = 拥有该 tsconfig 的目录（"" = 根），引擎按 importer 的
@@ -127,13 +128,6 @@ export async function resolveTsPaths(
   return out.map(({ dir, pattern, targets }) => ({ dir, pattern, targets }))
 }
 
-export interface EnginePathEvent {
-  kind: 'source' | 'propagation' | 'sanitizer' | 'sink'
-  /** 如 "fs.readdirSync" / "path.join" */
-  node: string
-  offset: number
-}
-
 export interface EngineDiagnostic {
   ruleId: string
   severity: 'error' | 'warning'
@@ -141,8 +135,8 @@ export interface EngineDiagnostic {
   file: string
   span: { offset: number; length: number; line: number; column: number }
   /** taint 规则证据链（design-m2 §4.2）；普通规则无此字段。
-   * contract v1 的 LintsightDiagnostic 暂不承载（T2.5 合并与契约切片接入）。 */
-  pathEvents?: EnginePathEvent[]
+   * 契约 v2（M3）起随 LintsightDiagnostic.pathEvents 透传给消费面。 */
+  pathEvents?: PathEvent[]
 }
 
 export interface EngineRunResult {

@@ -13,7 +13,8 @@ import {
   toLintsightDiagnostic,
   TYPE_AWARE_ERROR_RULE_ID,
   type LintsightDiagnostic,
-  type NormalizedDiagnostic
+  type NormalizedDiagnostic,
+  type PathEvent
 } from '../src/index'
 
 const ROOT = '/Users/dev/repo'
@@ -98,7 +99,7 @@ describe('owner 推导与统一模型', () => {
     })
     expect(d.owner).toBe('lintsight-js')
     expect(d.contractVersion).toBe(CONTRACT_VERSION)
-    expect(CONTRACT_VERSION).toBe('1')
+    expect(CONTRACT_VERSION).toBe('2')
     expect(
       toLintsightDiagnostic({
         ruleId: 'eslint/no-debugger',
@@ -108,6 +109,65 @@ describe('owner 推导与统一模型', () => {
         span: { offset: 0, length: 1, line: 1, column: 1 }
       }).owner
     ).toBe('oxlint-native')
+  })
+
+  test('owner 推导：lintsight-engine/ 前缀 → lintsight-engine', () => {
+    expect(
+      toLintsightDiagnostic({
+        ruleId: 'lintsight-engine/no-path-traversal',
+        severity: 'error',
+        message: 'm',
+        file: 'a.ts',
+        span: { offset: 0, length: 1, line: 1, column: 1 }
+      }).owner
+    ).toBe('lintsight-engine')
+  })
+
+  test('pathEvents 透传（契约 v2）：非空保留，空/缺省省略', () => {
+    const events: PathEvent[] = [
+      {
+        kind: 'source',
+        node: 'req.query.name',
+        offset: 10,
+        line: 3,
+        column: 5
+      },
+      {
+        kind: 'sink',
+        node: 'fs.readFileSync',
+        offset: 40,
+        line: 5,
+        column: 3
+      }
+    ]
+    const withEvents = toLintsightDiagnostic({
+      ruleId: 'lintsight-engine/no-path-traversal',
+      severity: 'error',
+      message: 'm',
+      file: 'a.ts',
+      span: { offset: 40, length: 1, line: 5, column: 3 },
+      pathEvents: events
+    })
+    expect(withEvents.pathEvents).toEqual(events)
+
+    const empty = toLintsightDiagnostic({
+      ruleId: 'lintsight-engine/no-path-traversal',
+      severity: 'error',
+      message: 'm',
+      file: 'a.ts',
+      span: { offset: 40, length: 1, line: 5, column: 3 },
+      pathEvents: []
+    })
+    expect(empty.pathEvents).toBeUndefined()
+    expect(
+      toLintsightDiagnostic({
+        ruleId: 'lintsight/no-empty-catch',
+        severity: 'error',
+        message: 'm',
+        file: 'a.ts',
+        span: { offset: 0, length: 1, line: 1, column: 1 }
+      }).pathEvents
+    ).toBeUndefined()
   })
 })
 
