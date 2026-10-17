@@ -433,10 +433,22 @@ describe('P0 安全规则契约', () => {
         file: 'fixtures/ts/no-serve-index.bad-3.ts',
         expect: [{ line: 3, column: 18 }]
       },
+      {
+        // require 立即调用（M3 review ④ 漏报面）
+        file: 'fixtures/ts/no-serve-index.bad-4.ts',
+        expect: [{ line: 2, column: 1 }]
+      },
+      {
+        // require 别名形态（绑定名非 serveIndex，M3 review ④ 漏报面）
+        file: 'fixtures/ts/no-serve-index.bad-5.ts',
+        expect: [{ line: 3, column: 19 }]
+      },
       // safe case：:file 路由按名下载（无目录列表）
       { file: 'fixtures/ts/no-serve-index.good-1.ts', expect: [] },
       // safe case：express.static 不列举目录
-      { file: 'fixtures/ts/no-serve-index.good-2.ts', expect: [] }
+      { file: 'fixtures/ts/no-serve-index.good-2.ts', expect: [] },
+      // safe case：其他模块 require 不进别名表（防误报守卫）
+      { file: 'fixtures/ts/no-serve-index.good-3.ts', expect: [] }
     ]
     const { tester, results } = await runCases(
       'lintsight/no-serve-index',

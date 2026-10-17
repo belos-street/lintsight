@@ -1985,9 +1985,26 @@ var no_serve_index_default = {
     }
   },
   create(context) {
+    const serveIndexAliases = new Set()
+    const isServeIndexRequire = (expr) =>
+      expr?.type === 'CallExpression' &&
+      expr.callee?.type === 'Identifier' &&
+      expr.callee.name === 'require' &&
+      expr.arguments?.length > 0 &&
+      expr.arguments[0]?.type === 'Literal' &&
+      expr.arguments[0].value === 'serve-index'
     return {
+      VariableDeclarator(node) {
+        if (node.id?.type === 'Identifier' && isServeIndexRequire(node.init)) {
+          serveIndexAliases.add(node.id.name)
+        }
+      },
       CallExpression(node) {
         const callee = node.callee
+        if (isServeIndexRequire(callee)) {
+          context.report({ node, messageId: 'serveIndex' })
+          return
+        }
         const name =
           callee?.type === 'Identifier'
             ? callee.name
@@ -1995,7 +2012,10 @@ var no_serve_index_default = {
                 callee.property?.type === 'Identifier'
               ? callee.property.name
               : null
-        if (name === 'serveIndex') {
+        if (
+          name === 'serveIndex' ||
+          (callee?.type === 'Identifier' && serveIndexAliases.has(callee.name))
+        ) {
           context.report({ node, messageId: 'serveIndex' })
         }
       }

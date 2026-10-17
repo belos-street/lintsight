@@ -3,6 +3,9 @@
  * serve-index/serveIndex 挂载目录浏览：暴露文件名、大小、时间戳，
  * 攻击者可枚举敏感文件（juice-shop accessLog/directoryListing 埋洞形态）。
  * 纯语法：任何 serveIndex 调用即报（目录浏览本身是暴露面，无安全配置项）。
+ * 检测面（M3 review 发现 ④ 补齐）：serveIndex(...) / .serveIndex(...) /
+ * require('serve-index') 立即调用 / require('serve-index') 别名调用。
+ * v0 边界：别名再赋值（const f = serveIndex; f()）与动态 import 不追踪。
  */
 export default {
   meta: {
@@ -35,10 +38,30 @@ export default {
     }
   },
   create(context) {
+    // require('serve-index') 绑定名（`const idx = require('serve-index')`）——
+    // 标识符名非 serveIndex 的别名形态（M3 review 发现 ④ 漏报面）
+    const serveIndexAliases = new Set()
+    const isServeIndexRequire = (expr) =>
+      expr?.type === 'CallExpression' &&
+      expr.callee?.type === 'Identifier' &&
+      expr.callee.name === 'require' &&
+      expr.arguments?.length > 0 &&
+      expr.arguments[0]?.type === 'Literal' &&
+      expr.arguments[0].value === 'serve-index'
     return {
+      VariableDeclarator(node) {
+        if (node.id?.type === 'Identifier' && isServeIndexRequire(node.init)) {
+          serveIndexAliases.add(node.id.name)
+        }
+      },
       CallExpression(node) {
         const callee = node.callee
-        // 裸标识符 serveIndex(...) / 成员 .serveIndex(...)
+        // require('serve-index')('ftp') 立即调用
+        if (isServeIndexRequire(callee)) {
+          context.report({ node, messageId: 'serveIndex' })
+          return
+        }
+        // 裸标识符 serveIndex(...) / 成员 .serveIndex(...) / require 别名(...)
         const name =
           callee?.type === 'Identifier'
             ? callee.name
@@ -46,7 +69,10 @@ export default {
                 callee.property?.type === 'Identifier'
               ? callee.property.name
               : null
-        if (name === 'serveIndex') {
+        if (
+          name === 'serveIndex' ||
+          (callee?.type === 'Identifier' && serveIndexAliases.has(callee.name))
+        ) {
           context.report({ node, messageId: 'serveIndex' })
         }
       }

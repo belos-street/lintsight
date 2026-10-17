@@ -1,9 +1,9 @@
 {
   "contractVersion": "2",
-  "files": 141,
+  "files": 144,
   "summary": {
     "error": 73,
-    "warning": 36,
+    "warning": 38,
     "info": 0
   },
   "diagnostics": [
@@ -1160,6 +1160,36 @@
         "column": 18
       },
       "fingerprint": "51da39310aa7e3bb3580e99ee4ea1e35393d4f7f570712eac76e4be890b26b5e",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-serve-index",
+      "severity": "warning",
+      "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
+      "file": "fixtures/ts/no-serve-index.bad-4.ts",
+      "span": {
+        "offset": 78,
+        "length": 29,
+        "line": 2,
+        "column": 1
+      },
+      "fingerprint": "b3b8181ceff01f33c39ed49d1b9778f138ff798370c35e31b9a0eda8feec339b",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-serve-index",
+      "severity": "warning",
+      "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
+      "file": "fixtures/ts/no-serve-index.bad-5.ts",
+      "span": {
+        "offset": 130,
+        "length": 12,
+        "line": 3,
+        "column": 19
+      },
+      "fingerprint": "629726141014cddb93907ab23dbde376d2728687414b47e4bdfb5cd09fa3ae9c",
       "owner": "lintsight-js"
     },
     {
