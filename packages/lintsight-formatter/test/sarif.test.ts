@@ -111,11 +111,11 @@ describe('formatSarif（SARIF 2.1.0）', () => {
     )
   })
 
-  test('M3：pathEvents → codeFlows（step 序）+ relatedLocations 双写，不落 kind 枚举字段', () => {
+  test('M3：pathEvents → codeFlows（executionOrder 序）+ relatedLocations 双写，不落 kind 枚举字段', () => {
     const taint = sarif.runs[0].results[0]
     const threadLocations = taint.codeFlows[0].threadFlows[0].locations
     expect(threadLocations).toHaveLength(2)
-    expect(threadLocations[0].step).toBe(1)
+    expect(threadLocations[0].executionOrder).toBe(1)
     expect(threadLocations[0].location.message.text).toBe(
       'source: fs.readdirSync'
     )
@@ -123,7 +123,7 @@ describe('formatSarif（SARIF 2.1.0）', () => {
       startLine: 155,
       startColumn: 21
     })
-    expect(threadLocations[1].step).toBe(2)
+    expect(threadLocations[1].executionOrder).toBe(2)
     expect(threadLocations[1].location.message.text).toBe(
       'sink: fs.readFileSync'
     )

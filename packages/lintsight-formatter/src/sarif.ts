@@ -9,7 +9,7 @@
  *   元数据源 = @lintsight/diagnostic 注册表，由 cli 构建为 SarifRuleMeta[] 传入
  *   （本包零依赖铁律）；无条目的 oxlint-native 规则仅 id+name 兜底
  * - results[].partialFingerprints.lintsightFingerprintV1 ← 诊断指纹（平台侧稳定锚点）
- * - pathEvents → codeFlows（threadFlows[0].locations 按序 step）+ relatedLocations 双写；
+ * - pathEvents → codeFlows（threadFlows[0].locations 按序 executionOrder）+ relatedLocations 双写；
  *   不写 kind 枚举字段（防 SARIF schema 违规），语义进 message.text
  * 快照测试锁定 schema（test/sarif.test.ts）。
  */
@@ -48,7 +48,7 @@ interface SarifResult {
   relatedLocations?: SarifLocation[]
   codeFlows?: {
     threadFlows: {
-      locations: { step: number; location: SarifLocation }[]
+      locations: { executionOrder: number; location: SarifLocation }[]
     }[]
   }[]
   partialFingerprints?: Record<string, string>
@@ -103,7 +103,8 @@ export function formatSarif(
                 threadFlows: [
                   {
                     locations: events.map((ev, i) => ({
-                      step: i + 1,
+                      // threadFlowLocation 规范序号属性（schema 外禁 step）
+                      executionOrder: i + 1,
                       location: eventLocation(d.file, ev)
                     }))
                   }
