@@ -111,6 +111,37 @@ describe('formatSarif（SARIF 2.1.0）', () => {
     )
   })
 
+  test('M3：region 0 值兜底夹取 ≥1（schema minimum: 1）', () => {
+    // 无 labels 诊断归一化兜底 {line:0,column:0}——落笔 SARIF 前夹取，防非法报告
+    const zeroReport = {
+      ...report,
+      diagnostics: [
+        {
+          ...report.diagnostics[1],
+          span: { offset: 0, length: 0, line: 0, column: 0 },
+          pathEvents: [
+            { kind: 'source', node: 'x', offset: 0, line: 0, column: 0 }
+          ]
+        }
+      ]
+    }
+    const out = JSON.parse(formatSarif(zeroReport))
+    const r = out.runs[0].results[0]
+    expect(r.locations[0].physicalLocation.region).toEqual({
+      startLine: 1,
+      startColumn: 1
+    })
+    // 证据链事件位置同夹取（threadFlowLocation + relatedLocations 双写面）
+    expect(
+      r.codeFlows[0].threadFlows[0].locations[0].location.physicalLocation
+        .region
+    ).toEqual({ startLine: 1, startColumn: 1 })
+    expect(r.relatedLocations[0].physicalLocation.region).toEqual({
+      startLine: 1,
+      startColumn: 1
+    })
+  })
+
   test('M3：pathEvents → codeFlows（executionOrder 序）+ relatedLocations 双写，不落 kind 枚举字段', () => {
     const taint = sarif.runs[0].results[0]
     const threadLocations = taint.codeFlows[0].threadFlows[0].locations

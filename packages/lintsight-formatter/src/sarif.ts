@@ -62,12 +62,21 @@ function toLevel(severity: string): 'error' | 'warning' | 'note' {
       : 'note'
 }
 
+/** SARIF region 坐标 schema 下限 1（startLine/startColumn "minimum": 1）——
+ * 无 labels 诊断的 0 值兜底夹取，防产出非法 SARIF（M3 review 发现 ③） */
+function toRegion(
+  line: number,
+  column: number
+): { startLine: number; startColumn: number } {
+  return { startLine: Math.max(1, line), startColumn: Math.max(1, column) }
+}
+
 /** 证据链事件 → SARIF location（message 承载 kind 语义，不落 schema 外字段） */
 function eventLocation(file: string, ev: PathEventLike): SarifLocation {
   return {
     physicalLocation: {
       artifactLocation: { uri: file },
-      region: { startLine: ev.line, startColumn: ev.column }
+      region: toRegion(ev.line, ev.column)
     },
     message: { text: `${ev.kind}: ${ev.node}` }
   }
@@ -85,7 +94,7 @@ export function formatSarif(
     const location: SarifLocation = {
       physicalLocation: {
         artifactLocation: { uri: d.file },
-        region: { startLine: d.span.line, startColumn: d.span.column }
+        region: toRegion(d.span.line, d.span.column)
       }
     }
     const events = d.pathEvents ?? []
