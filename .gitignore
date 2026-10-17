@@ -36,6 +36,9 @@ corpus/last-scan.json
 .env.*
 !.env.example
 
+# scan outputs（CLI --output 手工产物，不入库）
+/sarif.json
+
 # logs
 *.log
 pnpm-debug.log*
