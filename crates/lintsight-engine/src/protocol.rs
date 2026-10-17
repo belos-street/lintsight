@@ -87,6 +87,8 @@ pub struct Diagnostic {
 pub struct Summary {
     #[serde(rename = "type")]
     pub kind: &'static str, // 恒 "summary"
+    /// 引擎版本（CARGO_PKG_VERSION）——桥接侧规则面对账告警的辅助诊断信息
+    pub version: String,
     pub files: usize,
     pub rules: Vec<String>,
 }

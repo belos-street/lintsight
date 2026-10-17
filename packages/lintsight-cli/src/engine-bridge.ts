@@ -14,6 +14,8 @@ import path from 'node:path'
 import { parseJsonc } from '@lintsight/config-bridge'
 import type { ArchConfig } from '@lintsight/config-bridge'
 import type { PathEvent } from '@lintsight/diagnostic'
+import { registry } from '@lintsight/diagnostic/registry'
+import type { Logger } from '@lintsight/shared'
 
 /** tsconfig paths 映射（FR-304 别名兜底）：pattern/targets 均为相对 root 的 POSIX 路径，
  * 保留 `*` 通配；`dir` = 拥有该 tsconfig 的目录（"" = 根），引擎按 importer 的
@@ -146,6 +148,29 @@ export interface EngineRunResult {
   degraded: boolean
 }
 
+/** opt-in 引擎规则（配置/包表驱动才注册，summary 缺席是正常形态）——
+ * 规则面对账只盯常驻面。M3 review 发现 ②：陈旧引擎产物静默丢规则的防线。 */
+const ENGINE_OPT_IN_RULES = new Set([
+  'lintsight-engine/arch-boundaries',
+  'lintsight-engine/no-import-cycle',
+  'lintsight-engine/no-deep-import'
+])
+
+/** 期望常驻引擎规则面（注册表驱动——新增常驻规则自动进对账） */
+export function expectedEngineRules(): string[] {
+  return registry
+    .filter(
+      (e) =>
+        e.owner === 'lintsight-engine' && !ENGINE_OPT_IN_RULES.has(e.ruleId)
+    )
+    .map((e) => e.ruleId)
+}
+
+/** summary 规则面对账：期望面中缺席的规则（陈旧二进制信号） */
+export function missingEngineRules(reported: readonly string[]): string[] {
+  return expectedEngineRules().filter((id) => !reported.includes(id))
+}
+
 export function resolveEngineBin(cwd: string = process.cwd()): string | null {
   if (process.env.OXLINT_ENGINE_BIN) return process.env.OXLINT_ENGINE_BIN
   const candidates = [
@@ -167,6 +192,8 @@ export async function runEngine(
     cwd?: string
     arch?: ArchConfig
     tsPaths?: TsPathMapping[] | null
+    /** 规则面对账告警出口；缺省不对账（纯调用方语义） */
+    logger?: Logger
   } = {}
 ): Promise<EngineRunResult> {
   const cwd = opts.cwd ?? process.cwd()
@@ -204,6 +231,7 @@ export async function runEngine(
     }
 
     const diagnostics: EngineDiagnostic[] = []
+    let summary: { version?: string; rules: string[] } | null = null
     for (const line of stdout.split('\n')) {
       if (!line.trim()) continue
       let obj: unknown
@@ -212,9 +240,27 @@ export async function runEngine(
       } catch {
         return { diagnostics: null, degraded: true } // 协议损坏 → 降级
       }
-      const rec = obj as { type?: string; ruleId?: string }
+      const rec = obj as { type?: string; ruleId?: string } & Partial<{
+        version: string
+        rules: string[]
+      }>
+      if (rec.type === 'summary') {
+        summary = { version: rec.version, rules: rec.rules ?? [] }
+        continue
+      }
       if (rec.type !== 'diagnostic' || !rec.ruleId) continue
       diagnostics.push(obj as EngineDiagnostic)
+    }
+    // 规则面对账（M3 review 发现 ②）：常驻面缺席 = 陈旧引擎产物信号（静默丢规则）
+    if (summary && opts.logger) {
+      const missing = missingEngineRules(summary.rules)
+      if (missing.length > 0) {
+        opts.logger.warn(
+          `engine: 规则面缺失 ${missing.join(', ')}${
+            summary.version ? `（引擎 v${summary.version}）` : ''
+          }——疑似陈旧产物，请 cargo build --release 重建 lintsight-engine`
+        )
+      }
     }
     return { diagnostics, degraded: false }
   } catch {

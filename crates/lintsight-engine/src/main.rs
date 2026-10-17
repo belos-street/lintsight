@@ -157,6 +157,7 @@ fn main() {
     }
     let summary = protocol::Summary {
         kind: "summary",
+        version: env!("CARGO_PKG_VERSION").into(),
         files: scanned,
         rules: rules.iter().map(|r| r.id().to_string()).collect(),
     };

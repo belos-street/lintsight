@@ -8,6 +8,8 @@ import { chmod, cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {
+  expectedEngineRules,
+  missingEngineRules,
   resolveEngineBin,
   resolveTsPaths,
   runEngine
@@ -34,6 +36,21 @@ describe('engine-bridge: 二进制解析与降级', () => {
     } finally {
       restore()
     }
+  })
+
+  test('规则面对账（M3 review ②）：常驻面缺席检出，opt-in 缺席不误报', () => {
+    // 期望面由注册表驱动：常驻引擎规则必含（陈旧二进制丢的就是这些）
+    expect(expectedEngineRules()).toContain('lintsight-engine/no-open-redirect')
+    expect(expectedEngineRules()).toContain('lintsight-engine/no-eval')
+    // 满面 → 零缺失
+    expect(missingEngineRules(expectedEngineRules())).toEqual([])
+    // 陈旧产物形态（缺 no-open-redirect 等）→ 检出缺席项
+    const missing = missingEngineRules(['lintsight-engine/no-eval'])
+    expect(missing).toContain('lintsight-engine/no-open-redirect')
+    expect(missing).not.toContain('lintsight-engine/no-eval')
+    // opt-in 规则（配置/包表驱动）缺席是正常形态，不进对账
+    expect(missing).not.toContain('lintsight-engine/arch-boundaries')
+    expect(missing).not.toContain('lintsight-engine/no-deep-import')
   })
 
   test('files 为空 → 不调用引擎，正常形态返回', async () => {

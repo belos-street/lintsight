@@ -415,7 +415,8 @@ export async function runPipeline(
         {
           cwd,
           arch,
-          tsPaths
+          tsPaths,
+          logger
         }
       )
       if (engineResult.degraded) {
