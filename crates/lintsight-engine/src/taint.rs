@@ -167,14 +167,30 @@ impl TaintTables {
         self.sinks.iter().any(|k| k.0 == key.0 && k.1 == key.1)
     }
 
-    /// 字面量字符串锚定形态（anchored_concat_clean 的判定点）：
-    /// 纯字符串字面量，或从首元素起连续铺开的模板串静态段。
-    fn is_anchored_prefix(expr: &Expression) -> bool {
+    /// 锚定前缀的字面量文本：纯字符串字面量取值，模板串取首静态段
+    /// （cooked 优先，raw 兜底）。非字面量形态返回 None。
+    fn anchored_prefix_text<'a>(expr: &'a Expression<'a>) -> Option<&'a str> {
         match expr {
-            Expression::StringLiteral(_) => true,
-            Expression::TemplateLiteral(t) => t.quasis.first().is_some_and(|q| !q.span.is_empty()),
-            _ => false,
+            Expression::StringLiteral(s) => Some(s.value.as_str()),
+            Expression::TemplateLiteral(t) => {
+                let q = t.quasis.first()?;
+                Some(match &q.value.cooked {
+                    Some(c) => c.as_str(),
+                    None => q.value.raw.as_str(),
+                })
+            }
+            _ => None,
         }
+    }
+
+    /// 锚定前缀有效性：剥除前导空白后须非空、不为 `/`、不以 `//` 开头——
+    /// 否则可被拼接逃逸为站外 URL（URL 解析剥前导空白；`/`+`/evil.com` =
+    /// 协议相对 `//evil.com`）。M3 review 发现 ①② 反哺。
+    fn is_anchored_prefix(expr: &Expression) -> bool {
+        Self::anchored_prefix_text(expr).is_some_and(|text| {
+            let t = text.trim_start();
+            !t.is_empty() && t != "/" && !t.starts_with("//")
+        })
     }
 }
 

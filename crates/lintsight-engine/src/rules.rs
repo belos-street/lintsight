@@ -545,6 +545,29 @@ mod tests {
         assert_eq!(redirect_hits("res.redirect(req.query.url)\n").len(), 1);
     }
 
+    #[test]
+    fn redirect_reports_escapable_prefix_concat() {
+        // M3 review 发现 ①②：锚定前缀可逃逸形态不得豁免——
+        // `/`+`/evil.com` = 协议相对 URL；`''`/`' '` 前缀等于未锚定（URL 解析剥前导空白）。
+        for prefix in ["/", "//", "", " "] {
+            let src = format!("res.redirect('{prefix}' + req.query.to)\n");
+            assert_eq!(
+                redirect_hits(&src).len(),
+                1,
+                "concat 前缀 {prefix:?} 可逃逸，锚定豁免不适用"
+            );
+        }
+        // 模板串首静态段同判据（两分支防护对齐）
+        for prefix in ["/", "//", "", " "] {
+            let src = format!("res.redirect(`{prefix}${{req.query.to}}`)\n");
+            assert_eq!(
+                redirect_hits(&src).len(),
+                1,
+                "模板串前缀 {prefix:?} 可逃逸，锚定豁免不适用"
+            );
+        }
+    }
+
     // —— no-path-traversal（taint 竖切验收用例，对应 text-rpg readdir→join→readFile 场景） ——
 
     fn traversal_hits(source: &str) -> Vec<(u32, Vec<&'static str>)> {
