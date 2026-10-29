@@ -1,4 +1,4 @@
-# lintsight JS/TS 引擎升级评估与计划（v0.1 修订 4）
+# lintsight JS/TS 引擎升级评估与计划（v0.1 修订 5）
 
 > 状态：评审稿 · 日期：2026-10-29 · 项目版本：0.1.0-alpha.0
 > 本文由「升级计划 v0.1」与「M1-M3 交付评估」合并，并采纳 [独立评审报告 v0.1](review-report-v0.1.md)，作为 M4 立项、scanner 集成与替代验收的基线文档。
@@ -406,18 +406,20 @@ interface FrameworkProfile {
 | G3 | P0 | 仓库无 CI；bench/corpus 基线陈旧 | 无 `.github/`、`.gitlab-ci.yml`；`bun run test` 不含 cargo；bench baseline 停在 `5136929` | GitHub Actions：bun + cargo + lint + format + clippy + bench + corpus；基线按版本重建 |
 | G4 | P1 | Rust 轨道未真正兑现铁律 #2 | `rules.rs`/`taint.rs` 直接 `use oxc_ast`；`FileContext::semantic()` 返回 oxc `Semantic` | 补薄 `ir` façade，或明确修订铁律为「JS 强约束、Rust 绑定 oxc」 |
 | G5 | P1 | 并发/资源无上限，无 fuzz | 无单文件超时/大小上限；分批 `Promise.all` 无上限；oxlint 自带多线程；rayon 全核；无 `--concurrency` | 文件级超时/大小/内存上限；`--concurrency` 贯通；parser/processor fuzz |
-| G6 | P1 | fail-open 不可观测 | 引擎缺失返回 `degraded=false` 且无告警，与 design-m2 M2-DR3 的 `degraded:true` 冲突 | 报告加 `engineStatus`；缺失/崩溃/超时都标注；CI 可选 fail-closed |
+| G6 | P0 | fail-open 不可观测 | 引擎缺失返回 `degraded=false` 且无告警，与 design-m2 M2-DR3 的 `degraded:true` 冲突 | 报告加 `engineStatus`；缺失/崩溃/超时都标注；CI 可选 fail-closed |
 | G7 | P1 | 文档/规则账目漂移 | README「865+」「140+46」；计划此前「900」；实际 877 表格行 / 870 类别合计 / 807 唯一 / 123 启用 | 统一 registered / enabled / effective；测试数与规则数由脚本生成 |
-| G8 | P1 | Vue 误报治理靠整条抑制 | `.vue` 默认关闭 `no-unused-vars`；显式开启回到系统性误报 | template 引用索引恢复规则；抑制仅过渡；183 `.vue` 复扫验收 |
-| G9 | P1 | TSX/JSX 无契约 | 0 个 `.tsx/.jsx` fixture、0 条 JSX sink 规则 | 补解析、JSX 属性 sink、React/Vue JSX 用例 |
+| G8 | P0 | Vue 误报治理靠整条抑制 | `.vue` 默认关闭 `no-unused-vars`；显式开启回到系统性误报 | template 引用索引恢复规则；抑制仅过渡；183 `.vue` 复扫验收 |
+| G9 | P0 | TSX/JSX 无契约 | 0 个 `.tsx/.jsx` fixture、0 条 JSX sink 规则 | 补解析、JSX 属性 sink、React/Vue JSX 用例 |
 | G10 | P2 | Vue fixture 仅 1 个 | fixtures 中仅 `no-empty-catch.vue` | 增加 SFC 多场景 fixture（script setup、template、宏、样式） |
 | G11 | P2 | 发布/供应链无自动化 | 无 changesets/release；`oxlint-tsgolint: "7"` 浮大版本；无 cargo-deny/SBOM/签名/校验和 | changesets + 多平台产物 + 校验和 + 依赖审计；clippy/cargo fmt 入 CI |
 | G12 | P0 | 27 条 JS 规则（11 正确性 + 16 安全）默认全关、无推荐集 | `builtin-mapping.rules={}`；空配置项目 JS 0 启用；引擎可用且文件为 cache miss 时 6 条常驻规则仍运行；1b 映射未落地 | 新增 `recommended` / `security` 预设；补齐 1b 清单；空配置坏样本能出安全诊断 |
 | G13 | P0 | 配置/路径契约不适配 scanner | 配置按 cwd 解析、无 `--root`；外部绝对路径报告为绝对路径 | 明确 `--root`/cwd 语义；外部目标用其自身配置且报告相对路径 |
-| G14 | P1 | 版本号三处不一致 | CLI `0.0.1`、根 `0.1.0-alpha.0`、引擎 `0.1.0`、SARIF driver `0.0.1` | 单一版本源；`--version`/SARIF/包版本发布检查 |
-| G15 | P1 | Vue 虚拟路径进入图身份 | 引擎收到 `Foo.vue.lintsight-<pid>.ts`，指向 `Foo.vue` 的 import 与虚拟节点不同键；实测 Vue→TS 环 0 条，同结构 TS→TS 对照 2 条（`src/A.ts:1`、`src/B.ts:1`） | 图节点映射回原 `.vue`；把 TS→TS 对照写成回归用例；Vue 参与的环回归测试（仅 importCycles 开启时） |
+| G14 | P0 | 版本号三处不一致 | CLI `0.0.1`、根 `0.1.0-alpha.0`、引擎 `0.1.0`、SARIF driver `0.0.1` | 单一版本源；`--version`/SARIF/包版本发布检查 |
+| G15 | P0 | Vue 虚拟路径进入图身份 | 引擎收到 `Foo.vue.lintsight-<pid>.ts`，指向 `Foo.vue` 的 import 与虚拟节点不同键；当前 bug 基线 Vue→TS 环 0 条，同结构 TS→TS 对照 2 条（`src/A.ts:1`、`src/B.ts:1`） | 修复目标 Vue→TS 环 2 条（`src/A.vue:1`、`src/B.ts:1`）；图节点映射回原 `.vue`；把 TS→TS 对照写成回归用例 |
 | G16 | P2 | 输入面细节与文档不符 | arch `*` 仅前缀*后缀单星；默认忽略任意 `build/out` 段；重复输入未去重，已复现 `src src` → 引擎 `no-eval`/`no-path-traversal` 各 ×2（eslint 侧 1 条） | 文档标注或换 globset；忽略可配置+告警；输入 Set 去重，并加「重复 `src src` → 引擎诊断 ×2」回归测试 |
 | G17 | P2 | opt-in 规则无对账 | engine-bridge 排除 arch/cycle/deep-import；summary 不含 `no-import-cycle` | 对账覆盖可配置面或版本/能力协商；陈旧二进制可告警 |
+
+> M4 仅 P0：G5/G10 移至 M5；G6/G8/G9/G14/G15 为 M4 收口门槛，已升 P0。M4 = G1/G2/G3/G6/G8/G9/G12/G13/G14/G15。
 
 ---
 
@@ -449,7 +451,7 @@ interface FrameworkProfile {
 5. **双跑对照**
    - scanner 同仓库/commit 双跑；lintsight 保证确定性；差异逐条归因。
 6. **工程正确性**
-   - 修 G1（缓存路径/空结果/图规则/冷热等价）、G2（契约 v3 + inline suppression）、G3（CI）、G9（TSX/JSX）、G12（默认预设）、G13（配置根）、G14（版本源）、G15（Vue 图身份）。
+   - 修 G1（缓存路径/空结果/图规则/冷热等价）、G2（契约 v3 + inline suppression）、G3（CI）、G6（fail-open 可观测）、G9（TSX/JSX）、G12（默认预设）、G13（配置根）、G14（版本源）、G15（Vue 图身份）。
 7. **基准 v1**
    - 30~50 个精确漏洞行样本 + 负样本；差分 Semgrep/ESLint；生成报告。
 
@@ -475,8 +477,9 @@ interface FrameworkProfile {
 3. **框架 Profile 扩展**：NestJS 完整语义、Prisma/TypeORM/Sequelize/Mongoose、GraphQL。
 4. **type-aware 策略化**：Pinia action、axios 返回、composable 按需开启；默认关闭但可配置。
 5. **增量与缓存**：接受 scanner 变更文件集；反向依赖影响面；图规则一致性。
-6. **性能与内存**：`--concurrency`、超大文件、内存上限。
-7. **基准扩展**：每规则 TP/FP/FN；季度误报复盘。
+6. **性能与内存（G5）**：`--concurrency`、超大文件、内存上限。
+7. **工程支撑（G4/G7/G10/G16）**：Rust IR façade、文档/规则账目、Vue fixture、输入面与重复输入。
+8. **基准扩展**：每规则 TP/FP/FN；季度误报复盘。
 
 **M5 验收**：10 万行全量 <60s / 增量 <5s；Rust 安全规则 15~20 条；跨文件 taint 至少 2 条硬门槛规则误报 <15%；双跑 ≥95%。
 
@@ -485,8 +488,11 @@ interface FrameworkProfile {
 - Angular profile（template AST、DomSanitizer、DI、RxJS）——**需求门控**，无目标仓不启动。
 - React/Next profile（JSX sink、hooks、server components）。
 - Svelte/Nuxt/Remix（按需）。
-- LSP alpha + VS Code、常驻 worker、`lintsight migrate` 完整版。
+- LSP alpha + VS Code、`lintsight migrate` 完整版。
+- G11 发布/供应链（changesets、多平台产物、校验和、SBOM、签名）。
+- G17 opt-in 规则对账。
 - fixer 高级策略、上游 oxc 跟进。
+- 常驻 worker/daemon 归 scanner/平台，不在引擎排期。
 
 ---
 
@@ -575,3 +581,4 @@ interface FrameworkProfile {
 | v0.1 修订 2 | 2026-10-29 | 并入原 `docs/todo.md` 未完成项（附录 A）；补充 `--concurrency`、type-aware taint、fixer 高级策略与上游跟进；原 todo 删除 |
 | v0.1 修订 3 | 2026-10-29 | 合并 M1-M3 交付评估：新增评分与结论、语言/框架覆盖面模型（TSX/JSX、Vue、Angular、Nest/Express/ORM）、L0-L4 深度路线、Rust 安全规则扩充清单、精确行基准与验收口径、工程缺口 G1-G11；明确 Angular/React 需求门控与「覆盖矩阵优先于规则数量」 |
 | v0.1 修订 4 | 2026-10-29 | 复核独立评审 v0.1：采纳 B1/B2 + B3（H3 升级）、H1/H2/H4-H9、M1-M9（M9 已复现）与 L1-L4；评分改为 MVP 6.0 / 企业替代 3.3；补 G12-G17（默认预设、配置根、版本源、Vue 图身份、输入面、opt-in 对账）；修正 7 处口径（processor 语义、注册数、空配置安全面、engine degraded 设计冲突、M9 已复现、SQL 表述、评分非事实）；M4 验收增加冷/热等价、默认预设、契约字段与路径/版本一致性 |
+| v0.1 修订 5 | 2026-10-29 | 按执行清单复核调整范围：M4 仅 P0；G6/G8/G9/G14/G15 升 P0；G5/G10 移至 M5；G4/G7/G16 归 M5，G11/G17 归 M6；补 G15 修复目标（Vue→TS 2 条，当前 0 条为 bug 基线）；执行清单补齐证据行、G1 8 组缓存矩阵、G2 schema 细节、G12 规则账、G13 优先级、G3 分阶段 CI、G8/H5/前端包规则 ID 边界 |
