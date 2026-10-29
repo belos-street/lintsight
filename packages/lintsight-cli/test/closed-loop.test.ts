@@ -4,9 +4,10 @@
  * ⚠️ 扫描目标显式列出 fixtures 子目录：fixtures/options/ 是选项组用例（不进全量扫描面）。
  */
 import { describe, expect, test } from 'bun:test'
+import { fileURLToPath } from 'node:url'
 import { runPipeline } from '../src/pipeline'
 
-const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const SCAN_TARGETS = ['fixtures/ts', 'fixtures/vue']
 
 describe('竖切闭环（§11.3）', () => {

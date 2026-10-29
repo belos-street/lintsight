@@ -5,9 +5,10 @@
 import { afterAll, describe, expect, test } from 'bun:test'
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
+import { fileURLToPath } from 'node:url'
 import { runPipeline } from '../src/pipeline'
 
-const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const TMP = `${tmpdir()}/lintsight-pipeline-errors-test`
 
 afterAll(async () => {

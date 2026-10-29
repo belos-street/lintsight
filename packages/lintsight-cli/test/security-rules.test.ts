@@ -4,9 +4,10 @@
  * 断言只看目标 ruleId 诊断，内置噪音与跨规则交叉不进契约。
  */
 import { describe, test } from 'bun:test'
+import { fileURLToPath } from 'node:url'
 import { defineRuleTester } from '@lintsight/rule-sdk/testing'
 
-const ROOT = new URL('../../../', import.meta.url).pathname
+const ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 interface Case {
   file: string

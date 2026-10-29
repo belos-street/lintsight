@@ -10,9 +10,10 @@ import { describe, expect, test } from 'bun:test'
 import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { runPipeline } from '../src/pipeline'
 
-const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 /** 含空 catch 的源码片段——被 lintsight/no-empty-catch 命中（用于断言「是否被扫描」） */
 const BAD = 'try {\n  risky()\n} catch (e) {}\n'
@@ -38,7 +39,11 @@ function hitFiles(
 ): string[] {
   const files = diagnostics
     .filter((d) => d.ruleId === 'lintsight/no-empty-catch')
-    .map((d) => d.file.replace(`${dir}/`, ''))
+    .map((d) => {
+      // 诊断 file 可能是相对 cwd 的路径，也可能是 cwd 外目标的绝对路径（B1 外部目标用例）
+      const abs = path.isAbsolute(d.file) ? d.file : path.resolve(dir, d.file)
+      return path.relative(dir, abs).split(path.sep).join('/')
+    })
   return [...new Set(files)].sort()
 }
 

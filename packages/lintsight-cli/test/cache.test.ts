@@ -13,8 +13,9 @@ import {
 import { mkdtemp, rm, writeFile, readFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 describe('cache: 键敏感性与条目读写', () => {
   test('引擎指纹：oxlint 可解析则启用，含 lintsight/oxlint 版本', async () => {

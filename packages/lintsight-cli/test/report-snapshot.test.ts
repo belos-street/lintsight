@@ -5,11 +5,14 @@
  */
 import { describe, expect, test } from 'bun:test'
 import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { runPipeline } from '../src/pipeline'
 import { formatJson } from '@lintsight/formatter'
 
-const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
-const GOLDEN = new URL('./__golden__/report-v2.json', import.meta.url).pathname
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+const GOLDEN = fileURLToPath(
+  new URL('./__golden__/report-v2.json', import.meta.url)
+)
 
 describe('JSON 报告 golden（contractVersion=2）', () => {
   test('fixtures 全量扫描报告', async () => {

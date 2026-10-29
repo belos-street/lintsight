@@ -7,6 +7,7 @@ import { describe, expect, test } from 'bun:test'
 import { chmod, cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   expectedEngineRules,
   missingEngineRules,
@@ -16,7 +17,7 @@ import {
 } from '../src/engine-bridge'
 import { runPipeline } from '../src/pipeline'
 
-const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 function setEngineBin(value: string | undefined): () => void {
   const prev = process.env.OXLINT_ENGINE_BIN
@@ -174,10 +175,12 @@ describe('engine-bridge: 双报消解集成（T2.5 supersedes）', () => {
         path.join(dir, '.oxlintrc.json'),
         JSON.stringify({
           jsPlugins: [
-            new URL(
-              '../../../plugins/lintsight-rules/index.js',
-              import.meta.url
-            ).pathname
+            fileURLToPath(
+              new URL(
+                '../../../plugins/lintsight-rules/index.js',
+                import.meta.url
+              )
+            )
           ],
           rules: { 'lintsight/no-non-literal-fs-filename': 'warn' }
         })

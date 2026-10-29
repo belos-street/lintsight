@@ -4,6 +4,8 @@
  */
 import { afterAll, describe, expect, test } from 'bun:test'
 import { rm } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import {
   createIgnoreMatcher,
   effectiveIgnorePatterns,
@@ -14,7 +16,7 @@ import {
   translate
 } from '../src/index'
 
-const PROJECT_ROOT = new URL('../../../', import.meta.url).pathname
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 
 afterAll(async () => {
   await rm(`${PROJECT_ROOT}.lintsight-cache/config-bridge-test`, {
@@ -212,14 +214,20 @@ describe('等价报告', () => {
 describe('文件面', () => {
   test('resolveRulesPluginPath：monorepo dev 形态命中 plugins/', () => {
     const p = resolveRulesPluginPath(PROJECT_ROOT)
-    expect(p.endsWith('plugins/lintsight-rules/index.js')).toBeTrue()
+    expect(
+      p.endsWith(path.join('plugins', 'lintsight-rules', 'index.js'))
+    ).toBeTrue()
   })
 
   test('generateOxlintrc：写入 cache 目录，规则与 jsPlugins 落盘', async () => {
-    const cacheDir = `${PROJECT_ROOT}.lintsight-cache/config-bridge-test`
+    const cacheDir = path.join(
+      PROJECT_ROOT,
+      '.lintsight-cache',
+      'config-bridge-test'
+    )
     const out = await generateOxlintrc(
       PROJECT_ROOT,
-      `${PROJECT_ROOT}lintsight.config.json`,
+      path.join(PROJECT_ROOT, 'lintsight.config.json'),
       cacheDir
     )
     expect(out.oxlintrcPath.startsWith(cacheDir)).toBeTrue()
@@ -229,7 +237,9 @@ describe('文件面', () => {
     }
     expect(doc.rules['lintsight/no-empty-catch']).toBe('error')
     expect(
-      doc.jsPlugins[0].endsWith('plugins/lintsight-rules/index.js')
+      doc.jsPlugins[0].endsWith(
+        path.join('plugins', 'lintsight-rules', 'index.js')
+      )
     ).toBeTrue()
     expect(
       out.equivalent.some((r) => r.rule === 'lintsight/no-empty-catch')
