@@ -5,6 +5,7 @@
 > **环境**：Windows；Bun 1.4.2；oxlint 1.83.0；Rust 1.97.1；hyperfine 不可用；`corpus/repos/` 未同步。
 > **口径**：`实测`=命令/代码；`自报`=文档声明；`推断`=由证据推理；`观点`=评分判断。平台职责（任务、上传、基线、AI 研判、CI/CD）不计入扣分；引擎侧契约与 inline suppression 计入。
 > **本报告位置**：`docs/upgrade/v0.1/review-report-v0.1.md`。除本报告文件外，未修改源码、配置或既有文档。
+> **Errata（2026-10-29）**：H1「安全价值为 0」等口径已在 [upgrade-plan §0.5](upgrade-plan.md#05-评审分歧与口径修正) 修正；本报告的 processor 语义与「无 SQL」表述已同步修正（§6/B1），其余内容保持评审快照原样。
 
 ## 0. 结论
 

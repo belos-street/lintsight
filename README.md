@@ -15,7 +15,7 @@
             ┌───────────────▼───┐   ┌───────▼────────────┐
             │  M2 深度引擎 (Rust) │   │  M1 oxlint 基座     │
             │  oxc crates 直连    │   │  JS Plugins 宿主    │
-            │  taint / CFG / 图   │   │  865+ 内置规则      │
+            │  taint / CFG / 图   │   │  900 注册 / 123 启用 │
             │  lintsight-engine/*│   │  lintsight/*        │
             └───────────────┬───┘   └───────┬────────────┘
                             │  诊断合并（指纹 + supersedes 消解）│
@@ -25,7 +25,7 @@
 
 ## 特性
 
-- **双引擎，一份报告**：oxlint 内置规则面（865+）+ 自有规则 36 条（JS 轨道 27 + 引擎轨道 9），合并层按指纹去重、按 `supersedes` 消解同位置双报。
+- **双引擎，一份报告**：oxlint 内置规则面（900 注册 / 约 123 默认启用）+ 自有规则 36 条（注册；JS 轨道 27 + 引擎轨道 9），合并层按指纹去重、按 `supersedes` 消解同位置双报。
 - **污点分析带证据链**：引擎 taint 规则输出 `source → propagation → [sanitizer] → sink` 的 pathEvents 证据链，供平台 AI 研判与人工复核。
 - **误报治理是工程纪律**：每条规则强制 `falsePositives` 自证；6 个真实仓库（zod / dayjs / express / juice-shop / nodegoat / ghost，5596 文件）作为语料库基线，诊断面漂移即评审信号；OWASP juice-shop 官方挑战清单逐挑战召回对照制度化。
 - **fail-open**：引擎二进制缺失或崩溃 → 自动降级纯 M1 扫描，绝不阻塞业务流水线。
@@ -33,7 +33,7 @@
 - **内容哈希缓存**：引擎/配置/插件任一指纹变化自动失效；`--fix` 模式自动绕过。
 - **Vue SFC 支持**：虚拟块就地虚拟化（保 import 解析上下文），诊断位置 1:1 回映射；`--fix` 行数不变的 safe fix 差量回写。
 - **type-aware 编排**：`typeAware: true` 追加 oxlint `--type-aware`（tsgolint），伴生依赖缺失自动降级并提示。
-- **性能**：深度引擎实测 1.39M LOC/s（NFR-1 预算 150k LOC/s 的 9 倍余量），万行冷扫 <10s 硬门禁 + 基线回退拦截。
+- **性能**：深度引擎实测约 1.34M LOC/s（NFR-1 预算 150k LOC/s 的 9 倍余量），万行冷扫 <10s 硬门禁 + 基线回退拦截。
 
 ## 快速开始
 
@@ -274,12 +274,16 @@ bun run bench           # hyperfine 万行基准：<10s 硬门禁 + 引擎/端�
 
 ```bash
 bun install
-bun run test          # 全部测试（自动构建规则集产物；bun 140 + cargo 46）
+bun run test          # 全部测试（自动构建规则集产物；bun 167 + cargo 52）
 bun run lint          # dev-lint（0 警告基线）
 bun run format        # oxfmt
 ```
 
 写规则前必读 `.agents/skills/rule-authoring`（用例先行 → meta 完备 → 语料库门禁 → 注册表登记）；动 oxlint 配置 / spike / 升级前必读 `.agents/skills/oxc-toolchain`；评审引擎 / SAST 项目尽调前读 `.agents/skills/sast-review`（独立评分 + 证据口径）。
+
+### AI 协作
+
+复杂需求先读 [AGENTS.md](AGENTS.md) 的「AI 协作工作流」；规则/工作流在 `.agents/rules/` 与 `.agents/workflows/`，决策记录在 `.agents/memory/decisions.md`，变更文档在 `docs/changes/`。提交前可启用机器门禁：`git config core.hooksPath .githooks`（一次性）。
 
 ### 目录结构
 
@@ -297,10 +301,15 @@ bun run format        # oxfmt
 ├─ crates/lintsight-engine/   # M2 Rust 深度引擎（taint / 图 / 架构规则）
 ├─ fixtures/                  # 规则用例契约（断言依赖行列布局，勿格式化）
 ├─ corpus/                    # 语料库基线与清单（仓库体 gitignore，corpus:sync 拉取）
-├─ docs/                      # 需求 / 设计 / spike / 升级计划（版本化）
+├─ .githooks/                 # commit-msg spec-first 校验（可选启用 core.hooksPath）
+├─ docs/                      # 需求 / 设计 / spike / 升级计划 / 变更记录（版本化）
+│  ├─ changes/                # spec-first 三层变更文档（proposal/design/tasks）
+│  └─ templates/change/       # 变更文档模板
 └─ .agents/
-   ├─ skills/                 # 工程技能（rule-authoring / oxc-toolchain / belos-street）
-   └─ memory/                 # 项目记忆：引擎边界与二次封装约定
+   ├─ rules/                  # 规则（spec-first / workflow / verification / memory 常驻；project / commit 按需）
+   ├─ workflows/              # feature / rule-change / bug-fix / hotfix / refactor
+   ├─ skills/                 # 工程技能（rule-authoring / oxc-toolchain / belos-street / sast-review）
+   └─ memory/                 # 引擎边界 + decisions.md 决策记录
 ```
 
 ### 文档索引
@@ -313,12 +322,15 @@ bun run format        # oxfmt
 | [docs/design/p0-rules-proposal-v0.1.md](docs/design/p0-rules-proposal-v0.1.md) | P0 规则清单提案（CWE/OWASP 映射） |
 | [docs/spikes/](docs/spikes/) | 可行性验证与实测报告（竖切 / oxc crate / tsgolint / taint PoC / juice-shop 召回） |
 | [docs/upgrade/v0.1/upgrade-plan.md](docs/upgrade/v0.1/upgrade-plan.md) | JS/TS 引擎升级评估与计划（替代 SAST JS/TS 引擎；承接原 todo） |
+| [docs/upgrade/v0.1/execution-todo.md](docs/upgrade/v0.1/execution-todo.md) | M4/M5/M6 执行清单（G-ID、owner、证据、状态） |
 | [docs/upgrade/v0.1/review-report-v0.1.md](docs/upgrade/v0.1/review-report-v0.1.md) | 独立评审报告（v0.1）：架构 / SAST 专业性 / 精度证据 / 框架扩展性 |
+| [docs/changes/README.md](docs/changes/README.md) | 变更记录约定（spec-first 三层文档、change-id） |
+| [docs/templates/change/](docs/templates/change/) | proposal / design / tasks 模板 |
 
 ## 状态与路线图
 
 - **M1（oxlint 基座 + Bun 封装）**：已完成——7 个执行切片 + 3 个真实项目试用（127 文件 / 43 诊断 / 误报标注反哺 2 条规则行为）。
-- **M2（Rust 深度引擎）**：已完成——sidecar 协议、CFG taint 引擎、4 条 taint 规则 + 3 条治理规则、双报消解、SARIF、rayon 并行（1.39M LOC/s）；M2.7 精度批次（测试文件豁免 -89% 凭证噪音、taint 边界补齐、消解对扩充、架构能力 3 项）收官。
+- **M2（Rust 深度引擎）**：已完成——sidecar 协议、CFG taint 引擎、4 条 taint 规则 + 3 条治理规则、双报消解、SARIF、rayon 并行（约 1.34M LOC/s）；M2.7 精度批次（测试文件豁免 -89% 凭证噪音、taint 边界补齐、解对扩充、架构能力 3 项）收官。
 - **M3（最小收口已完成）**：SARIF 消费面补强、CI 模板与二进制分发、规则面扩充（juice-shop 静态可对照面召回 17/26）。
 - **升级计划（进行中）**：lintsight 作为纯 JS/TS 引擎接入 `scanner`，替代现有 JS/TS 检测引擎；路线与边界见 [docs/upgrade/v0.1/upgrade-plan.md](docs/upgrade/v0.1/upgrade-plan.md)。
 

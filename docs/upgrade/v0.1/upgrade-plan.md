@@ -403,7 +403,7 @@ interface FrameworkProfile {
 | --- | --- | --- | --- | --- |
 | G1 | P0 | 增量缓存对跨文件规则不成立，且同内容文件会错配 | `createCacheKey` 只含引擎/配置/插件/内容，不含路径；干净文件因无 `group` 不写缓存；图规则只接收 `misses` | 键含路径 + tsconfig + 依赖闭包/影响集 + 文件集；空结果也缓存；图规则全量 pass 或标不可缓存；补「重复内容 / 断环 / 加文件 / tsconfig 变更」冷热等价测试 |
 | G2 | P0 | 契约缺 confidence/cweTags/fail-on/engineStatus/toolVersion，且无 inline suppression | `LintsightDiagnostic` 只有 severity；`cli.ts` 无 `--fail-on`；`degraded` 不进报告；SARIF 无 taxonomies/suppressions；`--output` 仍写 stdout | 契约 v3；SARIF 补 taxonomies/suppressions；inline ignore + reason；golden/SARIF/scanner 消费测试 |
-| G3 | P0 | 仓库无 CI；bench/corpus 基线陈旧 | 无 `.github/`、`.gitlab-ci.yml`；`bun run test` 不含 cargo；bench baseline 停在 `5136929` | GitHub Actions：bun + cargo + lint + format + clippy + bench + corpus；基线按版本重建 |
+| G3 | P0 | 仓库无 CI；bench/corpus 基线陈旧 | 无 `.github/`、`.gitlab-ci.yml`；`bun run test` 不含 cargo；bench baseline 停在 `5136929` | GitHub Actions：bun + cargo + lint + format + clippy + bench + corpus + `check:change-id`；基线按版本重建 |
 | G4 | P1 | Rust 轨道未真正兑现铁律 #2 | `rules.rs`/`taint.rs` 直接 `use oxc_ast`；`FileContext::semantic()` 返回 oxc `Semantic` | 补薄 `ir` façade，或明确修订铁律为「JS 强约束、Rust 绑定 oxc」 |
 | G5 | P1 | 并发/资源无上限，无 fuzz | 无单文件超时/大小上限；分批 `Promise.all` 无上限；oxlint 自带多线程；rayon 全核；无 `--concurrency` | 文件级超时/大小/内存上限；`--concurrency` 贯通；parser/processor fuzz |
 | G6 | P0 | fail-open 不可观测 | 引擎缺失返回 `degraded=false` 且无告警，与 design-m2 M2-DR3 的 `degraded:true` 冲突 | 报告加 `engineStatus`；缺失/崩溃/超时都标注；CI 可选 fail-closed |

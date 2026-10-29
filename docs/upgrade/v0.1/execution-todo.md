@@ -1,6 +1,7 @@
 # lintsight M4 执行清单（execution-todo）
 
 > 来源：[upgrade-plan.md](upgrade-plan.md)（v0.1 修订 5）；本文件只记录执行状态与验收，不重复决策。
+> 执行方式：按 `.agents/rules/workflow-guide.md` 路由；复杂需求先按 `spec-first` 建 `docs/changes/<change-id>/` 三层文档。
 > 范围：**M4 只做 P0**。G5/G10 移至 M5；G6/G8/G9/G14/G15 为 M4 收口门槛，已升 P0。
 > G-ID 全量覆盖：M4 = G1/G2/G3/G6/G8/G9/G12/G13/G14/G15；M5 = G4/G5/G7/G10/G16；M6 = G11/G17。
 > 状态：`[ ]` 未开始 · `[~]` 进行中 · `[x]` 完成 · `[!]` 阻塞
@@ -127,7 +128,7 @@
 - [ ] **G3 CI 与基线（分阶段）**
   - owner：CI
   - 内容：
-    - 第一阶段最小 CI：`bun test` + `lint` + `format:check`；
+    - 第一阶段最小 CI：`bun run test` + `lint` + `format:check` + `check:change-id`；
     - 第二阶段：`cargo test` + `clippy` + `cargo fmt`；
     - 第三阶段：bench + corpus（专用 runner）；
     - 写明 OS 矩阵（Windows/Linux/macOS 至少 Linux+Windows）；
