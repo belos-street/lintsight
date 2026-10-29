@@ -17,7 +17,8 @@ import {
   sortDiagnostics,
   suppressSuperseded,
   toLintsightDiagnostic,
-  type LintsightDiagnostic
+  type LintsightDiagnostic,
+  type OxlintJsonOutput
 } from '@lintsight/diagnostic'
 import {
   ensureGitignore,
@@ -45,6 +46,24 @@ import {
 import { resolveEngineBin, resolveTsPaths, runEngine } from './engine-bridge'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
+/** Windows CreateProcess 命令行上限 32767 字符：大批文件按累计长度切批，
+ * 否则 500 个绝对路径即触发 ENAMETOOLONG（uv_spawn 失败）。 */
+function chunkPaths(paths: string[], maxChars = 28000): string[][] {
+  const chunks: string[][] = []
+  let cur: string[] = []
+  let len = 0
+  for (const p of paths) {
+    if (cur.length > 0 && len + p.length > maxChars) {
+      chunks.push(cur)
+      cur = []
+      len = 0
+    }
+    cur.push(p)
+    len += p.length + 3
+  }
+  if (cur.length > 0) chunks.push(cur)
+  return chunks
+}
 const SCAN_EXTS = new Set([
   '.ts',
   '.tsx',
@@ -150,7 +169,9 @@ async function collectFiles(
       if (!st.isDirectory()) throw new Error(`unsupported input type: ${input}`)
       const glob = new Bun.Glob('**/*')
       const matched: string[] = []
-      for (const rel of glob.scanSync({ cwd: abs, onlyFiles: true })) {
+      for (const rawRel of glob.scanSync({ cwd: abs, onlyFiles: true })) {
+        // Bun.Glob 在 Windows 返回反斜杠分隔 → 统一 POSIX 后再做段匹配
+        const rel = rawRel.replace(/\\/g, '/')
         if (rel.split('/').some((seg) => IGNORED_DIRS.has(seg))) continue
         if (isInPlaceVirtualPath(rel)) continue // 本次/历史运行的就地临时文件不重复扫描
         if (!SCAN_EXTS.has(path.extname(rel))) continue
@@ -349,17 +370,41 @@ export async function runPipeline(
     let scannedFiles = 0
     let degraded = false
     if (misses.length > 0) {
+      const batches = chunkPaths(misses.map((m) => m.scanAbs))
+      // 分批 spawn：各批输出按诊断数组拼接（文件级独立，无跨批语义）
+      const scanBatches = async (extra: { typeAware?: boolean } = {}) => {
+        const merged: OxlintJsonOutput = {
+          diagnostics: [],
+          number_of_files: 0,
+          number_of_rules: 0
+        }
+        // 各批互相独立（文件级隔离），并行 spawn 后合并；最终排序保证确定性
+        const rs = await Promise.all(
+          batches.map((batch) =>
+            runOxlint(batch, {
+              cwd,
+              config: oxlintrcPath,
+              fix: opts.fix,
+              ...extra
+            })
+          )
+        )
+        let lastExit = 0
+        for (const r of rs) {
+          if (!r.ok || !r.output) return r
+          merged.diagnostics.push(...r.output.diagnostics)
+          merged.number_of_files += r.output.number_of_files
+          merged.number_of_rules = Math.max(
+            merged.number_of_rules,
+            r.output.number_of_rules
+          )
+          lastExit = Math.max(lastExit, r.exitCode)
+        }
+        return { ok: true, exitCode: lastExit, stderr: '', output: merged }
+      }
       let result
       try {
-        result = await runOxlint(
-          misses.map((m) => m.scanAbs),
-          {
-            cwd,
-            config: oxlintrcPath,
-            fix: opts.fix,
-            typeAware
-          }
-        )
+        result = await scanBatches(typeAware ? { typeAware: true } : undefined)
       } catch (e) {
         // oxlint 不可得（未安装且未设 OXLINT_BIN）等运行错误 → exit 2
         return { exitCode: 2, report: null, error: (e as Error).message }
@@ -367,14 +412,7 @@ export async function runPipeline(
       // FR-305 降级：type-aware 启用但 tsgolint 伴生依赖缺失/不可用 →
       // 自动回落纯 M1 重试一次并提示（没结果比没 type-aware 更糟，fail-open 同纪律）
       if (!result.ok && typeAware) {
-        result = await runOxlint(
-          misses.map((m) => m.scanAbs),
-          {
-            cwd,
-            config: oxlintrcPath,
-            fix: opts.fix
-          }
-        )
+        result = await scanBatches()
         logger.warn(
           'type-aware 降级：oxlint --type-aware 不可用（oxlint-tsgolint 未安装或版本不支持），本轮为纯 M1 扫描'
         )
