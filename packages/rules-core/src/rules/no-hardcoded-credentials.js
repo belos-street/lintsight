@@ -40,6 +40,7 @@ export default {
         '键名命中但值为占位/空/非凭证语义（长度 < 6 的字符串不触发）',
         '值与键名自指（normalize 后相同，如 ACCESS_TOKEN = "access_token"）——值只是键名的机器形式复述，零信息量（T1.19 #3 误报反哺：hono 项目 cookie 名常量）',
         '裸 token 属性承载非凭证语义（语言学词元/设计 token 等）：值不含数字/非字母字符且长度 < 12 时不触发（Lexio 项目 diffTokens 词元误报实证，T1.19 #2）',
+        'i18n 文案（值为自然语言句子，含空白或 CJK 字符）不触发——凭证字面量不含空白/中文（cleancode-sast-web locale 批量误报，T1.19 #4）',
         "测试文件（*.test.* / *.spec.* / test(s)/ / __tests__/）默认豁免，options 传 { testFiles: 'report' } 恢复报告"
       ]
     }
@@ -76,6 +77,10 @@ export default {
       ) {
         return false
       }
+      // 自然语言文案（i18n 提示句子）：值含空白或 CJK 字符 → 不是凭证字面量。
+      // 凭证字面量是紧凑的 token，不会带空格/中文（T1.19 #4 误报反哺：locale 文件批量误报）
+      if (/\s/.test(value.value) || /[\u3400-\u9fff]/.test(value.value))
+        return false
       if (isSelfReferential(name, value)) return false
       // 裸 token 多义（语言学词元/设计 token/会话 token）——要求值具备凭证形态：
       // 含数字或非字母字符，或长度 ≥ 12；纯字母短词不触发（T1.19 #2 误报反哺）

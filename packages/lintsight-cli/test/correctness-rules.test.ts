@@ -36,7 +36,14 @@ describe('P0 正确性规则契约', () => {
         expect: [{ line: 3, column: 3 }]
       },
       { file: 'fixtures/ts/no-floating-promise.good-1.ts', expect: [] },
-      { file: 'fixtures/ts/no-floating-promise.good-2.ts', expect: [] }
+      { file: 'fixtures/ts/no-floating-promise.good-2.ts', expect: [] },
+      // T1.19 反哺：async 函数内部完整 try/catch（不 rethrow）→ 调用不再是 unhandled
+      { file: 'fixtures/ts/no-floating-promise.good-3.ts', expect: [] },
+      // 边界：内部 catch 重新抛出 → 调用方仍未处理，必须继续报告
+      {
+        file: 'fixtures/ts/no-floating-promise.bad-4.ts',
+        expect: [{ line: 10, column: 1 }]
+      }
     ]
     const { tester, results } = await runCases(
       'lintsight/no-floating-promise',

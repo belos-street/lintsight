@@ -107,6 +107,9 @@ json 报告（`--format json` 默认输出）节选：
     "lintsight/no-insecure-cookie": "warn"
   },
   // Vue SFC 处理器
+  // ⚠️ 虚拟块只含 <script>：template 中的变量/组件引用不可见，内置
+  // eslint/no-unused-vars 在 .vue 上会系统性误报 → 默认抑制；如需按虚拟块
+  // 口径检查，显式配置 "eslint/no-unused-vars": "error" 即可恢复
   "overrides": [{ "files": ["**/*.vue"], "processor": "@lintsight/vue" }],
   // 忽略路径（glob，相对扫描根或项目根；目录名亦可，如 "coverage"）
   // 项目特有的提交产物（如 docs/assets）由此排除——带内容哈希的构建目录很常见

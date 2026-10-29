@@ -24,6 +24,7 @@ export default {
       ],
       falsePositives: [
         'fire-and-forget 意图需显式 void 标注（这正是本规则的诉求）',
+        '同文件 async 函数内部已完整 try/catch 且 catch 不 rethrow → 视为已处理，不报（cleancode-sast-web bootstrap 误报，T1.19 反哺）',
         '启发式基于同文件 async 声明与 Async 后缀命名，跨文件导入的异步函数可能漏报（保守不误报）'
       ]
     }
@@ -38,6 +39,73 @@ export default {
       'any'
     ])
     const asyncNames = new Set()
+    const selfHandledAsync = new Set()
+
+    const isFunctionNode = (n) =>
+      n?.type === 'FunctionDeclaration' ||
+      n?.type === 'FunctionExpression' ||
+      n?.type === 'ArrowFunctionExpression'
+
+    /** 内部已兜住错误（T1.19 反哺）：函数体内所有 await 都位于「带 catch 且
+     * catch 不 rethrow」的 try 中 → 调用不会产生 unhandled rejection
+     * （cleancode-sast-web 的 bootstrap fetch 脚本误报实证）。 */
+    function isSelfHandled(fn) {
+      const body = fn.body
+      if (!fn.async || body?.type !== 'BlockStatement') return false
+      const awaits = []
+      const handled = new Set()
+      const collect = (node, out) => {
+        if (!node || typeof node !== 'object') return
+        if (Array.isArray(node)) {
+          for (const c of node) collect(c, out)
+          return
+        }
+        if (isFunctionNode(node)) return // 嵌套函数属另一错误处理作用域
+        if (node.type === 'AwaitExpression') out.push(node)
+        for (const key of Object.keys(node)) {
+          if (key === 'parent' || key === 'range' || key === 'loc') continue
+          collect(node[key], out)
+        }
+      }
+      collect(body, awaits)
+      if (awaits.length === 0) return false
+      const visitTry = (node) => {
+        if (!node || typeof node !== 'object') return
+        if (Array.isArray(node)) {
+          for (const c of node) visitTry(c)
+          return
+        }
+        if (isFunctionNode(node)) return
+        if (node.type === 'TryStatement' && node.handler) {
+          const throws = []
+          const collectThrows = (n) => {
+            if (!n || typeof n !== 'object') return
+            if (Array.isArray(n)) {
+              for (const c of n) collectThrows(c)
+              return
+            }
+            if (isFunctionNode(n)) return
+            if (n.type === 'ThrowStatement') throws.push(n)
+            for (const key of Object.keys(n)) {
+              if (key === 'parent' || key === 'range' || key === 'loc') continue
+              collectThrows(n[key])
+            }
+          }
+          collectThrows(node.handler.body)
+          if (throws.length === 0) {
+            const tryAwaits = []
+            collect(node.block, tryAwaits)
+            for (const a of tryAwaits) handled.add(a)
+          }
+        }
+        for (const key of Object.keys(node)) {
+          if (key === 'parent' || key === 'range' || key === 'loc') continue
+          visitTry(node[key])
+        }
+      }
+      visitTry(body)
+      return awaits.every((a) => handled.has(a))
+    }
 
     // 预扫描：收集同文件声明的 async 函数/方法名（Program 先于其余 visitor 触发）
     function collectAsyncNames(node) {
@@ -47,26 +115,30 @@ export default {
         return
       }
       if (node.type === 'FunctionDeclaration' && node.async && node.id) {
-        asyncNames.add(node.id.name)
+        if (isSelfHandled(node)) selfHandledAsync.add(node.id.name)
+        else asyncNames.add(node.id.name)
       } else if (
         (node.type === 'FunctionExpression' ||
           node.type === 'ArrowFunctionExpression') &&
         node.async &&
         node.id
       ) {
-        asyncNames.add(node.id.name)
+        if (isSelfHandled(node)) selfHandledAsync.add(node.id.name)
+        else asyncNames.add(node.id.name)
       } else if (
         node.type === 'MethodDefinition' &&
         node.value?.async &&
         node.key?.type === 'Identifier'
       ) {
-        asyncNames.add(node.key.name)
+        if (isSelfHandled(node.value)) selfHandledAsync.add(node.key.name)
+        else asyncNames.add(node.key.name)
       } else if (
         node.type === 'Property' &&
         node.value?.async &&
         node.key?.type === 'Identifier'
       ) {
-        asyncNames.add(node.key.name)
+        if (isSelfHandled(node.value)) selfHandledAsync.add(node.key.name)
+        else asyncNames.add(node.key.name)
       }
       for (const key of Object.keys(node)) {
         if (key === 'parent' || key === 'range' || key === 'loc') continue
@@ -111,7 +183,11 @@ export default {
                 callee.property?.type === 'Identifier'
               ? callee.property.name
               : null
-        if (name && (asyncNames.has(name) || name.endsWith('Async'))) {
+        if (
+          name &&
+          !selfHandledAsync.has(name) &&
+          (asyncNames.has(name) || name.endsWith('Async'))
+        ) {
           context.report({ node: expr, messageId: 'floating' })
         }
       }

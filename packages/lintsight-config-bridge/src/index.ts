@@ -453,6 +453,9 @@ export interface GeneratedConfig {
   ignore: string[]
   /** 疑似打包产物跳过开关（B2）；缺省 true */
   ignoreGenerated: boolean
+  /** Vue SFC 虚拟块看不到 <template> 引用 → 内置 no-unused-vars 系统性误报；
+   * 启用 Vue processor 且用户未显式配置该规则时默认抑制（pipeline 侧过滤） */
+  suppressVueUnusedVars: boolean
 }
 
 /** 生成 .oxlintrc 到 .lintsight-cache/（不污染项目根），返回路径与等价报告 */
@@ -472,13 +475,23 @@ export async function generateOxlintrc(
   const { oxlintrc, equivalent } = translate(parsed.config, { rulesPluginPath })
   const oxlintrcPath = path.join(cacheDir, 'oxlintrc.json')
   await Bun.write(oxlintrcPath, JSON.stringify(oxlintrc, null, 2))
+  const hasVueProcessor = (parsed.config.overrides ?? []).some(
+    (o) => o.processor
+  )
+  // Vue SFC 虚拟块只含 <script>，template 引用不可见 → 内置 no-unused-vars
+  // 在 .vue 上系统性误报（cleancode-sast-web 实测 1747/1747 全误报）。
+  // 默认抑制；用户显式配置该规则时尊重其意图（可能想按虚拟块口径检查）。
+  const suppressVueUnusedVars =
+    hasVueProcessor &&
+    parsed.config.rules?.['eslint/no-unused-vars'] === undefined
   return {
     oxlintrcPath,
     equivalent,
     arch: parsed.config.arch,
     typeAware: parsed.config.typeAware,
     ignore: effectiveIgnorePatterns(parsed.config),
-    ignoreGenerated: parsed.config.ignoreGenerated ?? true
+    ignoreGenerated: parsed.config.ignoreGenerated ?? true,
+    suppressVueUnusedVars
   }
 }
 

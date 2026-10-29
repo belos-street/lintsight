@@ -231,6 +231,8 @@ describe('文件面', () => {
       cacheDir
     )
     expect(out.oxlintrcPath.startsWith(cacheDir)).toBeTrue()
+    // Vue processor 启用 + 未显式配置 unused-vars → 默认抑制虚拟块误报
+    expect(out.suppressVueUnusedVars).toBeTrue()
     const doc = (await Bun.file(out.oxlintrcPath).json()) as {
       rules: Record<string, unknown>
       jsPlugins: string[]

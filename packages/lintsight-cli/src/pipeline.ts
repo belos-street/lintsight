@@ -211,6 +211,7 @@ export async function runPipeline(
   let typeAware: boolean | undefined
   let ignoreMatcher: IgnoreMatcher | null = null
   let ignoreGenerated = true
+  let suppressVueUnusedVars = false
   try {
     const configFile = resolveConfigFile(cwd, opts.config)
     if (configFile) {
@@ -225,6 +226,7 @@ export async function runPipeline(
         logger.warn(`ignore: 模式无法解析，已跳过 → '${p}'（不支持 .. 等形态）`)
       }
       ignoreGenerated = generated.ignoreGenerated
+      suppressVueUnusedVars = generated.suppressVueUnusedVars
       logger.info(`config: ${configFile} → ${oxlintrcPath}`)
     } else {
       logger.info(
@@ -502,11 +504,27 @@ export async function runPipeline(
       )
     }
 
+    // Vue SFC 虚拟块只含 <script>，template 引用不可见 → 内置 no-unused-vars
+    // 系统性误报（默认抑制；用户显式配置该规则时 config-bridge 会关闭本开关）
+    let mergedDiagnostics = [...results.values()].flat()
+    let suppressedVueUnused = 0
+    if (suppressVueUnusedVars) {
+      const vueRels = new Set(vues.map((v) => v.originalRel))
+      mergedDiagnostics = mergedDiagnostics.filter((d) => {
+        const hit = d.ruleId === 'eslint/no-unused-vars' && vueRels.has(d.file)
+        if (hit) suppressedVueUnused++
+        return !hit
+      })
+    }
+    if (suppressedVueUnused > 0) {
+      logger.info(
+        `vue: 抑制 ${suppressedVueUnused} 条 eslint/no-unused-vars（template 引用不可见；rules 显式配置可恢复）`
+      )
+    }
+
     // 合并（缓存命中 + 本次扫描）→ 双报消解（M2 §4.4：数据流版抑制同位置语法级版）
     // → 确定性排序（M1-DR4）
-    const diagnostics = sortDiagnostics(
-      suppressSuperseded([...results.values()].flat())
-    )
+    const diagnostics = sortDiagnostics(suppressSuperseded(mergedDiagnostics))
 
     const summary = { error: 0, warning: 0, info: 0 }
     for (const d of diagnostics) {

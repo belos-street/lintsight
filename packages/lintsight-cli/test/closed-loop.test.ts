@@ -57,12 +57,13 @@ describe('竖切闭环（§11.3）', () => {
 
     // owner 字段（注册表联动，§4.6）
     expect(vueDiag!.owner).toBe('lintsight-js')
+    // Vue SFC 虚拟块只含 <script>，template 引用不可见 → 内置 unused-vars 默认抑制
+    //（fixtures/vue/no-empty-catch.vue 的 load 在 template 中被使用，属系统性误报）
     expect(
       r1.report!.diagnostics.some(
-        (d) =>
-          d.ruleId === 'eslint/no-unused-vars' && d.owner === 'oxlint-native'
+        (d) => d.ruleId === 'eslint/no-unused-vars' && d.file.endsWith('.vue')
       )
-    ).toBeTrue()
+    ).toBeFalse()
   })
 
   test('exit=0：无 error 级诊断（warning 不拦截 CI）', async () => {

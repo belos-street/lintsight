@@ -151,6 +151,7 @@ var no_floating_promise_default = {
       ],
       falsePositives: [
         'fire-and-forget 意图需显式 void 标注（这正是本规则的诉求）',
+        '同文件 async 函数内部已完整 try/catch 且 catch 不 rethrow → 视为已处理，不报（cleancode-sast-web bootstrap 误报，T1.19 反哺）',
         '启发式基于同文件 async 声明与 Async 后缀命名，跨文件导入的异步函数可能漏报（保守不误报）'
       ]
     }
@@ -165,6 +166,68 @@ var no_floating_promise_default = {
       'any'
     ])
     const asyncNames = new Set()
+    const selfHandledAsync = new Set()
+    const isFunctionNode = (n) =>
+      n?.type === 'FunctionDeclaration' ||
+      n?.type === 'FunctionExpression' ||
+      n?.type === 'ArrowFunctionExpression'
+    function isSelfHandled(fn) {
+      const body = fn.body
+      if (!fn.async || body?.type !== 'BlockStatement') return false
+      const awaits = []
+      const handled = new Set()
+      const collect = (node, out) => {
+        if (!node || typeof node !== 'object') return
+        if (Array.isArray(node)) {
+          for (const c of node) collect(c, out)
+          return
+        }
+        if (isFunctionNode(node)) return
+        if (node.type === 'AwaitExpression') out.push(node)
+        for (const key of Object.keys(node)) {
+          if (key === 'parent' || key === 'range' || key === 'loc') continue
+          collect(node[key], out)
+        }
+      }
+      collect(body, awaits)
+      if (awaits.length === 0) return false
+      const visitTry = (node) => {
+        if (!node || typeof node !== 'object') return
+        if (Array.isArray(node)) {
+          for (const c of node) visitTry(c)
+          return
+        }
+        if (isFunctionNode(node)) return
+        if (node.type === 'TryStatement' && node.handler) {
+          const throws = []
+          const collectThrows = (n) => {
+            if (!n || typeof n !== 'object') return
+            if (Array.isArray(n)) {
+              for (const c of n) collectThrows(c)
+              return
+            }
+            if (isFunctionNode(n)) return
+            if (n.type === 'ThrowStatement') throws.push(n)
+            for (const key of Object.keys(n)) {
+              if (key === 'parent' || key === 'range' || key === 'loc') continue
+              collectThrows(n[key])
+            }
+          }
+          collectThrows(node.handler.body)
+          if (throws.length === 0) {
+            const tryAwaits = []
+            collect(node.block, tryAwaits)
+            for (const a of tryAwaits) handled.add(a)
+          }
+        }
+        for (const key of Object.keys(node)) {
+          if (key === 'parent' || key === 'range' || key === 'loc') continue
+          visitTry(node[key])
+        }
+      }
+      visitTry(body)
+      return awaits.every((a) => handled.has(a))
+    }
     function collectAsyncNames(node) {
       if (!node || typeof node !== 'object') return
       if (Array.isArray(node)) {
@@ -172,26 +235,30 @@ var no_floating_promise_default = {
         return
       }
       if (node.type === 'FunctionDeclaration' && node.async && node.id) {
-        asyncNames.add(node.id.name)
+        if (isSelfHandled(node)) selfHandledAsync.add(node.id.name)
+        else asyncNames.add(node.id.name)
       } else if (
         (node.type === 'FunctionExpression' ||
           node.type === 'ArrowFunctionExpression') &&
         node.async &&
         node.id
       ) {
-        asyncNames.add(node.id.name)
+        if (isSelfHandled(node)) selfHandledAsync.add(node.id.name)
+        else asyncNames.add(node.id.name)
       } else if (
         node.type === 'MethodDefinition' &&
         node.value?.async &&
         node.key?.type === 'Identifier'
       ) {
-        asyncNames.add(node.key.name)
+        if (isSelfHandled(node.value)) selfHandledAsync.add(node.key.name)
+        else asyncNames.add(node.key.name)
       } else if (
         node.type === 'Property' &&
         node.value?.async &&
         node.key?.type === 'Identifier'
       ) {
-        asyncNames.add(node.key.name)
+        if (isSelfHandled(node.value)) selfHandledAsync.add(node.key.name)
+        else asyncNames.add(node.key.name)
       }
       for (const key of Object.keys(node)) {
         if (key === 'parent' || key === 'range' || key === 'loc') continue
@@ -232,7 +299,11 @@ var no_floating_promise_default = {
                 callee.property?.type === 'Identifier'
               ? callee.property.name
               : null
-        if (name && (asyncNames.has(name) || name.endsWith('Async'))) {
+        if (
+          name &&
+          !selfHandledAsync.has(name) &&
+          (asyncNames.has(name) || name.endsWith('Async'))
+        ) {
           context.report({ node: expr, messageId: 'floating' })
         }
       }
@@ -825,6 +896,7 @@ var no_hardcoded_credentials_default = {
         '键名命中但值为占位/空/非凭证语义（长度 < 6 的字符串不触发）',
         '值与键名自指（normalize 后相同，如 ACCESS_TOKEN = "access_token"）——值只是键名的机器形式复述，零信息量（T1.19 #3 误报反哺：hono 项目 cookie 名常量）',
         '裸 token 属性承载非凭证语义（语言学词元/设计 token 等）：值不含数字/非字母字符且长度 < 12 时不触发（Lexio 项目 diffTokens 词元误报实证，T1.19 #2）',
+        'i18n 文案（值为自然语言句子，含空白或 CJK 字符）不触发——凭证字面量不含空白/中文（cleancode-sast-web locale 批量误报，T1.19 #4）',
         "测试文件（*.test.* / *.spec.* / test(s)/ / __tests__/）默认豁免，options 传 { testFiles: 'report' } 恢复报告"
       ]
     }
@@ -854,6 +926,8 @@ var no_hardcoded_credentials_default = {
       ) {
         return false
       }
+      if (/\s/.test(value.value) || /[\u3400-\u9fff]/.test(value.value))
+        return false
       if (isSelfReferential(name, value)) return false
       if (/^token$/i.test(name ?? '')) {
         const v = value.value
@@ -1161,7 +1235,8 @@ var no_non_literal_fs_filename_default = {
       ],
       falsePositives: [
         '命名启发（path/file/dir）与 fs 对象识别都很宽；low confidence 仅供人工复核',
-        '未导出 helper 的路径参数不点名（如 readMdFile(filePath)）——参数来源在调用侧，语法级无法判定，跨模块审计归调用方/M2 taint（text-rpg 实测 11 条同型噪音，T1.19 #1 反哺转正）；导出函数的参数仍报'
+        '未导出 helper 的路径参数不点名（如 readMdFile(filePath)）——参数来源在调用侧，语法级无法判定，跨模块审计归调用方/M2 taint（text-rpg 实测 11 条同型噪音，T1.19 #1 反哺转正）；导出函数的参数仍报',
+        '`path.join/resolve(process.cwd(), 字面量…)` 派生的常量变量不报（构建脚本常数路径，cleancode-sast-web 实证）'
       ]
     }
   },
@@ -1185,6 +1260,50 @@ var no_non_literal_fs_filename_default = {
       'openSync'
     ])
     const fnStack = []
+    const safePaths = new Set()
+    const isProcessCwd = (n) =>
+      n?.type === 'CallExpression' &&
+      n.callee?.type === 'MemberExpression' &&
+      n.callee.object?.type === 'Identifier' &&
+      n.callee.object.name === 'process' &&
+      n.callee.property?.type === 'Identifier' &&
+      n.callee.property.name === 'cwd'
+    const isSafePathInit = (n) => {
+      if (n?.type !== 'CallExpression') return false
+      const callee = n.callee
+      if (
+        callee?.type !== 'MemberExpression' ||
+        callee.object?.type !== 'Identifier' ||
+        callee.object.name !== 'path' ||
+        callee.property?.type !== 'Identifier' ||
+        !['join', 'resolve'].includes(callee.property.name)
+      )
+        return false
+      return (n.arguments ?? []).every(
+        (a) =>
+          a.type === 'Literal' ||
+          isProcessCwd(a) ||
+          (a.type === 'Identifier' && safePaths.has(a.name))
+      )
+    }
+    function collectSafePaths(node) {
+      if (!node || typeof node !== 'object') return
+      if (Array.isArray(node)) {
+        for (const c of node) collectSafePaths(c)
+        return
+      }
+      if (
+        node.type === 'VariableDeclarator' &&
+        node.id?.type === 'Identifier' &&
+        isSafePathInit(node.init)
+      ) {
+        safePaths.add(node.id.name)
+      }
+      for (const key of Object.keys(node)) {
+        if (key === 'parent' || key === 'range' || key === 'loc') continue
+        collectSafePaths(node[key])
+      }
+    }
     const collectParamNames = (params) => {
       const names = new Set()
       for (const p of params ?? []) {
@@ -1227,6 +1346,9 @@ var no_non_literal_fs_filename_default = {
       return false
     }
     return {
+      Program(node) {
+        collectSafePaths(node)
+      },
       FunctionDeclaration: enterFn,
       'FunctionDeclaration:exit': exitFn,
       FunctionExpression: enterFn,
@@ -1254,6 +1376,7 @@ var no_non_literal_fs_filename_default = {
         if (arg0.type === 'Literal' && typeof arg0.value === 'string') return
         if (arg0.type === 'TemplateLiteral' && arg0.expressions.length === 0)
           return
+        if (arg0.type === 'Identifier' && safePaths.has(arg0.name)) return
         const named =
           arg0.type === 'Identifier' && /path|file|dir/i.test(arg0.name)
         if (named) {

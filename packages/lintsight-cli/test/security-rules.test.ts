@@ -43,6 +43,8 @@ describe('P0 安全规则契约', () => {
       { file: 'fixtures/ts/no-hardcoded-credentials.good-3.ts', expect: [] },
       // T1.19 #3 反哺：值与键名自指（ACCESS_TOKEN = 'access_token'）不触发
       { file: 'fixtures/ts/no-hardcoded-credentials.good-4.ts', expect: [] },
+      // T1.19 #4 反哺：i18n 文案（键名含 token，值为自然语言句子）不触发
+      { file: 'fixtures/ts/no-hardcoded-credentials.good-5.ts', expect: [] },
       // —— M2.7 testFiles 豁免选项组（RuleTester 按选项分组叠加 oxlintrc；fixtures/options/ 不进全量扫描面）——
       {
         // 测试文件（*.test. 后缀）内 fixture 凭证 → 默认豁免
@@ -169,7 +171,14 @@ describe('P0 安全规则契约', () => {
       { file: 'fixtures/ts/no-non-literal-fs-filename.good-1.ts', expect: [] },
       { file: 'fixtures/ts/no-non-literal-fs-filename.good-2.ts', expect: [] },
       // T1.19 #1 反哺：未导出 helper 的路径参数（含闭包引用外层参数）→ 豁免
-      { file: 'fixtures/ts/no-non-literal-fs-filename.good-3.ts', expect: [] }
+      { file: 'fixtures/ts/no-non-literal-fs-filename.good-3.ts', expect: [] },
+      // T1.19 反哺：路径常量由 path.join(process.cwd(), 字面量) 派生 → 无外部输入
+      { file: 'fixtures/ts/no-non-literal-fs-filename.good-4.ts', expect: [] },
+      // 边界：path.join 参数含外部输入 → 不豁免
+      {
+        file: 'fixtures/ts/no-non-literal-fs-filename.bad-5.ts',
+        expect: [{ line: 7, column: 10 }]
+      }
     ]
     const { tester, results } = await runCases(
       'lintsight/no-non-literal-fs-filename',

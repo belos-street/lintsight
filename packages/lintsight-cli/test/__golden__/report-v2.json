@@ -1,9 +1,9 @@
 {
   "contractVersion": "2",
-  "files": 144,
+  "files": 149,
   "summary": {
-    "error": 73,
-    "warning": 38,
+    "error": 74,
+    "warning": 39,
     "info": 0
   },
   "diagnostics": [
@@ -609,6 +609,36 @@
     },
     {
       "contractVersion": "2",
+      "ruleId": "eslint/no-useless-catch",
+      "severity": "error",
+      "message": "Unnecessary try/catch wrapper",
+      "file": "fixtures/ts/no-floating-promise.bad-4.ts",
+      "span": {
+        "offset": 154,
+        "length": 5,
+        "line": 5,
+        "column": 12
+      },
+      "fingerprint": "c1fbe3d342e383325740da294db812ad6014327f33fe4e3af09a9f7d2506f3fa",
+      "owner": "oxlint-native"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-floating-promise",
+      "severity": "error",
+      "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
+      "file": "fixtures/ts/no-floating-promise.bad-4.ts",
+      "span": {
+        "offset": 186,
+        "length": 6,
+        "line": 10,
+        "column": 1
+      },
+      "fingerprint": "2e774db84f1641b4a00e292f2268d7380d177cdd1338205cb094ee31ca4e5156",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
       "ruleId": "lintsight/no-hardcoded-credentials",
       "severity": "error",
       "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
@@ -950,6 +980,21 @@
         "column": 10
       },
       "fingerprint": "80aa3231f0d6ee29e4b600971b39cc746b945f563845e7c997a4926615a42251",
+      "owner": "lintsight-js"
+    },
+    {
+      "contractVersion": "2",
+      "ruleId": "lintsight/no-non-literal-fs-filename",
+      "severity": "warning",
+      "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
+      "file": "fixtures/ts/no-non-literal-fs-filename.bad-5.ts",
+      "span": {
+        "offset": 228,
+        "length": 33,
+        "line": 7,
+        "column": 10
+      },
+      "fingerprint": "fa1bd7808ce2b7ca3f4de654fd96b8b4812490293befe4a6d15a20bf4dd5cf09",
       "owner": "lintsight-js"
     },
     {
@@ -1641,21 +1686,6 @@
       },
       "fingerprint": "bd716df35fcc9f4a5c8d7415a87341f50aab765808c33b2df7bd29adf3ca4bcb",
       "owner": "lintsight-js"
-    },
-    {
-      "contractVersion": "2",
-      "ruleId": "eslint/no-unused-vars",
-      "severity": "error",
-      "message": "Function 'load' is declared but never used.",
-      "file": "fixtures/vue/no-empty-catch.vue",
-      "span": {
-        "offset": 77,
-        "length": 4,
-        "line": 10,
-        "column": 16
-      },
-      "fingerprint": "e931a192c8ae687b35aa7c00de363e27453fbba4e5d9c574f804ac90104f2307",
-      "owner": "oxlint-native"
     },
     {
       "contractVersion": "2",
