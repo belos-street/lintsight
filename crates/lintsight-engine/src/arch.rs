@@ -8,7 +8,7 @@
 //!   裸说明符走 tsconfig paths 别名兜底（FR-304① 支持嵌套 tsconfig：按 importer
 //!   的最近祖先 tsconfig 选映射集，TS 语义），其余不解析——见误报复核清单
 //!
-//! 误报复核清单（v0 已知边界，登记于 docs/todo.md）：
+//! 误报复核清单（v0 已知边界，登记于本模块文档与 docs/upgrade/v0.1/upgrade-plan.md）：
 //! 1. 别名解析：tsconfig paths 走引擎侧兜底（FR-304，stdin 下发归一化映射表，
 //!    best-match 序 + 嵌套 tsconfig dir 归属）；package exports / paths 外的别名
 //!    仍跳过——漏报不误报（exports 面约束由 no-deep-import 独立承担）

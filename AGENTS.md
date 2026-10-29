@@ -6,6 +6,8 @@
 
 **lintsight**：面向企业级大规模 JS/TS 代码库的静态分析引擎（SAST），M1 = oxlint 基座 + Bun 封装（自有规则走 oxlint JS Plugins），M2 = Rust 深度分析引擎（sidecar 双引擎，taint/DFG/调用图）。
 
+**边界（详见 [.agents/memory/README.md](.agents/memory/README.md)）**：本仓只做 JS/TS 引擎。任务、报告/缺陷上传、基线/抑制、AI 研判、CI/CD、策略中心等平台能力由 `scanner` CLI 或平台二次封装，禁止塞进引擎。
+
 ## 铁律（违反即停）
 
 1. **M1 不自建 Node 内核**——解析/调度/并行/规则宿主全部复用 oxlint，封装层只做编排与桥接。
@@ -38,9 +40,11 @@ lintsight/
 │  ├─ requirements/               # 需求与总体技术设计（v0.x 版本化）
 │  ├─ design/                     # 里程碑设计文档（design-m1-v0.1.md）
 │  ├─ spikes/                     # spike/竖切验证报告（可验证证据）
-│  └─ todo.md                     # 当前执行 Todo（滚动更新）
+│  └─ upgrade/v0.1/               # 升级计划（承接原 todo 未完成项；已完成历史见 git）
 ├─ corpus/                        # 回归语料库（M0 交付物，暂未建）
-└─ .agents/skills/                # 工程技能（oxc-toolchain / rule-authoring / belos-street）
+└─ .agents/
+   ├─ skills/                     # 工程技能（oxc-toolchain / rule-authoring / belos-street / sast-review）
+   └─ memory/                     # 项目记忆：引擎边界与二次封装约定
 ```
 
 ## 常用命令
@@ -72,6 +76,8 @@ bun run corpus:check        # 语料库基线：全量扫描 + 双报率 0 断�
 - **写规则前必读** `.agents/skills/rule-authoring`（用例先行 → meta 完备 → 语料库门禁 → 注册表登记）。
 - **动 oxlint 配置 / spike / 升级前必读** `.agents/skills/oxc-toolchain`。
 - **写码 / review / 写文档前**参考 `.agents/skills/belos-street`。
+- **评审引擎 / 做 SAST 项目尽调前**读 `.agents/skills/sast-review`（独立评分、证据口径与框架扩展性检查）。
+- **需求归属先读** `.agents/memory/README.md`：只做 JS/TS 引擎；平台/任务/上传/CI 等由 `scanner` 二次封装，不得进本仓。
 - spike 任务必须产出可验证证据（`docs/spikes/` 报告）才算完成。
 - 文档版本化：requirements-v0.x.md / design-*-v0.x.md 带修订记录；决策记录（DR）必须含备选与否决理由。
 - fixtures 是规则的用例契约：改实现不改用例 = 没改对；放宽断言必须在 PR 说明。
@@ -92,4 +98,4 @@ bun run corpus:check        # 语料库基线：全量扫描 + 双报率 0 断�
 | [docs/spikes/oxc-crate-poc.md](docs/spikes/oxc-crate-poc.md) | spike ①：oxc crate 直连 PoC（M2 路线验证，性能/内存/CFG 实测） |
 | [docs/spikes/tsgolint-spike3.md](docs/spikes/tsgolint-spike3.md) | spike ③：tsgolint 类型感知实测（跑通性/兼容坑/no-misused-promises/sourceCode 能力） |
 | [docs/spikes/taint-poc-spike5.md](docs/spikes/taint-poc-spike5.md) | spike ⑤：taint 竖切预演（CFG worklist 传播模型/sanitizer/不动点） |
-| [docs/todo.md](docs/todo.md) | 当前执行 Todo |
+| [docs/upgrade/v0.1/upgrade-plan.md](docs/upgrade/v0.1/upgrade-plan.md) | JS/TS 引擎升级计划（承接原 todo 未完成项，替代 SAST JS/TS 引擎） |

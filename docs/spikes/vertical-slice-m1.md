@@ -2,7 +2,7 @@
 
 > 日期：2026-09-15 · 验证人：引擎研发（AI 协助）· 耗时口径：单日单线程
 > 依据：[requirements-v0.2.md](../requirements/requirements-v0.2.md) §11.3 首个竖切 + §8.3 风险清单
-> 任务清单：[todo.md](../todo.md)（SV1~SV7，全部完成）
+> 任务清单：SV1~SV7 全部完成（历史见 git）；后续计划见[升级计划](../upgrade/v0.1/upgrade-plan.md)
 > 环境：Bun 1.4.2 · oxlint **1.83.0**（package.json 精确锁定）· macOS · 全程无 Node.js 依赖
 
 ## 总结论

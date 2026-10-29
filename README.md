@@ -279,7 +279,7 @@ bun run lint          # dev-lint（0 警告基线）
 bun run format        # oxfmt
 ```
 
-写规则前必读 `.agents/skills/rule-authoring`（用例先行 → meta 完备 → 语料库门禁 → 注册表登记）；动 oxlint 配置 / spike / 升级前必读 `.agents/skills/oxc-toolchain`。
+写规则前必读 `.agents/skills/rule-authoring`（用例先行 → meta 完备 → 语料库门禁 → 注册表登记）；动 oxlint 配置 / spike / 升级前必读 `.agents/skills/oxc-toolchain`；评审引擎 / SAST 项目尽调前读 `.agents/skills/sast-review`（独立评分 + 证据口径）。
 
 ### 目录结构
 
@@ -297,8 +297,10 @@ bun run format        # oxfmt
 ├─ crates/lintsight-engine/   # M2 Rust 深度引擎（taint / 图 / 架构规则）
 ├─ fixtures/                  # 规则用例契约（断言依赖行列布局，勿格式化）
 ├─ corpus/                    # 语料库基线与清单（仓库体 gitignore，corpus:sync 拉取）
-├─ docs/                      # 需求 / 设计 / spike 报告（版本化）
-└─ .agents/skills/            # 工程技能（rule-authoring / oxc-toolchain / belos-street）
+├─ docs/                      # 需求 / 设计 / spike / 升级计划（版本化）
+└─ .agents/
+   ├─ skills/                 # 工程技能（rule-authoring / oxc-toolchain / belos-street）
+   └─ memory/                 # 项目记忆：引擎边界与二次封装约定
 ```
 
 ### 文档索引
@@ -310,13 +312,15 @@ bun run format        # oxfmt
 | [docs/design/design-m2-v0.1.md](docs/design/design-m2-v0.1.md) | M2 实现设计（sidecar 协议/taint 模型/M2-DR1~5） |
 | [docs/design/p0-rules-proposal-v0.1.md](docs/design/p0-rules-proposal-v0.1.md) | P0 规则清单提案（CWE/OWASP 映射） |
 | [docs/spikes/](docs/spikes/) | 可行性验证与实测报告（竖切 / oxc crate / tsgolint / taint PoC / juice-shop 召回） |
-| [docs/todo.md](docs/todo.md) | 当前执行 Todo |
+| [docs/upgrade/v0.1/upgrade-plan.md](docs/upgrade/v0.1/upgrade-plan.md) | JS/TS 引擎升级评估与计划（替代 SAST JS/TS 引擎；承接原 todo） |
+| [docs/upgrade/v0.1/review-report-v0.1.md](docs/upgrade/v0.1/review-report-v0.1.md) | 独立评审报告（v0.1）：架构 / SAST 专业性 / 精度证据 / 框架扩展性 |
 
 ## 状态与路线图
 
 - **M1（oxlint 基座 + Bun 封装）**：已完成——7 个执行切片 + 3 个真实项目试用（127 文件 / 43 诊断 / 误报标注反哺 2 条规则行为）。
 - **M2（Rust 深度引擎）**：已完成——sidecar 协议、CFG taint 引擎、4 条 taint 规则 + 3 条治理规则、双报消解、SARIF、rayon 并行（1.39M LOC/s）；M2.7 精度批次（测试文件豁免 -89% 凭证噪音、taint 边界补齐、消解对扩充、架构能力 3 项）收官。
-- **M3（规划中）**：L4 跨过程调用图与跨文件 taint、type-aware taint 增强、LSP/IDE 集成 alpha、高级 fixer 策略、平台化闭环（design-m3 评审后启动）。
+- **M3（最小收口已完成）**：SARIF 消费面补强、CI 模板与二进制分发、规则面扩充（juice-shop 静态可对照面召回 17/26）。
+- **升级计划（进行中）**：lintsight 作为纯 JS/TS 引擎接入 `scanner`，替代现有 JS/TS 检测引擎；路线与边界见 [docs/upgrade/v0.1/upgrade-plan.md](docs/upgrade/v0.1/upgrade-plan.md)。
 
 ## License
 
