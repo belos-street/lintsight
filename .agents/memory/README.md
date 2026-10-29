@@ -7,7 +7,7 @@
 - **lintsight 是纯 JS/TS 静态分析引擎**，不是平台、不是 CI 工具、不是报告服务。
 - 引擎只承诺三件事：
   1. **输入**：扫描根、包含/排除路径、规则启停、并发上限、可选变更文件集；
-  2. **输出**：诊断 JSON / SARIF、指纹、证据链（pathEvents）、退出码（0/1/2）；
+  2. **输出**：诊断 JSON / SARIF、指纹、证据链（pathEvents）、退出码（0/1/2）；目标态含 confidence/cweTags（G2 未完成）；
   3. **形态**：可被外部进程调用的单文件二进制（多平台）与稳定版本标识。
 - **scanner CLI 负责**：多语言引擎编排、平台配置解析、Task 生命周期、报告/缺陷上传、基线/抑制同步、AI 研判调度、CI/CD 集成、扫描机调度。
 - 平台侧功能（任务、报告、看板、策略中心、通知、账号权限）一律在 scanner 或平台二次封装；**禁止把平台职责塞进引擎**，否则破坏单一职责、可替换性与 fail-open 边界。
@@ -25,5 +25,9 @@
 ## 相关文档
 
 - 升级计划：[docs/upgrade/v0.1/upgrade-plan.md](../../docs/upgrade/v0.1/upgrade-plan.md)
+- 执行清单：[docs/upgrade/v0.1/execution-todo.md](../../docs/upgrade/v0.1/execution-todo.md)
 - 工作约定：[AGENTS.md](../../AGENTS.md)
+- AI 规则：[.agents/rules](../rules)
+- AI 工作流：[.agents/workflows](../workflows)
+- 决策记录：[decisions.md](decisions.md)
 - 规则开发：[.agents/skills/rule-authoring](../skills/rule-authoring)
