@@ -1,0 +1,2 @@
+# 统一 LF：fixtures 的行/列/offset 是规则契约，引擎与 golden 报告均按 LF 计算
+* text=auto eol=lf
