@@ -4,8 +4,9 @@
  */
 import { mkdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-export const ROOT = new URL('../', import.meta.url).pathname
+export const ROOT = fileURLToPath(new URL('../', import.meta.url))
 export const REPOS_DIR = path.join(ROOT, 'corpus', 'repos')
 
 export interface CorpusRepo {

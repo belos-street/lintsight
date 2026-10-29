@@ -67,7 +67,8 @@ fn main() {
         .files
         .par_iter()
         .map(|file| {
-            let abs = if file.starts_with('/') {
+            // Windows 绝对路径带盘符（D:\…）不以 '/' 开头 → 用 is_absolute 判定
+            let abs = if std::path::Path::new(file).is_absolute() {
                 std::path::PathBuf::from(file)
             } else {
                 root.join(file)
@@ -75,10 +76,12 @@ fn main() {
             let Ok(source) = std::fs::read_to_string(&abs) else {
                 return None; // 读不到的文件跳过（Bun 侧已做过存在性筛选）
             };
+            // rel 统一 POSIX：zone/allow glob 与 import 边表按 '/' 书写，
+            // Windows 的 '\' 分隔会让段匹配全部失配
             let rel = abs
                 .strip_prefix(&root)
-                .map(|p| p.to_string_lossy().to_string())
-                .unwrap_or_else(|_| file.clone());
+                .map(|p| p.to_string_lossy().replace('\\', "/"))
+                .unwrap_or_else(|_| file.replace('\\', "/"));
             let allocator = Allocator::default();
             let out = analyze::analyze_file(
                 &allocator,

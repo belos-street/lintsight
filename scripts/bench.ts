@@ -11,14 +11,17 @@
  */
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const ROOT = new URL('../', import.meta.url).pathname
+const ROOT = fileURLToPath(new URL('../', import.meta.url))
 const CORPUS_DIR = path.join(ROOT, '.bench-corpus')
 const BASELINE_PATH = path.join(ROOT, 'scripts', 'bench-baseline.json')
 const BENCH_JSON = path.join(ROOT, '.lintsight-cache', 'bench.json')
 const ENGINE_BIN = path.join(
   ROOT,
-  'crates/lintsight-engine/target/release/lintsight-engine'
+  process.platform === 'win32'
+    ? 'crates/lintsight-engine/target/release/lintsight-engine.exe'
+    : 'crates/lintsight-engine/target/release/lintsight-engine'
 )
 
 const FILES = 100

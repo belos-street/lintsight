@@ -99,16 +99,16 @@ export function normalizeFilePath(
   filename: string,
   projectRoot: string
 ): string {
-  const root = projectRoot.endsWith('/')
-    ? projectRoot.slice(0, -1)
-    : projectRoot
-  const candidates = filename.startsWith('/')
-    ? [filename]
-    : [`/${filename}`, `${root}/${filename}`]
+  // 分隔符统一为 POSIX：Windows 下 oxlint / Bun.Glob 的路径是反斜杠，
+  // 直接比较会让「相对 root 前缀」静默失配（报告 file 落成绝对路径）
+  const root = projectRoot.replace(/\\/g, '/').replace(/\/+$/, '')
+  const f = filename.replace(/\\/g, '/')
+  const isAbs = f.startsWith('/') || /^[A-Za-z]:\//.test(f)
+  const candidates = isAbs ? [f] : [f, `/${f}`, `${root}/${f}`]
   for (const abs of candidates) {
     if (abs.startsWith(`${root}/`)) return abs.slice(root.length + 1)
   }
-  return filename
+  return f
 }
 
 /** M2 type-aware 编排（spike ③ 结论）：tsgolint 对 TS7 已移除的 tsconfig 选项

@@ -150,12 +150,12 @@ export async function virtualizeVue(
   const { block, warnings } = selectScriptBlock(source)
   if (!block) return null
 
-  const root = projectRoot.endsWith('/')
-    ? projectRoot.slice(0, -1)
-    : projectRoot
-  const originalRel = vueAbsPath.startsWith(`${root}/`)
-    ? vueAbsPath.slice(root.length + 1)
-    : vueAbsPath
+  // 分隔符统一 POSIX（Windows 下两者都是反斜杠，直接按 '/' 比较会失配）
+  const root = projectRoot.replace(/\\/g, '/').replace(/\/+$/, '')
+  const absPosix = vueAbsPath.replace(/\\/g, '/')
+  const originalRel = absPosix.startsWith(`${root}/`)
+    ? absPosix.slice(root.length + 1)
+    : absPosix
   const suffix = `lintsight-${process.pid}-${virtualSeq++}`
   const virtualAbs = `${vueAbsPath}.${suffix}.${block.lang}`
   const virtualRel = `${originalRel}.${suffix}.${block.lang}`

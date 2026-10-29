@@ -11,6 +11,7 @@
  */
 import { existsSync, readdirSync, statSync } from 'node:fs'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { parseJsonc } from '@lintsight/config-bridge'
 import type { ArchConfig } from '@lintsight/config-bridge'
 import type { PathEvent } from '@lintsight/diagnostic'
@@ -173,12 +174,17 @@ export function missingEngineRules(reported: readonly string[]): string[] {
 
 export function resolveEngineBin(cwd: string = process.cwd()): string | null {
   if (process.env.OXLINT_ENGINE_BIN) return process.env.OXLINT_ENGINE_BIN
+  // Windows 下 cargo/bin shim 带 .exe 后缀（无扩展名文件不存在）
+  const bin =
+    process.platform === 'win32' ? 'lintsight-engine.exe' : 'lintsight-engine'
   const candidates = [
-    `${cwd}/node_modules/.bin/lintsight-engine`,
-    new URL(
-      '../../../crates/lintsight-engine/target/release/lintsight-engine',
-      import.meta.url
-    ).pathname
+    `${cwd}/node_modules/.bin/${bin}`,
+    fileURLToPath(
+      new URL(
+        `../../../crates/lintsight-engine/target/release/${bin}`,
+        import.meta.url
+      )
+    )
   ]
   for (const c of candidates) {
     if (existsSync(c)) return c

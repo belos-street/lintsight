@@ -3,6 +3,7 @@
  * 归一化 / 指纹等诊断职责在 @lintsight/diagnostic；本模块只负责进程编排。
  */
 import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import type { OxlintJsonOutput } from '@lintsight/diagnostic'
 
 /**
@@ -13,9 +14,11 @@ import type { OxlintJsonOutput } from '@lintsight/diagnostic'
  */
 export function resolveOxlintBin(cwd: string = process.cwd()): string {
   if (process.env.OXLINT_BIN) return process.env.OXLINT_BIN
+  // Windows 下 bun/npm 的 bin shim 带 .exe 后缀（无扩展名文件不存在）
+  const bin = process.platform === 'win32' ? 'oxlint.exe' : 'oxlint'
   const candidates = [
-    `${cwd}/node_modules/.bin/oxlint`,
-    new URL('../../../node_modules/.bin/oxlint', import.meta.url).pathname
+    `${cwd}/node_modules/.bin/${bin}`,
+    fileURLToPath(new URL(`../../../node_modules/.bin/${bin}`, import.meta.url))
   ]
   for (const c of candidates) {
     if (existsSync(c)) return c

@@ -413,8 +413,15 @@ import path from 'node:path'
 /** 定位自有规则插件（jsPlugins 需要）：monorepo dev 形态 → plugins/；业务项目形态 → node_modules 包路径 */
 export function resolveRulesPluginPath(projectRoot: string): string {
   const candidates = [
-    path.join(projectRoot, 'plugins/lintsight-rules/index.js'),
-    path.join(projectRoot, 'node_modules/@lintsight/rules-core/dist/index.js')
+    path.join(projectRoot, 'plugins', 'lintsight-rules', 'index.js'),
+    path.join(
+      projectRoot,
+      'node_modules',
+      '@lintsight',
+      'rules-core',
+      'dist',
+      'index.js'
+    )
   ]
   for (const c of candidates) {
     if (existsSync(c)) return c

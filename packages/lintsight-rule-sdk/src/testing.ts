@@ -5,6 +5,7 @@
  * （config-bridge 选项数组语义，T1.8 实测有效），每组一次 spawn。
  */
 import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
 import { runOxlint } from '@lintsight/cli/oxlint-bridge'
 import { generateOxlintrc, resolveConfigFile } from '@lintsight/config-bridge'
 import {
@@ -30,7 +31,7 @@ export interface RuleTester {
 
 export function defineRuleTester(opts: { ruleId: string }): RuleTester {
   const { ruleId } = opts
-  const projectRoot = new URL('../../../', import.meta.url).pathname
+  const projectRoot = fileURLToPath(new URL('../../../', import.meta.url))
 
   return {
     async run(cases, runOpts = {}): Promise<CaseResults> {
