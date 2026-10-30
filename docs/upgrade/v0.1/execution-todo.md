@@ -48,10 +48,10 @@
   - 内容：引擎缺失/崩溃/协议损坏/超时统一标注；CI 可选 fail-closed。
   - 验收：四种失败场景均有 `engineStatus` 与退出码语义，不再静默。
   - 证据（2026-10-30）：
-    - `bun run test`：214 pass / 0 fail；`cargo test --release`：52 passed；`lint`：0 warnings；`format:check`：clean。
-    - `engine-bridge.test.ts`：missing（显式路径不存在）/crashed（存在但不可执行）/protocol（`parseEngineStdout` 非 JSON）/timeout（fake proc 忽略 kill、流不关闭，10ms 检测 + ≤2s 宽限）；`deriveEngineStatus` 五态。
-    - `fail-closed.test.ts`：missing/crashed + `failClosed` → exit 2 且 report 保留；fail-open 默认不变；CLI `--fail-closed --output` → exit 2、stdout 为空、文件 engineStatus=missing。
-    - `sarif.test.ts`：`invocations[0].executionSuccessful` 五态与 `properties.engineStatus`。
+    - `bun run test`：217 pass / 0 fail；`cargo test --release`：52 passed；`lint`：0 warnings；`format:check`：clean。
+    - `engine-bridge.test.ts`：missing（显式路径不存在）/crashed（存在但不可执行）/protocol（非 JSON + `null`/数组守卫）/timeout（fake proc 忽略 kill、流不关闭，10ms 检测 + ≤2s 宽限）；显式相对 `OXLINT_ENGINE_BIN` 按 root/cwd 解析；`deriveEngineStatus` 五态。
+    - `fail-closed.test.ts`：missing/crashed/timeout（真实引擎 + `engineTimeoutMs:1`）→ exit 2 且 report 保留；fail-open 默认不变；CLI `--fail-closed --output` → exit 2、stdout 为空、文件 engineStatus=missing。
+    - `sarif.test.ts`：`invocations[0].executionSuccessful` 五态与 `properties.engineStatus`；`formatter.test.ts`：text 摘要末行 `engine: <status>`。
     - golden：`report-v3.json` engineStatus 由 crashed 更新为 missing（固定 `OXLINT_ENGINE_BIN` 不存在路径）。
     - 默认引擎超时 120s（`LINTSIGHT_ENGINE_TIMEOUT_MS` 覆盖，0 关闭）；非 ok 状态统一 warn。
     - `bun run corpus:check`：FAIL（与 G1/G2 相同的既有基线陈旧；本 change 不改检测面，未 `--save`）。

@@ -18,12 +18,12 @@
     - `LINTSIGHT_ENGINE_TIMEOUT_MS` 解析（正整数覆盖、0 禁用、非法 warn + 默认）；
     - 任一非 ok 状态统一 `logger.warn`（含 missing）；
     - `failClosed` 选项：非 ok → exit 2，保留 report（engineStatus + M1 诊断）。
-  - 验收点：新增 `fail-closed.test.ts`（missing/crashed/timeout + fail-open 默认 + report 非空）；既有 cache/closed-loop 回归。
+  - 验收点：新增 `fail-closed.test.ts`（missing/crashed/timeout + fail-open 默认 + report 非空）；timeout 用真实引擎 + `engineTimeoutMs:1` 触发 exit 2（skipIf 无引擎）；既有 cache/closed-loop 回归。
 
 - [x] **任务 3：CLI --fail-closed + SARIF invocations**
   - 涉及文件：`packages/lintsight-cli/src/cli.ts`、`packages/lintsight-formatter/src/sarif.ts`
-  - 内容：usage 增加 `--fail-closed`（含与 `--fix` 组合的风险提示）；布尔开关透传 pipeline；`--output` 组合仍只落文件；SARIF `invocations[0].executionSuccessful` + `properties.engineStatus`。
-  - 验收点：`fail-closed.test.ts` 增加 CLI spawn：`--fail-closed --output` + missing 引擎 → exit 2、stdout 为空、文件 engineStatus=missing；`sarif.test.ts` 断言五态 invocations。
+  - 内容：usage 增加 `--fail-closed`（含与 `--fix` 组合的风险提示）；布尔开关透传 pipeline；`--output` 组合仍只落文件；SARIF `invocations[0].executionSuccessful` + `properties.engineStatus`；text 摘要输出 `engine: <status>`。
+  - 验收点：`fail-closed.test.ts` 增加 CLI spawn：`--fail-closed --output` + missing 引擎 → exit 2、stdout 为空、文件 engineStatus=missing；`sarif.test.ts` 断言五态 invocations；`formatter.test.ts` 断言 text engine 行。
 
 - [x] **任务 4：golden 与降级用例口径同步**
   - 涉及文件：`packages/lintsight-cli/test/__golden__/report-v3.json`、`report-snapshot.test.ts`、`cache.test.ts`

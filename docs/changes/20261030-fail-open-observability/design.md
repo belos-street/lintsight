@@ -21,11 +21,14 @@
 
 ```ts
 const explicit = process.env.OXLINT_ENGINE_BIN
-if (explicit) return existsSync(explicit) ? explicit : null
+if (explicit) {
+  const abs = path.isAbsolute(explicit) ? explicit : path.resolve(cwd, explicit)
+  return existsSync(abs) ? abs : null
+}
 ```
 
 - 显式路径无效**不回退**仓库自带的二进制（避免偷偷换引擎），直接按 `missing`。
-- 其余候选保持 `existsSync` 探测。
+- 显式相对路径按调用方 `cwd/root` 解析（`path.resolve(cwd, explicit)`），不按进程 cwd；其余候选保持 `existsSync` 探测。
 
 ### 2. 协议解析抽取（让「协议损坏」可独立验证）
 
@@ -40,9 +43,9 @@ export interface ParsedEngineOutput {
 export function parseEngineStdout(stdout: string): ParsedEngineOutput
 ```
 
-- 任一行非 JSON → `protocolError=true`（不再依赖 spawn 失败路径）。
+- 任一行非 JSON、或 JSON 值不是对象（`null`/数组/标量）→ `protocolError=true`（不再依赖 spawn 失败路径，也不让 `null` 抛异常落到外层 catch）。
 - `runEngine` 在 `protocolError` 时返回 `{ diagnostics: null, degraded: true, status: 'crashed' }`。
-- 单测可直接喂 `"not json"` / 混合合法行 + 损坏行。
+- 单测可直接喂 `"not json"` / `null` / `[]` / 混合合法行 + 损坏行。
 
 ### 3. 引擎进程超时（必须与流读取同时竞速）
 
@@ -84,7 +87,7 @@ if (first.kind === 'timeout') {
 
 - 超时路径不再读取半截输出（诊断置 null）；stdout/stderr 已被 `Promise.all` 消费，kill 后不会阻塞。
 - `kill()` 抛异常也返回 `timeout`，不得降级成 `crashed`。
-- `timeoutMs=0` 不创建定时器（禁用）。
+- `timeoutMs=0` 不创建定时器（禁用）；`runPipeline.engineTimeoutMs` 与 env 的负数/非整数一律 warn 后回落默认，不静默当成禁用。
 - 测试必须覆盖「进程忽略 kill / exited 永不 resolve」：用 fake proc（`exited: new Promise(() => {})`、`kill` 抛错、流不关闭）调用 `awaitEngineProcess`，断言 10ms 检测到超时、≤2s 宽限内返回 timeout 且不悬挂（测试上界 3s）。
 - **不**做单文件/内存/并发上限（G5）。
 
@@ -99,7 +102,7 @@ if (engineResult.status !== 'ok') {
 ```
 
 - `missing / crashed / timeout / degraded` 全部可见；具体失败细节仍由 engine-bridge debug/stderr 承载。
-- 报告 `engineStatus` 始终写入，即使 fail-open。
+- 报告 `engineStatus` 始终写入，即使 fail-open。JSON 报告字段、SARIF `invocations`、text 摘要末行 `engine: <status>` 三种格式同口径。
 
 ### 5. fail-closed（CI 可选）
 
