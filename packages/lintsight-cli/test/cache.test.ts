@@ -28,6 +28,8 @@ import { fileURLToPath } from 'node:url'
 
 const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
 const engineBin = resolveEngineBin(PROJECT_ROOT)
+/** CI 设 REQUIRE_ENGINE=1：引擎矩阵不得静默 skip（无 cargo release 产物即失败） */
+const REQUIRE_ENGINE = process.env.REQUIRE_ENGINE === '1'
 
 function setEngineBin(value: string | undefined): () => void {
   const prev = process.env.OXLINT_ENGINE_BIN
@@ -68,6 +70,12 @@ async function cacheEntryPaths(dir: string): Promise<string[]> {
     return []
   }
 }
+
+describe('cache: 引擎矩阵前置条件', () => {
+  test('REQUIRE_ENGINE=1 时必须有 cargo release 引擎产物', () => {
+    if (REQUIRE_ENGINE) expect(engineBin).not.toBeNull()
+  })
+})
 
 describe('cache: 键敏感性与条目读写', () => {
   test('引擎指纹：oxlint 可解析则启用，含 lintsight/oxlint 版本', async () => {
@@ -204,6 +212,28 @@ describe('cache: 键敏感性与条目读写', () => {
       })
       expect(ctx2.plugin).not.toBe(ctx1.plugin)
       expect(createCacheKey(ctx2, 'a.ts', 'hash-a')).not.toBe(key1)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('手写 .oxlintrc.json 的 jsPlugins 相对路径：oxlint 实际加载（相对配置目录解析）', async () => {
+    const dir = await tempProject('lintsight-cache-plugin-e2e-')
+    try {
+      await cp(
+        path.join(PROJECT_ROOT, 'plugins/lintsight-rules/index.js'),
+        path.join(dir, 'plugin.js')
+      )
+      await writeFile(
+        path.join(dir, '.oxlintrc.json'),
+        JSON.stringify({
+          jsPlugins: ['./plugin.js'],
+          rules: { 'lintsight/no-empty-catch': 'error' }
+        })
+      )
+      await writeFile(path.join(dir, 'a.ts'), 'try { foo() } catch {}\n')
+      const r = await runPipeline(['.'], { cwd: dir, cache: false })
+      expect(diagnosticsOf(r, 'lintsight/no-empty-catch')).toHaveLength(1)
     } finally {
       await rm(dir, { recursive: true, force: true })
     }

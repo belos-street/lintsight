@@ -57,6 +57,15 @@ describe('S5 T1.15: safe fix 逆映射回写（.vue 收敛）', () => {
         /\.lintsight-\d+(-\d+)?\.(ts|tsx|js|jsx)$/.test(f)
       )
       expect(leftovers).toHaveLength(0)
+
+      // 缓存写入的临时文件也必须零残留（tmp + rename 失败路径会清理 tmp）
+      const cacheTmps = [
+        ...new Bun.Glob('**/*.tmp').scanSync({
+          cwd: path.join(dir, '.lintsight-cache'),
+          onlyFiles: true
+        })
+      ]
+      expect(cacheTmps).toHaveLength(0)
     } finally {
       await rm(dir, { recursive: true, force: true })
     }

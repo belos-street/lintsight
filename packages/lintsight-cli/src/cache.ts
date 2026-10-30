@@ -186,9 +186,17 @@ export function createCacheKey(
   fileRelPath: string,
   fileContentHash: string
 ): string {
+  // JSON 数组序列化：路径/内容中的 `|` 等字符不会产生成分边界歧义
   return new Bun.CryptoHasher('sha256')
     .update(
-      `entry@${ENTRY_VERSION}|${ctx.engine}|${ctx.config}|${ctx.plugin}|path@${fileRelPath}|content@${fileContentHash}`
+      JSON.stringify([
+        `entry@${ENTRY_VERSION}`,
+        ctx.engine,
+        ctx.config,
+        ctx.plugin,
+        `path@${fileRelPath}`,
+        `content@${fileContentHash}`
+      ])
     )
     .digest('hex')
 }
