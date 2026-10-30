@@ -39,8 +39,9 @@
     - `bun run corpus:check`：FAIL（与 G1 相同的既有基线陈旧：`no-floating-promise -28`、`no-hardcoded-credentials +115`；本 change 不改检测面，未 `--save`）。
     - scanner 签字：**待补**（用户已在任务约定「G2 的 scanner 签字可后补」）；未签字前不宣称平台侧验收闭合。
   - 依赖：scanner 调用契约。
-- [ ] **G6 fail-open 可观测**
+- [~] **G6 fail-open 可观测**
   - owner：engine
+  - 进行中：方案文档 `docs/changes/20261030-fail-open-observability/`（待确认，未改代码）
   - 内容：引擎缺失/崩溃/协议损坏/超时统一标注；CI 可选 fail-closed。
   - 验收：四种失败场景均有 `engineStatus` 与退出码语义，不再静默。
   - 证据：`engine-bridge.test.ts` 增加 missing/crashed/timeout/protocol 四组；报告 golden 增加 `engineStatus`。
