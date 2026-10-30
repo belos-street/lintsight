@@ -9,6 +9,10 @@
  *
  * 用法：bun run check:change-id -- <commit-msg-file>
  *       bun run check:change-id:ci -- origin/main...HEAD
+ *       bun run check:change-id:ci -- origin/main...HEAD --since <cutoff>
+ *
+ * --since（G3）：spec-first 制度生效前的历史提交不可能补 change-id，
+ * CI 范围以截止点收窄为 `<cutoff>..HEAD`，避免存量红灯。
  */
 import { readFileSync } from 'node:fs'
 
@@ -47,6 +51,18 @@ export function needsChangeId(
       !isExemptMessage(message) && !hasChangeId(message) && effective.length >= 3,
     effective
   }
+}
+
+/** 合成实际校验范围（G3）：有 --since 截止点时只校验 `<cutoff>..<head>`，
+ * 截止点之前的存量提交豁免（制度生效前无法补 change-id）。 */
+export function resolveRange(range: string, since?: string): string | null {
+  const trimmed = range.trim()
+  const match = trimmed.match(/^(.*?)(\.\.\.?)(.*)$/)
+  if (!match) return null
+  const head = match[3]?.trim()
+  if (!head) return null
+  const cutoff = since?.trim()
+  return cutoff ? `${cutoff}..${head}` : trimmed
 }
 
 function git(args: string[]): { code: number; out: string } {
@@ -105,11 +121,18 @@ function runStaged(msgFile: string | undefined): number {
   return 0
 }
 
-/** CI：逐提交检查范围（base..head） */
-function runRange(range: string): number {
-  const list = git(['rev-list', '--reverse', range])
+/** CI：逐提交检查范围（base..head；--since 时收窄为 cutoff..head） */
+function runRange(range: string, since?: string): number {
+  const effective = resolveRange(range, since)
+  if (!effective) {
+    console.error(
+      `usage: bun run check:change-id:ci -- <base..head> [--since <cutoff>]（得到 '${range}'）`
+    )
+    return 2
+  }
+  const list = git(['rev-list', '--reverse', effective])
   if (list.code !== 0) {
-    console.error(`[spec-first] git rev-list 失败：${range}`)
+    console.error(`[spec-first] git rev-list 失败：${effective}`)
     return 2
   }
 
@@ -141,11 +164,23 @@ function main(): void {
   const rangeIdx = args.indexOf('--range')
   if (rangeIdx >= 0) {
     const range = args[rangeIdx + 1]
-    if (!range) {
-      console.error('usage: bun run check:change-id:ci -- <base..head>')
+    if (!range || range.startsWith('--')) {
+      console.error(
+        'usage: bun run check:change-id:ci -- <base..head> [--since <cutoff>]'
+      )
       process.exit(2)
     }
-    process.exit(runRange(range))
+    const sinceIdx = args.indexOf('--since')
+    let since: string | undefined
+    if (sinceIdx >= 0) {
+      const value = args[sinceIdx + 1]
+      if (!value || value.startsWith('--')) {
+        console.error('[spec-first] --since 缺少截止点 commit')
+        process.exit(2)
+      }
+      since = value
+    }
+    process.exit(runRange(range, since))
   }
   process.exit(runStaged(args[0]))
 }

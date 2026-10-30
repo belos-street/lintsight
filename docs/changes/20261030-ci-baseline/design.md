@@ -32,7 +32,7 @@ jobs:
       - bun run lint
       - bun run format:check
       - bun run version:check
-      - bun run check:change-id:ci   # PR/push 范围模式
+      - bun run check:change-id:ci -- origin/<base>...HEAD --since $SPEC_FIRST_CUTOFF
 
   test:
     needs: static
@@ -80,6 +80,22 @@ jobs:
 - `test` 先 `cargo build --release`，再以 `REQUIRE_ENGINE=1` 跑全量测试，保证图规则矩阵不静默 skip。
 - `rust` 独立跑 fmt/clippy/test，避免与 JS 测试互相掩盖。
 - `heavy` 只在定时/手动触发；不自动 `--save`。
+
+### 评审整改（2026-10-30）
+
+#### check-change-id 历史截止点
+
+- 问题：`origin/main...HEAD` 包含 spec-first 制度生效前的提交（`4b73641`/`027fd8f`），不可能补 change-id。
+- 方案：`--since <cutoff>` → `resolveRange()` 合成 `cutoff..head`（`git rev-list` 只遍历制度生效后的提交）；workflow env `SPEC_FIRST_CUTOFF=d98c457`（增加门禁的提交）。
+- 边界：`--since` 缺值 / 以 `--` 开头 → exit 2；范围缺 `..` 或缺 head → exit 2；staged 模式不变。
+- 单测：`resolveRange` 无 cutoff / 有 cutoff / 非法范围三组。
+
+#### corpus 基线跨平台可复现
+
+- 现象：Windows 基线 3540 相对旧基线 3453 出现 `no-hardcoded +115` 与指纹 churn（oldOnly=1502/newOnly=1589），但按规则计数其余规则完全一致 → 是扫描环境差异，不是代码漂移。
+- 根因 1：`isTestFile` 只按 `/` 分段；oxlint JS Plugins 的 `context.filename` 是平台原生绝对路径（Windows `D:\...\tests\...`）→ 测试豁免失效。修复为 `split(/[/\\]/)`，新增 `fixtures/options/tests/**` 契约用例。
+- 根因 2：`corpus:sync` 未锁定行尾；Windows 全局 `core.autocrlf=true` 会把无 `eol=lf` attributes 的仓库检出为 CRLF，offset 与 Linux LF 基线漂移。修复：clone 时 `-c core.autocrlf=false -c core.eol=lf`，成功后写 `.git/lintsight-lf` 标记；无标记的旧检出自动重建（`corpus/repos` 为 gitignore 缓存）。
+- 结果：基线 3392；相对 `52b03db` 的 -61 = `027fd8f` no-floating -28 + no-hardcoded -33；其余 3392 条指纹与旧基线逐条一致（newOnly=0）。
 - 无 self-hosted `lintsight-heavy` runner 时，heavy job 保持 pending/跳过，不阻塞普通 PR。
 
 ### 2. `check-change-id` CI 模式

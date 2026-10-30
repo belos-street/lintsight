@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'bun:test'
-import { needsChangeId } from './check-change-id'
+import { needsChangeId, resolveRange } from './check-change-id'
 
 const msg = (id?: string) =>
   `feat(cli): 示例变更${id ? `\n\nchange/${id}` : ''}`
@@ -43,5 +43,22 @@ describe('check-change-id（G3 range 共用纯函数）', () => {
         'plugins/lintsight-rules/index.js'
       ]).required
     ).toBe(false)
+  })
+})
+
+describe('check-change-id（G3 --since 历史截止点）', () => {
+  test('无截止点 → 保持 CI 原始范围', () => {
+    expect(resolveRange('origin/main...HEAD')).toBe('origin/main...HEAD')
+    expect(resolveRange('309291c..HEAD')).toBe('309291c..HEAD')
+  })
+
+  test('有截止点 → 只校验 cutoff..head（历史提交豁免）', () => {
+    expect(resolveRange('origin/main...HEAD', 'd98c457')).toBe('d98c457..HEAD')
+    expect(resolveRange('309291c..HEAD', 'd98c457')).toBe('d98c457..HEAD')
+  })
+
+  test('非法范围 / 缺 head → null（调用方 exit 2）', () => {
+    expect(resolveRange('HEAD')).toBeNull()
+    expect(resolveRange('origin/main...')).toBeNull()
   })
 })

@@ -6,6 +6,16 @@
 
 - 2026-10-30：方案评审补强后，用户以消息全文 **「好的，按这个方案开始实现 G13、G14 和 G3」** 确认进入实现（无独立消息 ID，仓库内只能引用原话）；确认范围 = G13/G14/G3 三份 change 的三层文档全量方案。
 
+## 评审整改（2026-10-30）
+
+- **Blocker（check:change-id）**：真实 CI 范围 `origin/main...HEAD` 会被制度生效前的历史提交（`4b73641` 9 个代码文件、`027fd8f` 11 个）拦红，且这些提交不可能补 change-id。新增 `--since <cutoff>`：`resolveRange()` 将范围合成为 `cutoff..head`；workflow env `SPEC_FIRST_CUTOFF=d98c457`（spec-first 机器门禁生效提交）。本地实测：raw exit 1，`--since d98c457` exit 0。
+- **Medium（corpus 归因）**：原证据「3453 → 3540，漂移由 027fd8f/abe8326 解释」口径失真——3540 是 Windows 平台产物，不是提交漂移：
+  - `isTestFile` 只按 `/` 分段，而 oxlint JS Plugins 的 `context.filename` 是平台原生绝对路径（Windows 为 `\`）→ 测试文件豁免整体失效，新增 `no-hardcoded` 命中 148/156 在 test/fixture 目录（+115 的来源）。
+  - `corpus:sync` 未锁定 LF，Windows 全局 `core.autocrlf=true` 让无 `eol=lf` attributes 的仓库检出 CRLF → offset/指纹漂移（oldOnly=1502/newOnly=1589 的来源）。
+  - 修复后基线 **3392**；相对 `52b03db`（3453）的 -61 全部可归因：`no-floating-promise` -28（`027fd8f` self-handled async 收紧）、`no-hardcoded-credentials` -33（`027fd8f` i18n 文案抑制）；其余规则指纹逐条一致（overlap=3392/3392，newOnly=0）。
+  - 该修复同时保证 Linux heavy runner 与 Windows 本地产生同一指纹基线（G3 验收「基线按版本可追溯」的前提）。
+- **Rust job**：`cargo fmt/clippy` 改为 `--manifest-path crates/lintsight-engine/Cargo.toml`；修复 clippy 存量 8 error 与 rustfmt 9 处 diff；`actions/checkout@v4→v5`。
+
 ## 背景与问题
 
 仓库当前没有任何 CI（无 `.github/`、无 `.gitlab-ci.yml`）；质量门禁只靠本地命令：

@@ -18,6 +18,8 @@ permissions:
 env:
   BUN_VERSION: 1.4.2
   RUST_VERSION: 1.97.1
+  # spec-first 机器门禁生效点（d98c457）；截止点之前的历史提交豁免 change-id
+  SPEC_FIRST_CUTOFF: d98c457
 
 jobs:
   # 第一阶段：最快反馈（lint/format/版本/change-id）
@@ -36,9 +38,9 @@ jobs:
       - run: bun run lint
       - run: bun run format:check
       - run: bun run version:check
-      - name: change-id 范围校验（PR）
+      - name: change-id 范围校验（PR；历史提交按截止点豁免）
         if: github.event_name == 'pull_request'
-        run: bun run check:change-id:ci -- origin/${{ github.base_ref }}...HEAD
+        run: bun run check:change-id:ci -- origin/${{ github.base_ref }}...HEAD --since ${{ env.SPEC_FIRST_CUTOFF }}
 
   # 第二阶段：JS 测试 + 真实引擎（Linux + Windows）
   test:
