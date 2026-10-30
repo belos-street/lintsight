@@ -5,8 +5,8 @@
 
 - [ ] **任务 1：static / test / rust 三个 job**
   - 涉及文件：新增 `.github/workflows/ci.yml`
-  - 内容：Bun + Rust 安装缓存；static（build:rules/lint/format/version:check）；test 矩阵（Linux+Windows，cargo build --release 后 `REQUIRE_ENGINE=1 bun run test`）；rust 矩阵（fmt/clippy/test）。
-  - 验收点：首次 PR 运行通过；至少一次失败运行（红）链接；OS 矩阵齐全。
+  - 内容：Bun 1.4.2 + Rust 1.97.1 固定版本与缓存；static（build:rules/lint/format/version:check）；test 矩阵（Linux+Windows，cargo build --release 后 `REQUIRE_ENGINE=1 bun run test`）；rust 矩阵（fmt/clippy/test）。
+  - 验收点：首次 PR 运行通过；至少一次失败运行（红）链接；OS 矩阵齐全；workflow 中无 `stable`/`latest` 浮动版本。
 
 - [ ] **任务 2：check-change-id range 模式**
   - 涉及文件：`scripts/check-change-id.ts`、`package.json`、`scripts/check-change-id.test.ts`
@@ -15,8 +15,8 @@
 
 - [ ] **任务 3：heavy job + 基线重建**
   - 涉及文件：`.github/workflows/ci.yml`、`scripts/bench-baseline.json`、`corpus/baseline-v0.json`
-  - 内容：schedule/workflow_dispatch 触发；bench 与 corpus 在 `lintsight-heavy` runner 运行；先逐条归因，再人工 `bench --save` / `corpus:check -- --save`。
-  - 验收点：bench <10s；corpus 双报率 0、基线一致；归因表与 diff 评审记录；G1/G2/G6 的 corpus FAIL 消失。
+  - 内容：schedule/workflow_dispatch 触发；bench 与 corpus 在 `lintsight-heavy` runner 运行；启动预检 Bun 1.4.2 / Rust 1.97.1 / `hyperfine --version` / `git` / 网络与 `bun run corpus:sync`；先逐条归因，再人工 `bench --save` / `corpus:check -- --save`。
+  - 验收点：bench <10s；corpus 双报率 0、基线一致；归因表与 diff 评审记录；G1/G2/G6 的 corpus FAIL 消失；runner 预检失败时明确报错而非静默跳过。
 
 - [ ] **任务 4：branch protection 与证据**
   - 涉及文件：无代码（仓库设置）

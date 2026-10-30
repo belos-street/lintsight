@@ -18,10 +18,10 @@
   - 内容：校验根/CLI/Cargo；不等 exit 1；脚本 check-only。
   - 验收点：`bun run version:check` 输出三载体版本；人为漂移（测试临时文件/解析函数）能报错；CI 阶段（G3）调用。
 
-- [ ] **任务 4：测试与 golden 更新**
+- [ ] **任务 4：测试与 golden 更新 + build:binary 回归**
   - 涉及文件：新增 `packages/lintsight-cli/test/version-consistency.test.ts`、`__golden__/report-v3.json`
-  - 内容：三载体一致性、SARIF driver.version、CLI `--version`；golden `toolVersion` 更新。
-  - 验收点：`bun test packages/lintsight-cli/test/version-consistency.test.ts`；golden diff 仅 toolVersion。
+  - 内容：三载体一致性、SARIF driver.version、CLI `--version`；golden `toolVersion` 更新；`bun run build:binary` 后单文件产物 `--version` / JSON `toolVersion` / SARIF driver.version 一致。
+  - 验收点：`bun test packages/lintsight-cli/test/version-consistency.test.ts`；golden diff 仅 toolVersion；build:binary 冒烟通过。
 
 - [ ] **任务 5：全量验证与文档同步**
   - 涉及文件：`docs/upgrade/v0.1/execution-todo.md`、`upgrade-plan.md`、本 change

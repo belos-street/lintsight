@@ -26,7 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - checkout (fetch-depth: 0)
-      - setup-bun
+      - setup-bun (bun-version: 1.4.2)
       - bun install --frozen-lockfile
       - bun run build:rules
       - bun run lint
@@ -43,8 +43,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - checkout
-      - setup-bun
-      - rust-toolchain (stable + cache)
+      - setup-bun (bun-version: 1.4.2)
+      - rust-toolchain (toolchain: 1.97.1 + cache)
       - cargo build --release --manifest-path crates/lintsight-engine/Cargo.toml
       - bun install --frozen-lockfile
       - env: REQUIRE_ENGINE=1
@@ -59,7 +59,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - checkout
-      - rust-toolchain (rustfmt + clippy + cache)
+      - rust-toolchain (toolchain: 1.97.1 + rustfmt + clippy + cache)
       - cargo fmt --all -- --check
       - cargo clippy --all-targets -- -D warnings
       - cargo test --release --manifest-path crates/lintsight-engine/Cargo.toml
@@ -101,6 +101,8 @@ bun run check:change-id:ci -- <base-ref>
 CI 中 `base` = `origin/${{ github.base_ref || 'main' }}`；`fetch-depth: 0` 保证可解析。
 默认不带参数的 staged 模式保持不变。
 
+> `check-change-id:ci` 是 G3 的实现任务（任务 2）；在工作流合入前，CI 的 change-id 门禁仅存在于文档，static job 需等任务 2 完成后再启用该步骤，避免假绿。
+
 ### 3. branch protection（外部配置）
 
 工作流本身不能开启分支保护；需要在仓库设置（或 `gh api` 管理员 token）配置：
@@ -131,7 +133,8 @@ corpus：
 
 - 必测：`ubuntu-latest`、`windows-latest`（缓存 rename、路径分隔符、可执行探测差异）。
 - macOS 可选（后补 job，不阻塞 G3）。
-- heavy runner 需：Bun、Rust、hyperfine、git、网络（corpus clone 6 个公开仓库）。
+- **版本固定**：Bun `1.4.2`（`setup-bun` 的 `bun-version`）；Rust `1.97.1`（`dtolnay/rust-toolchain` 的 `toolchain`，或新增 `rust-toolchain.toml` 锁定同一版本）。禁止 `stable`/`latest` 让 runner 漂移。
+- heavy runner 需预装并校验：Bun `1.4.2`、Rust `1.97.1`、`hyperfine`（`hyperfine --version`）、`git`、网络（corpus clone 6 个公开仓库）；job 启动时先跑 `bun run corpus:sync` 与工具版本断言，再 `bench` / `corpus:check`。
 
 ### 6. 与既有门禁的关系
 

@@ -99,6 +99,8 @@ bun run version:check
 
 1. **JSON import 在 compile 产物**：Bun 支持 JSON 内联；若升级 Bun 后行为变化，CI 的 `build:binary` 需回归。
 2. **三处手动同步**：check-only 意味着 bump 时要改三处；G11 changesets 接管后消除。CI 红即阻断，避免漂移进入 main。
+   - `version:check` 解析 Cargo.toml 只匹配 `[package]` 段的 `version`；若未来引入 Cargo workspace，必须改用 `cargo metadata` 或 workspace 继承，不能继续正则扫全文。
+   - 顺序：先落 G14（`version:check`），再开 G3 CI（static 阶段依赖该脚本）。
 3. **预发布 semver**：`0.1.0-alpha.0` 的排序/展示由 npm/semver 处理；脚本只做字符串相等，不做 semver 解析。
 4. **缓存一次性 miss**：版本切换后首轮冷扫，属预期；不因此修改缓存键设计。
 5. **SARIF 消费方**：driver.version 变化可能影响平台按版本过滤；G14 只统一源，不改变格式。

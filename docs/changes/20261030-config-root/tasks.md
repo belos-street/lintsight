@@ -5,8 +5,8 @@
 
 - [ ] **任务 1：pipeline 引入 root 并贯通全部路径基准**
   - 涉及文件：`packages/lintsight-cli/src/pipeline.ts`
-  - 内容：`runPipeline` 增加 `root?: string`；配置/缓存/输入/ignore/tsconfig/Vue/诊断/抑制/引擎 spawn 全部改用 root；根外输入 warning。
-  - 验收点：现有测试全绿；新增外部根用例先以 `runPipeline` 直接驱动（不依赖 CLI）。
+  - 内容：`runPipeline` 增加 `root?: string`；配置/缓存/输入/ignore/tsconfig/Vue/诊断/抑制/**oxlint 二进制与 spawn**/**引擎二进制与 spawn** 全部改用 root；根外输入 warning；`stat(root)` 前置校验。
+  - 验收点：现有测试全绿；新增外部根用例先以 `runPipeline` 直接驱动（不依赖 CLI）；`resolveOxlintBin/runOxlint/resolveEngineBin` 均可传入 root。
 
 - [ ] **任务 2：config-bridge 显式根解析**
   - 涉及文件：`packages/lintsight-config-bridge/src/index.ts`
@@ -15,8 +15,8 @@
 
 - [ ] **任务 3：CLI --root**
   - 涉及文件：`packages/lintsight-cli/src/cli.ts`
-  - 内容：解析 `--root <dir>`（缺值 exit 2）；传入 pipeline；usage 更新。
-  - 验收点：`config-root.test.ts` 增加 CLI spawn：外部绝对路径 + `--root`，报告 file 相对、无盘符前缀；`--root` 缺值 exit 2。
+  - 内容：解析 `--root <dir>`（缺值/不存在/非目录 exit 2）；传入 pipeline；usage 更新；`--output` 明确按进程 cwd 解析。
+  - 验收点：`config-root.test.ts` 增加 CLI spawn：外部绝对路径 + `--root`，报告 file 相对、无盘符前缀；`--root` 缺值/不存在 exit 2；`--output` 落调用方 cwd。
 
 - [ ] **任务 4：外部路径/嵌套 config/ignore 回归矩阵**
   - 涉及文件：`packages/lintsight-cli/test/config-root.test.ts`、`test/ignore.test.ts`

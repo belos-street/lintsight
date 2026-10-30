@@ -58,6 +58,8 @@
   1. 外部绝对路径项目（临时目录）`--root <dir>`：config 正确发现，报告 `file` 全部相对；
   2. 嵌套 config（`--config sub/lintsight.config.json`，相对 root）：生成配置正确；
   3. 显式 `--config` 覆盖 root 默认配置。
-- `ignore.test.ts`、Vue/`.lintsight-cache` 回归全绿。
+- oxlint 与引擎的二进制解析/spawn 均以 root 为基准（不会误用调用方二进制或误判 missing）。
+- `--output` 按进程 cwd 落盘；报告内 `file` 仍 root 相对。
+- `--root` 缺值/不存在/非目录均 exit 2；`ignore.test.ts`、Vue/`.lintsight-cache` 回归全绿。
 - 报告 `file` 断言不含 `C:/`、`/Users/`、盘符绝对前缀。
 - `bun run test` / `lint` / `format:check` 全绿；`corpus:check` 不改检测面，漂移只归因。

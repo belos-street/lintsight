@@ -36,6 +36,9 @@ const root = path.resolve(cwd, rootArg ?? '.')
 | Vue 虚拟化/gitignore | `virtualizeVue(f, cwd)` / `ensureGitignore(cwd)` | root |
 | 诊断归一 | `normalizeDiagnostics(output, cwd)` | root |
 | 抑制文件读取 | `path.resolve(cwd, file)` | root |
+| oxlint 二进制解析 | `resolveOxlintBin(cwd)` | `resolveOxlintBin(root)` |
+| oxlint spawn | `runOxlint(..., { cwd })` | `{ cwd: root }` |
+| 引擎二进制解析 | `resolveEngineBin(cwd)` | `resolveEngineBin(root)` |
 | 引擎 spawn | `runEngine(..., { cwd })` | `{ cwd: root }`（协议 file 相对 root） |
 | 报告 file | root 相对 | 不变，但 root 可外部指定 |
 | 缓存指纹 tsconfig 相对路径 | 相对 cwd | 相对 root |
@@ -51,8 +54,9 @@ usage: ... [--root <dir>] ...
 ```
 
 - `--root` 取值缺失 → exit 2（与 `--fail-on` 缺值同纪律）。
-- `--root` 指向不存在目录 → pipeline 在收集阶段报 `input path not found` / 明确错误 → exit 2。
+- `--root` 不存在 / 不是目录 → 在 `collectFiles` 之前 `stat(root)`，exit 2 且错误含 root 路径（不进入扫描）。
 - `--root` 与 `--config` 同时存在：config 按 root 解析。
+- **`--output` 基准**：输出文件按**进程 cwd**解析（CLI 参数面），报告内 `file` 字段仍 root 相对。两者分开，避免把报告写进被扫描项目。
 - 传 `--root` 时，报告 `toolVersion`/`engineStatus` 等字段不变，仅路径基准变化。
 
 ### 4. 外部绝对路径验收
@@ -105,6 +109,7 @@ usage: ... [--root <dir>] ...
 
 1. **语义变更面大**：cwd → root 是机械替换，但任何一个漏改都会导致配置/缓存/报告混用两个根。任务按「先加 root 贯通 + 测试，再改 CLI」拆分。
 2. **根外输入**：保持现有 normalize 行为（可能绝对路径），只告警；不把根外文件伪装成 root 相对。
-3. **oxlint 自动发现**：无 root 配置文件时 oxlint 仍可能向上发现祖先 `.oxlintrc.json`；G13 只定义 lintsight 配置根，不改变 oxlint 自身发现。
+3. **oxlint 自动发现**：无 root 配置文件时 oxlint 仍可能向上发现祖先 `.oxlintrc.json`；G13 只定义 lintsight 配置根，不改变 oxlint 自身发现；测试锁定 lintsight 配置只从 root 读取。
 4. **scanner 契约**：`--root` 的传参方式需 scanner 联调确认；G13 只保证引擎侧语义，签字可后补（与 G2 同纪律）。
 5. **Windows 盘符**：`path.resolve(root, absInput)` 对绝对输入原样；测试用 tmpdir 覆盖 Windows 路径。
+6. **symlink/realpath**：root 与输入不做 `realpath` 归一（保持词法路径）；symlink 项目可能使 root 相对路径与物理路径不一致，契约中明示。
