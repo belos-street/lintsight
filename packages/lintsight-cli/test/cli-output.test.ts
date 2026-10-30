@@ -89,4 +89,15 @@ describe('G2 CLI 输出通道', () => {
       await rm(dir, { recursive: true, force: true })
     }
   })
+
+  test('--fail-on 缺值：exit 2，不静默回落 low', async () => {
+    const dir = await makeProject('lintsight-cli-failon-missing-')
+    try {
+      const r = await spawnCli(dir, ['.', '--fail-on'])
+      expect(r.code).toBe(2)
+      expect(r.stderr).toContain('--fail-on 缺少取值')
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
 })

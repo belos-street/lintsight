@@ -315,7 +315,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-78"
+        "CWE-78"
       ]
     },
     {
@@ -334,7 +334,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-78"
+        "CWE-78"
       ]
     },
     {
@@ -353,7 +353,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-78"
+        "CWE-78"
       ]
     },
     {
@@ -423,7 +423,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-942"
+        "CWE-942"
       ]
     },
     {
@@ -442,7 +442,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-942"
+        "CWE-942"
       ]
     },
     {
@@ -461,7 +461,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-942"
+        "CWE-942"
       ]
     },
     {
@@ -752,7 +752,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-798"
+        "CWE-798"
       ]
     },
     {
@@ -771,7 +771,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-798"
+        "CWE-798"
       ]
     },
     {
@@ -790,7 +790,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-798"
+        "CWE-798"
       ]
     },
     {
@@ -860,7 +860,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -879,7 +879,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -898,7 +898,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -917,8 +917,8 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-614",
-        "cwe-1004"
+        "CWE-614",
+        "CWE-1004"
       ]
     },
     {
@@ -937,8 +937,8 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-614",
-        "cwe-1004"
+        "CWE-614",
+        "CWE-1004"
       ]
     },
     {
@@ -957,8 +957,8 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-614",
-        "cwe-1004"
+        "CWE-614",
+        "CWE-1004"
       ]
     },
     {
@@ -1028,7 +1028,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-338"
+        "CWE-338"
       ]
     },
     {
@@ -1047,7 +1047,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-338"
+        "CWE-338"
       ]
     },
     {
@@ -1066,7 +1066,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-338"
+        "CWE-338"
       ]
     },
     {
@@ -1085,7 +1085,7 @@
       "owner": "lintsight-js",
       "confidence": "low",
       "cweTags": [
-        "cwe-22"
+        "CWE-22"
       ]
     },
     {
@@ -1104,7 +1104,7 @@
       "owner": "lintsight-js",
       "confidence": "low",
       "cweTags": [
-        "cwe-22"
+        "CWE-22"
       ]
     },
     {
@@ -1123,7 +1123,7 @@
       "owner": "lintsight-js",
       "confidence": "low",
       "cweTags": [
-        "cwe-22"
+        "CWE-22"
       ]
     },
     {
@@ -1159,7 +1159,7 @@
       "owner": "lintsight-js",
       "confidence": "low",
       "cweTags": [
-        "cwe-22"
+        "CWE-22"
       ]
     },
     {
@@ -1178,7 +1178,7 @@
       "owner": "lintsight-js",
       "confidence": "low",
       "cweTags": [
-        "cwe-22"
+        "CWE-22"
       ]
     },
     {
@@ -1231,7 +1231,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-94"
+        "CWE-94"
       ]
     },
     {
@@ -1250,7 +1250,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-94"
+        "CWE-94"
       ]
     },
     {
@@ -1269,7 +1269,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-94"
+        "CWE-94"
       ]
     },
     {
@@ -1288,7 +1288,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-1321"
+        "CWE-1321"
       ]
     },
     {
@@ -1307,7 +1307,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-1321"
+        "CWE-1321"
       ]
     },
     {
@@ -1326,7 +1326,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-1321"
+        "CWE-1321"
       ]
     },
     {
@@ -1345,7 +1345,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-312"
+        "CWE-312"
       ]
     },
     {
@@ -1364,7 +1364,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-312"
+        "CWE-312"
       ]
     },
     {
@@ -1383,7 +1383,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-312"
+        "CWE-312"
       ]
     },
     {
@@ -1402,7 +1402,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-548"
+        "CWE-548"
       ]
     },
     {
@@ -1421,7 +1421,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-548"
+        "CWE-548"
       ]
     },
     {
@@ -1440,7 +1440,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-548"
+        "CWE-548"
       ]
     },
     {
@@ -1459,7 +1459,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-548"
+        "CWE-548"
       ]
     },
     {
@@ -1478,7 +1478,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-548"
+        "CWE-548"
       ]
     },
     {
@@ -1497,7 +1497,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-89"
+        "CWE-89"
       ]
     },
     {
@@ -1516,7 +1516,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-89"
+        "CWE-89"
       ]
     },
     {
@@ -1535,7 +1535,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-89"
+        "CWE-89"
       ]
     },
     {
@@ -1690,7 +1690,7 @@
       "owner": "lintsight-js",
       "confidence": "low",
       "cweTags": [
-        "cwe-22"
+        "CWE-22"
       ]
     },
     {
@@ -1760,7 +1760,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-1333"
+        "CWE-1333"
       ]
     },
     {
@@ -1779,7 +1779,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-1333"
+        "CWE-1333"
       ]
     },
     {
@@ -1798,7 +1798,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-1333"
+        "CWE-1333"
       ]
     },
     {
@@ -1817,7 +1817,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -1836,7 +1836,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -1855,7 +1855,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -1874,7 +1874,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -1893,7 +1893,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-79"
+        "CWE-79"
       ]
     },
     {
@@ -1912,7 +1912,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-94"
+        "CWE-94"
       ]
     },
     {
@@ -1931,7 +1931,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-94"
+        "CWE-94"
       ]
     },
     {
@@ -1950,7 +1950,7 @@
       "owner": "lintsight-js",
       "confidence": "medium",
       "cweTags": [
-        "cwe-94"
+        "CWE-94"
       ]
     },
     {
@@ -1986,7 +1986,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-327"
+        "CWE-327"
       ]
     },
     {
@@ -2005,7 +2005,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-327"
+        "CWE-327"
       ]
     },
     {
@@ -2024,7 +2024,7 @@
       "owner": "lintsight-js",
       "confidence": "high",
       "cweTags": [
-        "cwe-327"
+        "CWE-327"
       ]
     },
     {

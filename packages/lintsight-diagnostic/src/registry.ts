@@ -408,11 +408,6 @@ export function getRegistryEntry(ruleId: string): RegistryEntry | undefined {
   return registry.find((e) => e.ruleId === ruleId)
 }
 
-/** CWE 标签（契约 v3）：未登记/无 CWE 关系的规则返回空数组 */
-export function getCweTags(ruleId: string): string[] {
-  return getRegistryEntry(ruleId)?.cweTags ?? []
-}
-
 export function isRegistered(ruleId: string): boolean {
   return registry.some((e) => e.ruleId === ruleId)
 }

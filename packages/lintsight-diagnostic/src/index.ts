@@ -235,7 +235,8 @@ export function toLintsightDiagnostic(
     fingerprint: computeFingerprint(d),
     owner: deriveOwner(d.ruleId),
     confidence: d.confidence ?? entry?.confidence ?? 'medium',
-    cweTags: entry?.cweTags ?? [],
+    // 契约 v3：对外统一 CWE 官方大写形态（CWE-79）；registry/插件 meta 内部保持小写
+    cweTags: (entry?.cweTags ?? []).map((t) => t.toUpperCase()),
     // 空数组等同无证据链：省略字段保持 JSON 报告面干净（SARIF 侧同口径）
     ...(d.pathEvents?.length ? { pathEvents: d.pathEvents } : {})
   }
@@ -249,7 +250,8 @@ export function refreshDiagnosticMetadata<T extends LintsightDiagnostic>(
   return {
     ...d,
     confidence: entry?.confidence ?? 'medium',
-    cweTags: entry?.cweTags ?? []
+    // 与 toLintsightDiagnostic 同口径：对外统一大写
+    cweTags: (entry?.cweTags ?? []).map((t) => t.toUpperCase())
   }
 }
 

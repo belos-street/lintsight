@@ -343,7 +343,7 @@ describe('契约 v3（G2）：逐 finding confidence / cweTags', () => {
       ruleId: 'lintsight/no-insecure-cookie'
     })
     expect(security.confidence).toBe('medium')
-    expect(security.cweTags).toEqual(['cwe-614', 'cwe-1004'])
+    expect(security.cweTags).toEqual(['CWE-614', 'CWE-1004'])
   })
 
   test('finding 覆盖优先；未登记规则兜底 medium + 空 CWE', () => {

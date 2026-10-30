@@ -40,7 +40,12 @@ if (!['debug', 'info', 'warn', 'error'].includes(logLevel)) {
   process.exit(2)
 }
 // 契约 v3：CI 门禁阈值；缺省 low = 现有「任何 error 即 1」
-const failOn = readOption('--fail-on') ?? 'low'
+const failOnRaw = readOption('--fail-on')
+if (args.includes('--fail-on') && failOnRaw === undefined) {
+  console.error('lintsight: --fail-on 缺少取值（high|medium|low）')
+  process.exit(2)
+}
+const failOn = failOnRaw ?? 'low'
 if (!['high', 'medium', 'low'].includes(failOn)) {
   console.error(`lintsight: --fail-on 期望 high|medium|low，得到 '${failOn}'`)
   process.exit(2)
