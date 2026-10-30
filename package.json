@@ -21,7 +21,9 @@
     "corpus:sync": "bun run scripts/corpus-sync.ts",
     "corpus:check": "bun run scripts/corpus-baseline.ts",
     "corpus:recall": "bun run scripts/corpus-recall.ts",
-    "check:change-id": "bun run scripts/check-change-id.ts"
+    "check:change-id": "bun run scripts/check-change-id.ts",
+    "check:change-id:ci": "bun run scripts/check-change-id.ts --range",
+    "version:check": "bun run scripts/version-check.ts"
   },
   "engines": {
     "bun": ">=1.2"

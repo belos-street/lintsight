@@ -1,0 +1,117 @@
+name: ci
+
+on:
+  push:
+    branches: [main, 'dev/**']
+  pull_request:
+  schedule:
+    - cron: '0 2 * * 1' # 每周一 heavy（bench + corpus）
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  BUN_VERSION: 1.4.2
+  RUST_VERSION: 1.97.1
+
+jobs:
+  # 第一阶段：最快反馈（lint/format/版本/change-id）
+  static:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - run: bun install --frozen-lockfile
+      - run: bun run build:rules
+      - run: bun run lint
+      - run: bun run format:check
+      - run: bun run version:check
+      - name: change-id 范围校验（PR）
+        if: github.event_name == 'pull_request'
+        run: bun run check:change-id:ci -- origin/${{ github.base_ref }}...HEAD
+
+  # 第二阶段：JS 测试 + 真实引擎（Linux + Windows）
+  test:
+    needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --manifest-path crates/lintsight-engine/Cargo.toml
+      - run: bun install --frozen-lockfile
+      - name: bun test（引擎矩阵硬门禁）
+        env:
+          REQUIRE_ENGINE: '1'
+        run: bun run test
+
+  # 第二阶段：Rust 门禁（Linux + Windows）
+  rust:
+    needs: static
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo fmt --all -- --check
+      - run: cargo clippy --all-targets -- -D warnings
+      - run: cargo test --release --manifest-path crates/lintsight-engine/Cargo.toml
+
+  # 第三阶段：重型门禁（专用 runner；不自动 --save 基线）
+  heavy:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: [self-hosted, lintsight-heavy]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build --release --manifest-path crates/lintsight-engine/Cargo.toml
+      - run: bun install --frozen-lockfile
+      - name: runner 预检（版本/工具/网络）
+        shell: bash
+        run: |
+          bun --version | grep -q "$BUN_VERSION"
+          rustc --version | grep -q "$RUST_VERSION"
+          hyperfine --version
+          git --version
+          bun run corpus:sync
+      - name: bench（冷扫 <10s + 回退门禁）
+        run: bun run bench
+      - name: corpus（双报率 0 + 基线 diff）
+        run: bun run corpus:check

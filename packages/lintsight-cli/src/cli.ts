@@ -1,4 +1,5 @@
-import pkg from '../package.json'
+// G14：运行时单一版本源 = 仓库根 package.json（bun 会把 JSON 内联进 compile 产物）
+import pkg from '../../../package.json'
 import path from 'node:path'
 import { runPipeline } from './pipeline'
 import {
@@ -11,7 +12,8 @@ import { createLogger, type LogLevel } from '@lintsight/shared'
 
 const args = process.argv.slice(2)
 
-const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text|sarif] [--output <file>] [--log-level debug|info|warn|error] [--fail-on high|medium|low] [--fail-closed] [--fix] [--no-cache]
+const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--root <dir>] [--config <lintsight.config.json>] [--format json|text|sarif] [--output <file>] [--log-level debug|info|warn|error] [--fail-on high|medium|low] [--fail-closed] [--fix] [--no-cache]
+  --root：项目根（配置/ignore/tsconfig/缓存/报告 file 基准）；缺省为 cwd
   --fail-closed：引擎非 ok（missing/crashed/timeout/degraded）时 exit 2，仍输出报告；与 --fix 组合不回滚已改写文件`
 
 function readOption(name: string): string | undefined {
@@ -52,7 +54,14 @@ if (!['high', 'medium', 'low'].includes(failOn)) {
   process.exit(2)
 }
 
+const rootArg = readOption('--root')
+if (args.includes('--root') && rootArg === undefined) {
+  console.error('lintsight: --root 缺少取值（项目根目录）')
+  process.exit(2)
+}
+
 const optionNames = [
+  '--root',
   '--format',
   '--log-level',
   '--config',
@@ -70,6 +79,7 @@ if (paths.length === 0) {
 
 const logger = createLogger(logLevel as LogLevel)
 const result = await runPipeline(paths, {
+  root: rootArg,
   config: readOption('--config'),
   logLevel: logLevel as LogLevel,
   failOn: failOn as 'high' | 'medium' | 'low',

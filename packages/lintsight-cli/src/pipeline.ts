@@ -8,7 +8,8 @@
  */
 import path from 'node:path'
 import { stat, unlink } from 'node:fs/promises'
-import pkg from '../package.json'
+// G14：版本唯一源 = 仓库根 package.json
+import pkg from '../../../package.json'
 import { runOxlint } from './oxlint-bridge'
 import {
   applySuppressions,
@@ -254,6 +255,8 @@ export async function runPipeline(
   inputs: string[],
   opts: {
     cwd?: string
+    /** G13：显式项目根；缺省 = cwd。config/ignore/tsconfig/缓存/诊断/引擎均以 root 为基准 */
+    root?: string
     config?: string
     logLevel?: 'debug' | 'info' | 'warn' | 'error'
     /** --fix：oxlint safe fix 就地改写虚拟文件后，差量行回写原 .vue（T1.15）；禁用缓存 */
@@ -269,9 +272,25 @@ export async function runPipeline(
   } = {}
 ): Promise<PipelineResult> {
   const cwd = opts.cwd ?? process.cwd()
+  const root = path.resolve(cwd, opts.root ?? '.')
   const logger: Logger = createLogger(opts.logLevel ?? 'error')
+
+  // G13：root 必须先存在且是目录，避免后续配置/缓存混用错误基准
+  try {
+    const st = await stat(root)
+    if (!st.isDirectory()) {
+      return {
+        exitCode: 2,
+        report: null,
+        error: `root is not a directory: ${root}`
+      }
+    }
+  } catch {
+    return { exitCode: 2, report: null, error: `root path not found: ${root}` }
+  }
+
   // 缓存条目须跨运行存活：cacheDir 只在启动时确保存在，不再整体清空（oxlintrc 每次覆盖生成）
-  const cacheDir = path.resolve(cwd, CACHE_DIR_NAME)
+  const cacheDir = path.resolve(root, CACHE_DIR_NAME)
 
   // 配置解析：lintsight.config.json → 生成 .oxlintrc（--config 显式传入，避免自动发现歧义）
   let oxlintrcPath: string | undefined
@@ -281,9 +300,9 @@ export async function runPipeline(
   let ignoreGenerated = true
   let suppressVueUnusedVars = false
   try {
-    const configFile = resolveConfigFile(cwd, opts.config)
+    const configFile = resolveConfigFile(root, opts.config)
     if (configFile) {
-      const generated = await generateOxlintrc(cwd, configFile, cacheDir)
+      const generated = await generateOxlintrc(root, configFile, cacheDir)
       oxlintrcPath = generated.oxlintrcPath
       arch = generated.arch
       typeAware = generated.typeAware
@@ -309,7 +328,7 @@ export async function runPipeline(
   let ignoredCount = 0
   let skippedGenerated = 0
   try {
-    const collected = await collectFiles(inputs, cwd, ignoreMatcher)
+    const collected = await collectFiles(inputs, root, ignoreMatcher)
     files = collected.files
     ignoredCount = collected.ignored
     // B2：疑似打包/压缩产物跳过（可见 + 可关：ignoreGenerated: false）
@@ -324,7 +343,7 @@ export async function runPipeline(
           `generated: 跳过 ${skipped.length} 个疑似打包/压缩产物（长行 ≥ ${GENERATED_MIN_LINE} 字符；ignoreGenerated: false 可关闭）`
         )
         for (const f of skipped.slice(0, 10)) {
-          logger.info(`generated: ${normalizeFilePath(f, cwd)}`)
+          logger.info(`generated: ${normalizeFilePath(f, root)}`)
         }
       }
       files = files.filter((_, i) => !flags[i])
@@ -349,16 +368,23 @@ export async function runPipeline(
   const vueFiles = files.filter((f) => f.endsWith('.vue'))
   const passthrough = files.filter((f) => !f.endsWith('.vue'))
   const virtualized = await Promise.all(
-    vueFiles.map((f) => virtualizeVue(f, cwd))
+    vueFiles.map((f) => virtualizeVue(f, root))
   )
   const vues = virtualized.filter((v): v is VirtualVueFile => v !== null)
   for (const v of vues) {
     for (const w of v.warnings) logger.warn(`${v.originalRel}: ${w}`)
   }
-  if (vues.length > 0) await ensureGitignore(cwd)
+  if (vues.length > 0) await ensureGitignore(root)
 
   // 缓存筛减（T1.16）：units = 本次运行的扫描单元；storeRel = 诊断归属文件（vue 回映射后的原路径）
-  const relOf = (abs: string) => normalizeFilePath(abs, cwd)
+  const relOf = (abs: string) => {
+    const rel = normalizeFilePath(abs, root)
+    if (path.isAbsolute(rel) || rel.startsWith('..')) {
+      // G13：根外输入保留原路径（不伪装成 root 相对），显式告警
+      logger.warn(`path: ${abs} 在 root 之外，报告保留原路径`)
+    }
+    return rel
+  }
   const units = [
     ...passthrough.map((abs) => ({
       scanAbs: abs,
@@ -373,7 +399,7 @@ export async function runPipeline(
   ]
 
   // G1：tsconfig 发现一次，缓存指纹与引擎别名解析共用同一份列表
-  const tsconfigFiles = discoverTsconfigs(cwd, inputs)
+  const tsconfigFiles = discoverTsconfigs(root, inputs)
 
   let cacheCtx: CacheContext = {
     enabled: false,
@@ -384,10 +410,10 @@ export async function runPipeline(
   }
   if ((opts.cache ?? true) && !opts.fix) {
     cacheCtx = await initCache({
-      cwd,
+      cwd: root,
       oxlintrcPath,
       lintsightVersion: pkg.version,
-      engineBin: resolveEngineBin(cwd),
+      engineBin: resolveEngineBin(root),
       tsconfigFiles
     })
   }
@@ -459,7 +485,7 @@ export async function runPipeline(
         const rs = await Promise.all(
           batches.map((batch) =>
             runOxlint(batch, {
-              cwd,
+              cwd: root,
               config: oxlintrcPath,
               fix: opts.fix,
               ...extra
@@ -522,7 +548,7 @@ export async function runPipeline(
       }
 
       // M1 回映射（oxlint 只扫 miss；scanRel → storeRel）→ 统一模型 → 按文件分组
-      for (const d of normalizeDiagnostics(result.output, cwd)) {
+      for (const d of normalizeDiagnostics(result.output, root)) {
         const storeRel = missMap.get(d.file)?.storeRel ?? d.file
         const diag = toLintsightDiagnostic({ ...d, file: storeRel })
         const group = results.get(storeRel)
@@ -542,12 +568,12 @@ export async function runPipeline(
 
     // 引擎全量 pass（G1）：图规则需要当前完整文件集；结果每轮重算、不进缓存。
     // FR-304：tsconfig paths 归一化表随 stdin 下发引擎（arch 别名兜底；fail-open）
-    // 发现范围 = 扫描根 + cwd 根 tsconfig（discoverTsconfigs 已复用同一列表）
-    const tsPaths = await resolveTsPaths(cwd, inputs, tsconfigFiles)
+    // 发现范围 = 扫描根 + root 根 tsconfig（discoverTsconfigs 已复用同一列表）
+    const tsPaths = await resolveTsPaths(root, inputs, tsconfigFiles)
     const engineResult = await runEngine(
       units.map((u) => relOf(u.scanAbs)),
       {
-        cwd,
+        cwd: root,
         arch,
         tsPaths,
         logger,
@@ -610,7 +636,7 @@ export async function runPipeline(
     const ordered = sortDiagnostics(suppressSuperseded(mergedDiagnostics))
 
     // G2：行内抑制（缓存命中后每轮重算；被抑制诊断保留并带审计字段）
-    const suppressionIndex = await loadInlineSuppressions(cwd, ordered)
+    const suppressionIndex = await loadInlineSuppressions(root, ordered)
     const applied = applySuppressions(ordered, suppressionIndex)
     for (const issue of applied.invalid) {
       logger.warn(
