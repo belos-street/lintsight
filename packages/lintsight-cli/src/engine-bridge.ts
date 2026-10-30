@@ -40,16 +40,11 @@ const TS_DISCOVERY_SKIP = new Set([
   '.nuxt'
 ])
 
-/** 读扫描树内全部 tsconfig.json（JSONC）→ paths + baseUrl 归一化为相对 root
- * 的映射表（FR-304① 嵌套 tsconfig / per-package paths）。
- * 发现范围 = roots（扫描根，目录递归）+ cwd 根 tsconfig——别名只对扫描文件生效，
- * 不做全仓 IO（bench 回归教训：全 cwd 递归在大仓会吃掉两位数 ms）。
- * fail-open：无 tsconfig / 全部无 paths / 解析失败 → null（引擎侧维持裸说明符
- * 跳过语义）。v0 边界：不解析 `extends`（引用链上的 paths 不继承）。 */
-export async function resolveTsPaths(
-  cwd: string,
-  roots: string[] = []
-): Promise<TsPathMapping[] | null> {
+/** 发现扫描树内的 tsconfig.json 绝对路径（cwd 根恒含；目录递归 + 深度/数量上限）。
+ * 缓存指纹（G1）与别名解析共用同一份列表，避免两次全树 IO。
+ * 发现范围 = roots（扫描根）+ cwd 根 tsconfig——别名只对扫描文件生效，
+ * 不做全仓 IO（bench 回归教训：全 cwd 递归在大仓会吃掉两位数 ms）。 */
+export function discoverTsconfigs(cwd: string, roots: string[] = []): string[] {
   const files: string[] = [path.join(cwd, 'tsconfig.json')]
   const walkRoots = roots.length > 0 ? roots : []
   const walk = (dir: string, depth: number): void => {
@@ -81,6 +76,20 @@ export async function resolveTsPaths(
     if (st.isDirectory()) walk(abs, 0)
     // 文件输入不递归（适用 tsconfig = cwd 根，已含）
   }
+  return files
+}
+
+/** 读扫描树内全部 tsconfig.json（JSONC）→ paths + baseUrl 归一化为相对 root
+ * 的映射表（FR-304① 嵌套 tsconfig / per-package paths）。
+ * `discovered` 可传入 discoverTsconfigs 的结果复用发现（G1 缓存指纹同源）。
+ * fail-open：无 tsconfig / 全部无 paths / 解析失败 → null（引擎侧维持裸说明符
+ * 跳过语义）。v0 边界：不解析 `extends`（引用链上的 paths 不继承）。 */
+export async function resolveTsPaths(
+  cwd: string,
+  roots: string[] = [],
+  discovered?: string[]
+): Promise<TsPathMapping[] | null> {
+  const files = discovered ?? discoverTsconfigs(cwd, roots)
 
   type TsConfigRaw = {
     compilerOptions?: { baseUrl?: string; paths?: Record<string, unknown> }

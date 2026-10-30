@@ -43,7 +43,12 @@ import {
   writeCacheEntry,
   type CacheContext
 } from './cache'
-import { resolveEngineBin, resolveTsPaths, runEngine } from './engine-bridge'
+import {
+  discoverTsconfigs,
+  resolveEngineBin,
+  resolveTsPaths,
+  runEngine
+} from './engine-bridge'
 
 export const CACHE_DIR_NAME = '.lintsight-cache'
 /** Windows CreateProcess 命令行上限 32767 字符：大批文件按累计长度切批，
@@ -124,6 +129,8 @@ export interface PipelineResult {
   error?: string
   /** M2 引擎降级标注（design-m2 M2-DR3 fail-open）：true = 本轮曾尝试引擎但失败，纯 M1 出结果（不进报告 JSON） */
   degraded?: boolean
+  /** G1 缓存统计（测试/排障用；不进报告 JSON） */
+  cache?: { enabled: boolean; hits: number; misses: number }
 }
 
 interface Collected {
@@ -304,6 +311,9 @@ export async function runPipeline(
     }))
   ]
 
+  // G1：tsconfig 发现一次，缓存指纹与引擎别名解析共用同一份列表
+  const tsconfigFiles = discoverTsconfigs(cwd, inputs)
+
   let cacheCtx: CacheContext = {
     enabled: false,
     dir: path.join(cacheDir, 'cache'),
@@ -316,7 +326,8 @@ export async function runPipeline(
       cwd,
       oxlintrcPath,
       lintsightVersion: pkg.version,
-      engineBin: resolveEngineBin(cwd)
+      engineBin: resolveEngineBin(cwd),
+      tsconfigFiles
     })
   }
 
@@ -333,9 +344,10 @@ export async function runPipeline(
       units.map(async (u) => {
         const hash = await sha256Content(u.contentAbs)
         if (hash !== null) {
-          const key = createCacheKey(cacheCtx, hash)
+          // G1：键含路径与 tsconfig 指纹；空数组是合法命中（干净文件已缓存）
+          const key = createCacheKey(cacheCtx, u.storeRel, hash)
           const entry = await readCacheEntry(cacheCtx, key)
-          if (entry) {
+          if (entry !== null) {
             hits++
             results.set(u.storeRel, entry)
             return
@@ -369,8 +381,9 @@ export async function runPipeline(
 
   try {
     const missMap = new Map(misses.map((m) => [m.scanRel, m]))
+    // G1：引擎输入 = 全部扫描单元（图规则需要完整文件集）；回映射用全量 unitMap
+    const unitMap = new Map(units.map((u) => [relOf(u.scanAbs), u.storeRel]))
     let scannedFiles = 0
-    let degraded = false
     if (misses.length > 0) {
       const batches = chunkPaths(misses.map((m) => m.scanAbs))
       // 分批 spawn：各批输出按诊断数组拼接（文件级独立，无跨批语义）
@@ -446,25 +459,7 @@ export async function runPipeline(
         }
       }
 
-      // 回映射（scanRel → storeRel）→ 统一模型 → 按文件分组（= 缓存条目粒度）
-      // FR-304：tsconfig paths 归一化表随 stdin 下发引擎（arch 别名兜底；fail-open）
-      // 发现范围 = 扫描根 + cwd 根 tsconfig（不做全仓 IO）
-      const tsPaths = await resolveTsPaths(cwd, inputs)
-      const engineResult = await runEngine(
-        misses.map((m) => m.scanRel),
-        {
-          cwd,
-          arch,
-          tsPaths,
-          logger
-        }
-      )
-      if (engineResult.degraded) {
-        logger.warn(
-          'engine: M2 sidecar 降级（启动/协议失败），本轮为纯 M1 扫描'
-        )
-      }
-
+      // M1 回映射（oxlint 只扫 miss；scanRel → storeRel）→ 统一模型 → 按文件分组
       for (const d of normalizeDiagnostics(result.output, cwd)) {
         const storeRel = missMap.get(d.file)?.storeRel ?? d.file
         const diag = toLintsightDiagnostic({ ...d, file: storeRel })
@@ -473,40 +468,60 @@ export async function runPipeline(
         else results.set(storeRel, [diag])
       }
 
-      // M2 引擎诊断合并（design-m2 §4.3；协议 file = --root 相对路径，missMap 键同口径）
-      if (engineResult.diagnostics) {
-        for (const ed of engineResult.diagnostics) {
-          const storeRel = missMap.get(ed.file)?.storeRel ?? ed.file
-          const diag = toLintsightDiagnostic({
-            ruleId: ed.ruleId,
-            severity: ed.severity,
-            message: ed.message,
-            file: storeRel,
-            span: ed.span,
-            // 契约 v2：taint 证据链透传（SARIF codeFlows/relatedLocations 消费）
-            pathEvents: ed.pathEvents
-          })
-          const group = results.get(storeRel)
-          if (group) group.push(diag)
-          else results.set(storeRel, [diag])
-        }
-      }
-      degraded = engineResult.degraded
-
-      // 缓存回写：只写本次真实扫描且内容哈希可得的文件
+      // 缓存回写（G1）：干净文件写空数组；只写 M1 诊断，引擎诊断不落盘
       await Promise.all(
-        misses.map((m) => {
-          const group = results.get(m.storeRel)
-          return m.key && group
-            ? writeCacheEntry(cacheCtx, m.key, group)
+        misses.map((m) =>
+          m.key
+            ? writeCacheEntry(cacheCtx, m.key, results.get(m.storeRel) ?? [])
             : Promise.resolve()
-        })
+        )
       )
+    }
+
+    // 引擎全量 pass（G1）：图规则需要当前完整文件集；结果每轮重算、不进缓存。
+    // FR-304：tsconfig paths 归一化表随 stdin 下发引擎（arch 别名兜底；fail-open）
+    // 发现范围 = 扫描根 + cwd 根 tsconfig（discoverTsconfigs 已复用同一列表）
+    const tsPaths = await resolveTsPaths(cwd, inputs, tsconfigFiles)
+    const engineResult = await runEngine(
+      units.map((u) => relOf(u.scanAbs)),
+      {
+        cwd,
+        arch,
+        tsPaths,
+        logger
+      }
+    )
+    if (engineResult.degraded) {
+      logger.warn('engine: M2 sidecar 降级（启动/协议失败），本轮为纯 M1 扫描')
+    }
+    const degraded = engineResult.degraded
+
+    // M2 引擎诊断合并（design-m2 §4.3；协议 file = --root 相对路径，unitMap 键同口径）
+    const engineGroups = new Map<string, LintsightDiagnostic[]>()
+    if (engineResult.diagnostics) {
+      for (const ed of engineResult.diagnostics) {
+        const storeRel = unitMap.get(ed.file) ?? ed.file
+        const diag = toLintsightDiagnostic({
+          ruleId: ed.ruleId,
+          severity: ed.severity,
+          message: ed.message,
+          file: storeRel,
+          span: ed.span,
+          // 契约 v2：taint 证据链透传（SARIF codeFlows/relatedLocations 消费）
+          pathEvents: ed.pathEvents
+        })
+        const group = engineGroups.get(storeRel)
+        if (group) group.push(diag)
+        else engineGroups.set(storeRel, [diag])
+      }
     }
 
     // Vue SFC 虚拟块只含 <script>，template 引用不可见 → 内置 no-unused-vars
     // 系统性误报（默认抑制；用户显式配置该规则时 config-bridge 会关闭本开关）
-    let mergedDiagnostics = [...results.values()].flat()
+    let mergedDiagnostics = [
+      ...results.values(),
+      ...engineGroups.values()
+    ].flat()
     let suppressedVueUnused = 0
     if (suppressVueUnusedVars) {
       const vueRels = new Set(vues.map((v) => v.originalRel))
@@ -540,6 +555,7 @@ export async function runPipeline(
     return {
       exitCode: summary.error > 0 ? 1 : 0,
       degraded,
+      cache: { enabled: cacheCtx.enabled, hits, misses: misses.length },
       report: {
         contractVersion: diagnostics[0]?.contractVersion ?? CONTRACT_VERSION,
         files: units.length,

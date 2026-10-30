@@ -50,9 +50,11 @@ describe('S5 T1.15: safe fix 逆映射回写（.vue 收敛）', () => {
       expect(r2.exitCode).toBe(0)
       expect(r2.report?.diagnostics ?? []).toHaveLength(0)
 
-      // 临时文件零残留（finally 清理只删本次创建的）
+      // 临时文件零残留（finally 清理只删本次创建的）。
+      // G1 起干净文件也写空缓存条目 → `.lintsight-cache/` 属预期产物；
+      // 这里只检查虚拟块临时文件（`.lintsight-<pid>-<seq>.<lang>`）。
       const leftovers = (await readdir(dir)).filter((f) =>
-        f.includes('lintsight-')
+        /\.lintsight-\d+(-\d+)?\.(ts|tsx|js|jsx)$/.test(f)
       )
       expect(leftovers).toHaveLength(0)
     } finally {
