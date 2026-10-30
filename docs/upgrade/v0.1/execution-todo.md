@@ -56,13 +56,15 @@
     - 默认引擎超时 120s（`LINTSIGHT_ENGINE_TIMEOUT_MS` 覆盖，0 关闭）；非 ok 状态统一 warn。
     - `bun run corpus:check`：FAIL（与 G1/G2 相同的既有基线陈旧；本 change 不改检测面，未 `--save`）。
     - scanner 签字：**待补**（不伪造；未签字前不宣称 G6 外部验收闭合）。
-- [ ] **G13 配置根与路径契约**
+- [~] **G13 配置根与路径契约**
   - owner：engine
+  - 进行中：方案文档 `docs/changes/20261030-config-root/`（待确认，未改代码）
   - 内容：明确优先级 **`--root` > `--config` > cwd**；config/ignore/tsconfig/报告路径全部 root 相对。
   - 验收：扫描外部绝对路径项目，配置正确发现、报告路径不含 `C:/`/`/Users/` 绝对前缀。
   - 证据：新增 `config-root.test.ts` 三组：外部绝对路径、嵌套 config、显式 `--config`；`ignore.test.ts` 回归。
-- [ ] **G14 单一版本源**
+- [~] **G14 单一版本源**
   - owner：release
+  - 进行中：方案文档 `docs/changes/20261030-version-source/`（待确认，未改代码）
   - 内容：CLI、根包、引擎、SARIF driver 版本一致。
   - 验收：`--version` / SARIF / 包版本 / 引擎版本检查进 CI。
   - 证据：`version-check` CI 脚本 + `sarif.test.ts` 快照；发布检查清单。
@@ -151,8 +153,9 @@
     - `bun run test`：180 pass / 0 fail；`cargo test --release`：52 passed；`bun run lint`：0 warnings；`bun run format:check`：clean。
     - 冷/热报告 diff：`fixtures/ts` 三轮（`--no-cache` / 首次 cache miss / 二次 cache hit）JSON 逐字节一致；100 文件热扫 109ms（<1s）。复现命令见 `docs/changes/20261030-cache-correctness/design.md` §证据复现命令。
     - `bun run corpus:check`：FAIL（归因与阻塞说明见上；未执行 `--save`）。
-- [ ] **G3 CI 与基线（分阶段）**
+- [~] **G3 CI 与基线（分阶段）**
   - owner：CI
+  - 进行中：方案文档 `docs/changes/20261030-ci-baseline/`（待确认，未改代码）
   - 内容：
     - 第一阶段最小 CI：`cargo build --release` → `REQUIRE_ENGINE=1 bun run test` + `lint` + `format:check` + `check:change-id`（无引擎产物时图规则矩阵必须 fail 而非 skip）；
     - 第二阶段：`cargo test` + `clippy` + `cargo fmt`；
