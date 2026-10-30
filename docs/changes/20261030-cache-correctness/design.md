@@ -22,12 +22,14 @@ key = sha256(JSON.stringify([
 - `storeRel`：诊断归属文件的项目根相对 POSIX 路径；`.vue` 用**原始 `.vue`**（不是虚拟块路径），与缓存条目里的 `file` 口径一致。
 - `contentHash`：原始文件内容 SHA-256（`.vue` 仍取原文件；虚拟块由原文件确定性生成）。
 - `engineFp`（沿用现有组合）：`lintsight@<版本>|oxlint@<版本>|engine@<bin 内容哈希前 16 位 | none>|contract@<CONTRACT_VERSION>`。`entry@2` 作为键前缀盐，与条目版本双保险。
-- `configFp`：按固定顺序拼接 `<label>@<sha256 | ->`：
+- `configFp`：按固定顺序**序列化为 JSON 数组**，元素为 `<label>:<sha256 | ->`：
   1. `lintsight.config.json`（cwd 自动发现形态）；
   2. `cwd/.oxlintrc.json`（oxlint 自动发现形态）；
   3. 生成配置（`.lintsight-cache/oxlintrc.json`，若本轮存在）；
-  4. **本轮发现的全部 tsconfig**：`<root 相对 POSIX 路径>@<内容哈希>`，按路径排序。
-- `pluginFp`：两个 oxlintrc 的 `jsPlugins` 并集，逐项解析为绝对路径后 `<absPath>@<sha256 | missing>`，按路径排序。
+  4. **本轮发现的全部 tsconfig**：`tsconfig@<root 相对 POSIX 路径>:<内容哈希>`，按路径排序。
+- `pluginFp`：两个 oxlintrc 的 `jsPlugins` 并集，逐项解析为绝对路径、按路径排序后**序列化为 JSON 数组**，元素为 `<absPath>:<sha256 | missing>`。
+
+> 所有指纹成分（含 `configFp` / `pluginFp` 内部）都用 JSON 数组序列化，避免 `|` 等字符造成成分边界歧义。
 
 > 说明：`tsconfig` 通过 `configFp` 参与键。它既影响引擎别名解析，也影响 `--type-aware`（tsgolint）诊断，不能只当作引擎成分。
 
@@ -202,6 +204,25 @@ $out = Join-Path $env:TEMP 'lintsight-100.json'
 $sw=[Diagnostics.Stopwatch]::StartNew(); bun run cli -- $d --format json --output $out > $null; $t1=$sw.ElapsedMilliseconds
 $sw.Restart(); bun run cli -- $d --format json --output $out > $null; $t2=$sw.ElapsedMilliseconds
 Write-Output "cold-ish=$t1 ms, warm=$t2 ms"   # 实测 309ms / 109ms
+```
+
+```bash
+# 等价命令（bash；macOS/Linux）
+rm -rf .lintsight-cache
+bun run cli -- fixtures/ts --format json --no-cache --output "${TMPDIR:-/tmp}/lintsight-nocache.json" >/dev/null
+bun run cli -- fixtures/ts --format json --output "${TMPDIR:-/tmp}/lintsight-cold.json" >/dev/null
+bun run cli -- fixtures/ts --format json --output "${TMPDIR:-/tmp}/lintsight-hot.json" >/dev/null
+diff -u "${TMPDIR:-/tmp}/lintsight-nocache.json" "${TMPDIR:-/tmp}/lintsight-cold.json"  # 空
+diff -u "${TMPDIR:-/tmp}/lintsight-cold.json" "${TMPDIR:-/tmp}/lintsight-hot.json"      # 空
+
+d="${TMPDIR:-/tmp}/lintsight-100"; rm -rf "$d"; mkdir -p "$d"
+for i in $(seq 1 100); do
+  printf 'export function f%s(a: number): number {\n  const x = a + 1\n  console.log(x)\n  return x\n}\n' "$i" > "$d/f$i.ts"
+done
+out="${TMPDIR:-/tmp}/lintsight-100.json"
+start=$(date +%s%N); bun run cli -- "$d" --format json --output "$out" >/dev/null; t1=$(( ($(date +%s%N)-start)/1000000 ))
+start=$(date +%s%N); bun run cli -- "$d" --format json --output "$out" >/dev/null; t2=$(( ($(date +%s%N)-start)/1000000 ))
+echo "cold-ish=${t1}ms warm=${t2}ms"
 ```
 
 ## 风险与已知坑

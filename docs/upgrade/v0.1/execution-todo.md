@@ -134,7 +134,7 @@
 - [ ] **G3 CI 与基线（分阶段）**
   - owner：CI
   - 内容：
-    - 第一阶段最小 CI：`bun run test` + `lint` + `format:check` + `check:change-id`；
+    - 第一阶段最小 CI：`cargo build --release` → `REQUIRE_ENGINE=1 bun run test` + `lint` + `format:check` + `check:change-id`（无引擎产物时图规则矩阵必须 fail 而非 skip）；
     - 第二阶段：`cargo test` + `clippy` + `cargo fmt`；
     - 第三阶段：bench + corpus（专用 runner）；
     - 写明 OS 矩阵（Windows/Linux/macOS 至少 Linux+Windows）；

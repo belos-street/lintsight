@@ -50,7 +50,7 @@
     - `引擎降级期间写 M1 缓存，恢复后引擎诊断仍出现`
     - 命令：`bun run build:rules && bun test packages/lintsight-cli/test/cache.test.ts`（有引擎产物时三组必须执行，不允许 skip 静默通过而无说明）
 
-- [x] **任务 5：全量验证与证据/文档同步**
+- [x] **任务 5：全量验证与证据/文档同步**（注：`corpus:check` 已执行，FAIL 归 G3 基线陈旧，不作为本任务通过条件；G1 收口状态见 execution-todo 阻塞说明）
   - 涉及文件：`docs/upgrade/v0.1/execution-todo.md`、`.agents/memory/decisions.md`、本 change 目录
   - 内容：
     - 按 `verification.md` 实际执行并附摘要：
@@ -72,6 +72,7 @@
     - B2：proposal 补确认记录（2026-10-30，用户确认范围）；
     - H1：plan/execution-todo 的 G1 口径改为「引擎结果不缓存 + 全量 pass 覆盖文件集/依赖闭包」；
     - H2：`REQUIRE_ENGINE=1` 前置门禁，无引擎产物时不得静默 skip；
-    - Medium：design 修正并发写语义、补证据复现命令、补相对 jsPlugins 端到端用例、fix 测试补缓存 tmp 零残留断言；
-    - Low：修正旧测试覆盖描述、补 `.oxlintrc.json` `extends` 风险、缓存键改 JSON 数组序列化。
+    - Medium：design 修正并发写语义、补证据复现命令（PowerShell + bash 等价）、补相对 jsPlugins 端到端用例、fix 测试补缓存 tmp 零残留断言；
+    - Low：修正旧测试覆盖描述、补 `.oxlintrc.json` `extends` 风险、缓存键（顶层 + config/plugin 内部）改 JSON 数组序列化；
+    - G3 口径：第一阶段 CI 明确 `cargo build --release` → `REQUIRE_ENGINE=1 bun run test`。
   - 验收点：`REQUIRE_ENGINE=1 bun test packages/lintsight-cli/test/cache.test.ts` 全绿；`bun run test` / `lint` / `format:check` / `cargo test --release` 全绿；G1 状态为 `[~]` 且有阻塞说明。
