@@ -52,6 +52,11 @@ describe('P0 安全规则契约', () => {
         expect: []
       },
       {
+        // tests/ 目录段豁免（跨平台：Windows 的 context.filename 是反斜杠绝对路径）
+        file: 'fixtures/options/tests/no-hardcoded-credentials.dir.bad-1.ts',
+        expect: []
+      },
+      {
         // 普通文件（非 test 名）硬编码凭证 → 默认仍报（豁免不误伤主口径）
         file: 'fixtures/options/no-hardcoded-credentials.testfile.good-1.ts',
         expect: [{ line: 3, column: 3 }]

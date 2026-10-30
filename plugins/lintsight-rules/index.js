@@ -852,7 +852,7 @@ var no_sync_io_in_async_default = {
 // packages/rules-core/src/is-test-file.js
 function isTestFile(filename) {
   if (typeof filename !== 'string') return false
-  const segments = filename.toLowerCase().split('/')
+  const segments = filename.toLowerCase().split(/[/\\]/)
   const basename = segments[segments.length - 1]
   if (basename.includes('.test.') || basename.includes('.spec.')) return true
   return segments.some(
