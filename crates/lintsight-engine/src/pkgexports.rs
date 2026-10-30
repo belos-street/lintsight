@@ -50,10 +50,7 @@ fn walk(dir: &Path, root: &Path, out: &mut BTreeMap<String, PackageInfo>, depth:
     let Ok(entries) = std::fs::read_dir(dir) else {
         return;
     };
-    let mut names: Vec<PathBuf> = entries
-        .flatten()
-        .map(|e| e.path())
-        .collect();
+    let mut names: Vec<PathBuf> = entries.flatten().map(|e| e.path()).collect();
     names.sort(); // 确定性遍历
     for p in names {
         let name = p.file_name().and_then(|n| n.to_str()).unwrap_or("");
@@ -80,10 +77,8 @@ fn walk(dir: &Path, root: &Path, out: &mut BTreeMap<String, PackageInfo>, depth:
                         .and_then(|d| d.strip_prefix(root).ok())
                         .map(|d| d.to_string_lossy().to_string())
                         .unwrap_or_default();
-                    out.entry(pkg_name.to_string()).or_insert(PackageInfo {
-                        root_rel,
-                        keys,
-                    });
+                    out.entry(pkg_name.to_string())
+                        .or_insert(PackageInfo { root_rel, keys });
                 }
             }
         }
@@ -291,7 +286,11 @@ mod tests {
         let pkgs = discover(&base);
         std::fs::remove_dir_all(&base).ok();
 
-        assert_eq!(pkgs.len(), 2, "node_modules 跳过 + legacy 无 exports 不入册");
+        assert_eq!(
+            pkgs.len(),
+            2,
+            "node_modules 跳过 + legacy 无 exports 不入册"
+        );
         assert!(pkgs.contains_key("@app/api"));
         assert_eq!(pkgs["web"].keys, BTreeSet::from([".".to_string()]));
     }

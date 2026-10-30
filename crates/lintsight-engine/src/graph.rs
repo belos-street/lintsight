@@ -66,10 +66,7 @@ pub fn detect_cycles(edges: &EdgeTable) -> Vec<CycleDiag> {
     let mut adj: Vec<Vec<usize>> = vec![Vec::new(); n];
     for (from, tos) in edges {
         let f = ids[from.as_str()];
-        let mut targets: Vec<usize> = tos
-            .iter()
-            .map(|(to, _)| ids[to.as_str()])
-            .collect();
+        let mut targets: Vec<usize> = tos.iter().map(|(to, _)| ids[to.as_str()]).collect();
         targets.sort_unstable();
         targets.dedup();
         adj[f] = targets;
@@ -169,7 +166,10 @@ fn tarjan(adj: &[Vec<usize>], n: usize) -> Vec<Vec<usize>> {
         if index_of[root] != usize::MAX {
             continue;
         }
-        let mut call: Vec<Frame> = vec![Frame { v: root, child_idx: 0 }];
+        let mut call: Vec<Frame> = vec![Frame {
+            v: root,
+            child_idx: 0,
+        }];
         while let Some(frame) = call.last_mut() {
             let v = frame.v;
             if frame.child_idx == 0 {
@@ -272,12 +272,7 @@ mod tests {
 
     #[test]
     fn two_disjoint_cycles() {
-        let t = table(&[
-            ("a", &["b"]),
-            ("b", &["a"]),
-            ("c", &["d"]),
-            ("d", &["c"]),
-        ]);
+        let t = table(&[("a", &["b"]), ("b", &["a"]), ("c", &["d"]), ("d", &["c"])]);
         let diags = detect_cycles(&t);
         assert_eq!(diags.len(), 4);
         let files: Vec<&str> = diags.iter().map(|d| d.file.as_str()).collect();

@@ -165,6 +165,7 @@
   - 验收：流水线红即阻断合并；基线按版本可追溯。
   - 证据（2026-10-30）：
     - `.github/workflows/ci.yml`：static（lint/format/version:check/change-id range）、test（Linux+Windows，cargo build 后 `REQUIRE_ENGINE=1`）、rust（fmt/clippy/test）、heavy（schedule/manual + 预检）；Bun 1.4.2 / Rust 1.97.1 固定。
+    - 首轮 CI（2026-10-30）rust 矩阵红灯：`cargo fmt/clippy` 未带 `--manifest-path`（仓库根无 Cargo.toml）+ clippy 存量 8 error + rustfmt 存量 9 处 diff；已修复（workflow 三处命令改 manifest-path、修 `never_loop`/`needless_return`×5/`manual_flatten`/`non_upper_case_globals`、`cargo fmt` 应用、`actions/checkout@v4→v5`）。本地等价门禁：fmt exit 0、clippy exit 0、`cargo test --release` 52 passed。待 CI 复跑链接。
     - `check:change-id:ci --range` 已实现；`scripts/check-change-id.test.ts` 3 pass；本提交范围实测 `309291c..HEAD` exit 0。
     - corpus 基线已重建（`corpus/baseline-v0.json`：3453 → **3540** diagnostics，双报率 0，`corpus:check` 通过）；漂移归因 `027fd8f`（floating-promise 误报治理）/`abe8326`（serve-index 路径前缀）。
     - **未完成（外部依赖）**：branch protection 未配置、无 CI 运行链接、无 `lintsight-heavy` runner、bench 基线未重建（本机无 hyperfine）。G3 保持 `[~]`，不伪造签字。

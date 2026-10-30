@@ -199,7 +199,8 @@ pub fn resolve_target(
     specifier: &str,
     ts_paths: &[TsPathMapping],
 ) -> Option<String> {
-    resolve_import(importer_rel, specifier).or_else(|| resolve_alias(importer_rel, specifier, ts_paths))
+    resolve_import(importer_rel, specifier)
+        .or_else(|| resolve_alias(importer_rel, specifier, ts_paths))
 }
 
 /// 单文件架构检查：返回越界 import 列表（按源码序，确定性）

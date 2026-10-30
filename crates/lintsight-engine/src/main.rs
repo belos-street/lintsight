@@ -101,28 +101,23 @@ fn main() {
     // scanRel 映射回报告文件）
     let mut edges: graph::EdgeTable = BTreeMap::new();
     let mut node2real: BTreeMap<String, String> = BTreeMap::new();
-    for result in file_results {
-        if let Some((out, rel)) = result {
-            diagnostics.extend(out.diagnostics);
-            if want_cycles {
-                let node = graph::strip_extension(&rel);
-                node2real.entry(node.clone()).or_insert(rel.clone());
-                let targets: &mut Vec<(String, oxc_span::Span)> =
-                    edges.entry(node).or_default();
-                for (specifier, span, type_only) in out.specifiers {
-                    // type-only import TS 擦除后无运行时环 → 图边不收
-                    if type_only {
-                        continue;
-                    }
-                    if let Some(target) =
-                        arch::resolve_target(&rel, &specifier, &ts_paths)
-                    {
-                        targets.push((graph::strip_extension(&target), span));
-                    }
+    for (out, rel) in file_results.into_iter().flatten() {
+        diagnostics.extend(out.diagnostics);
+        if want_cycles {
+            let node = graph::strip_extension(&rel);
+            node2real.entry(node.clone()).or_insert(rel.clone());
+            let targets: &mut Vec<(String, oxc_span::Span)> = edges.entry(node).or_default();
+            for (specifier, span, type_only) in out.specifiers {
+                // type-only import TS 擦除后无运行时环 → 图边不收
+                if type_only {
+                    continue;
+                }
+                if let Some(target) = arch::resolve_target(&rel, &specifier, &ts_paths) {
+                    targets.push((graph::strip_extension(&target), span));
                 }
             }
-            scanned += 1;
         }
+        scanned += 1;
     }
 
     if want_cycles {

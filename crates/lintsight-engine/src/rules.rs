@@ -581,7 +581,7 @@ mod tests {
         out
     }
 
-    const REaddir_JOIN_READ: &str = "\
+    const READDIR_JOIN_READ: &str = "\
 import fs from 'node:fs'
 import path from 'node:path'
 const files = fs.readdirSync('./data')
@@ -592,7 +592,7 @@ for (const f of files) {
 
     #[test]
     fn detects_readdir_join_sink_loop() {
-        let hits = traversal_hits(REaddir_JOIN_READ);
+        let hits = traversal_hits(READDIR_JOIN_READ);
         assert_eq!(hits.len(), 1, "回边不动点收敛后 sink 只报一次");
         // 证据链完整：source → propagation(join) → sink
         assert_eq!(hits[0].1, vec!["source", "propagation", "sink"]);
@@ -601,14 +601,14 @@ for (const f of files) {
     #[test]
     fn path_events_carry_line_col() {
         // M3 T3.1：SARIF relatedLocations 依赖事件级 line/column（1-based）。
-        // REaddir_JOIN_READ：source=readdirSync(L3) → join(L5) → sink=readFileSync(L5)。
+        // READDIR_JOIN_READ：source=readdirSync(L3) → join(L5) → sink=readFileSync(L5)。
         // 走 analyze_file（shape_diag 是换算点），非 check() 的 RawDiag。
         let allocator = oxc_allocator::Allocator::default();
         let rules = registry(None, &[], None);
         let out = crate::analyze::analyze_file(
             &allocator,
             "a.ts",
-            REaddir_JOIN_READ,
+            READDIR_JOIN_READ,
             rules.as_slice(),
             false,
         );

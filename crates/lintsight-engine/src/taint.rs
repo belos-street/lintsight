@@ -225,22 +225,19 @@ impl BlockState {
 /// `fs.readFileSync` → ("fs","readFileSync")；`c.req.query` → ("req","query")；
 /// 裸标识符 `exec(...)` → ("","exec")（obj 空串约定 = 无命名空间形态）。
 fn member_name<'a>(expr: &'a Expression<'a>) -> (&'a str, &'a str) {
-    let cur = expr;
-    loop {
-        match cur {
-            Expression::StaticMemberExpression(m) => {
-                // 链末段 (m.object 的末段名, m.property)
-                let obj = match &m.object {
-                    Expression::Identifier(i) => i.name.as_str(),
-                    Expression::StaticMemberExpression(inner) => inner.property.name.as_str(),
-                    _ => "",
-                };
-                return (obj, m.property.name.as_str());
-            }
-            Expression::Identifier(i) => return ("", i.name.as_str()),
-            // 继续剥 Parenthesized/TS 断言等包装（0.150 无该 Expression 变体则自然落空）
-            _ => return ("", ""),
+    match expr {
+        Expression::StaticMemberExpression(m) => {
+            // 链末段 (m.object 的末段名, m.property)
+            let obj = match &m.object {
+                Expression::Identifier(i) => i.name.as_str(),
+                Expression::StaticMemberExpression(inner) => inner.property.name.as_str(),
+                _ => "",
+            };
+            (obj, m.property.name.as_str())
         }
+        Expression::Identifier(i) => ("", i.name.as_str()),
+        // 其他包装（Parenthesized/TS 断言等）不剥，按无名字形态返回
+        _ => ("", ""),
     }
 }
 
@@ -530,15 +527,11 @@ impl<'a, 't> Analyzer<'a, 't> {
         match expr {
             // TS 类型语法包装剥离（M3）：`query.to as string` / `x!` / `(x)` 不改变值语义，
             // 污点穿透——juice-shop redirect 埋洞实参是 `query.to as string` 形态
-            Expression::TSAsExpression(t) => return self.eval(&t.expression, state, events),
-            Expression::TSSatisfiesExpression(t) => return self.eval(&t.expression, state, events),
-            Expression::TSNonNullExpression(t) => return self.eval(&t.expression, state, events),
-            Expression::TSInstantiationExpression(t) => {
-                return self.eval(&t.expression, state, events)
-            }
-            Expression::ParenthesizedExpression(p) => {
-                return self.eval(&p.expression, state, events)
-            }
+            Expression::TSAsExpression(t) => self.eval(&t.expression, state, events),
+            Expression::TSSatisfiesExpression(t) => self.eval(&t.expression, state, events),
+            Expression::TSNonNullExpression(t) => self.eval(&t.expression, state, events),
+            Expression::TSInstantiationExpression(t) => self.eval(&t.expression, state, events),
+            Expression::ParenthesizedExpression(p) => self.eval(&p.expression, state, events),
             Expression::Identifier(ident) => {
                 let sid = self.sym_of_ref(ident.reference_id())?;
                 state.chain_of(sid).cloned().or_else(|| {

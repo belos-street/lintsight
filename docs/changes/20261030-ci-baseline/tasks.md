@@ -3,10 +3,17 @@
 > change-id：`20261030-ci-baseline` · 按依赖排序；每项完成后勾选，最后走 `verification.md`。
 > 实现前需用户确认本方案；未确认禁止改代码面。
 
-- [~] **任务 1：static / test / rust 三个 job**（workflow 已落地；尚未在 GitHub 实际运行，无成功/失败运行链接）
+- [~] **任务 1：static / test / rust 三个 job**（workflow 已落地；rust job 首轮 CI 失败已修复；尚未有成功运行链接）
   - 涉及文件：新增 `.github/workflows/ci.yml`
   - 内容：Bun 1.4.2 + Rust 1.97.1 固定版本与缓存；static（build:rules/lint/format/version:check）；test 矩阵（Linux+Windows，cargo build --release 后 `REQUIRE_ENGINE=1 bun run test`）；rust 矩阵（fmt/clippy/test）。
   - 验收点：首次 PR 运行通过；至少一次失败运行（红）链接；OS 矩阵齐全；workflow 中无 `stable`/`latest` 浮动版本。
+  - 首轮运行失败与修复（2026-10-30）：
+    - 现象：`rust (ubuntu-latest)` / `rust (windows-latest)` exit 1；
+    - 根因 1：`cargo fmt --all` / `cargo clippy` 在仓库根执行，而 `Cargo.toml` 在 `crates/lintsight-engine/`——统一改 `--manifest-path crates/lintsight-engine/Cargo.toml`；
+    - 根因 2：`clippy -D warnings` 存量 8 个 error（`never_loop` 1、`needless_return` 5、`manual_flatten` 1、`non_upper_case_globals` 1）——按建议修代码，不引入 allow；
+    - 根因 3：rustfmt 存量 9 处 diff（arch/graph/main/pkgexports）——`cargo fmt` 应用格式化；
+    - 附：`actions/checkout@v4` → `v5`（消除 Node.js 20 deprecation 注解）。
+    - 本地等价验证：`cargo fmt --manifest-path ... -- --check`（exit 0）、`cargo clippy --manifest-path ... --all-targets -- -D warnings`（exit 0）、`cargo test --release --manifest-path ...`（52 passed）。
 
 - [x] **任务 2：check-change-id range 模式**
   - 涉及文件：`scripts/check-change-id.ts`、`package.json`、`scripts/check-change-id.test.ts`

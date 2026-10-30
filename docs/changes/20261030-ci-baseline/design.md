@@ -60,8 +60,8 @@ jobs:
     steps:
       - checkout
       - rust-toolchain (toolchain: 1.97.1 + rustfmt + clippy + cache)
-      - cargo fmt --all -- --check
-      - cargo clippy --all-targets -- -D warnings
+      - cargo fmt --manifest-path crates/lintsight-engine/Cargo.toml -- --check
+      - cargo clippy --manifest-path crates/lintsight-engine/Cargo.toml --all-targets -- -D warnings
       - cargo test --release --manifest-path crates/lintsight-engine/Cargo.toml
 
   heavy:
@@ -70,7 +70,7 @@ jobs:
     steps:
       - checkout (fetch-depth: 0)
       - setup-bun
-      - cargo build --release
+      - cargo build --release --manifest-path crates/lintsight-engine/Cargo.toml
       - bun install --frozen-lockfile
       - bun run bench
       - bun run corpus:check
