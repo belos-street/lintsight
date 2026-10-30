@@ -124,7 +124,8 @@ async function pluginFingerprint(
   const hashes = await Promise.all(
     files.map(async (f) => `${f}:${(await sha256File(f)) ?? 'missing'}`)
   )
-  return hashes.join('|')
+  // JSON 数组序列化：插件路径含 `|` 时不产生成分边界歧义
+  return JSON.stringify(hashes)
 }
 
 export async function initCache(opts: InitCacheOptions): Promise<CacheContext> {
@@ -153,13 +154,14 @@ export async function initCache(opts: InitCacheOptions): Promise<CacheContext> {
     const rel = path.relative(opts.cwd, abs).split(path.sep).join('/')
     configEntries.push({ label: `tsconfig@${rel}`, abs })
   }
-  const config = (
+  // JSON 数组序列化：标签/哈希含 `|` 时不产生成分边界歧义
+  const config = JSON.stringify(
     await Promise.all(
       configEntries.map(
         async (e) => `${e.label}:${(await sha256File(e.abs)) ?? '-'}`
       )
     )
-  ).join('|')
+  )
   const plugin = await pluginFingerprint([
     opts.oxlintrcPath,
     path.join(opts.cwd, '.oxlintrc.json')
