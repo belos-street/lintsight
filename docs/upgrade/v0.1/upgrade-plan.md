@@ -401,7 +401,7 @@ interface FrameworkProfile {
 
 | ID | 优先级 | 缺口 | 证据 | 修复与验收 |
 | --- | --- | --- | --- | --- |
-| G1 | P0 | 增量缓存对跨文件规则不成立，且同内容文件会错配 | `createCacheKey` 只含引擎/配置/插件/内容，不含路径；干净文件因无 `group` 不写缓存；图规则只接收 `misses` | 键含路径 + tsconfig + 依赖闭包/影响集 + 文件集；空结果也缓存；图规则全量 pass 或标不可缓存；补「重复内容 / 断环 / 加文件 / tsconfig 变更」冷热等价测试 |
+| G1 | P0 | 增量缓存对跨文件规则不成立，且同内容文件会错配 | `createCacheKey` 只含引擎/配置/插件/内容，不含路径；干净文件因无 `group` 不写缓存；图规则只接收 `misses` | 键含路径 + tsconfig + engine/config/plugin 指纹；空结果也缓存；**引擎结果不缓存、每轮按当前文件集全量 pass**（依赖闭包/影响集/文件集由此覆盖，不进缓存键）；补「重复内容 / 断环 / 加文件 / tsconfig 变更」冷热等价测试 |
 | G2 | P0 | 契约缺 confidence/cweTags/fail-on/engineStatus/toolVersion，且无 inline suppression | `LintsightDiagnostic` 只有 severity；`cli.ts` 无 `--fail-on`；`degraded` 不进报告；SARIF 无 taxonomies/suppressions；`--output` 仍写 stdout | 契约 v3；SARIF 补 taxonomies/suppressions；inline ignore + reason；golden/SARIF/scanner 消费测试 |
 | G3 | P0 | 仓库无 CI；bench/corpus 基线陈旧 | 无 `.github/`、`.gitlab-ci.yml`；`bun run test` 不含 cargo；bench baseline 停在 `5136929` | GitHub Actions：bun + cargo + lint + format + clippy + bench + corpus + `check:change-id`；基线按版本重建 |
 | G4 | P1 | Rust 轨道未真正兑现铁律 #2 | `rules.rs`/`taint.rs` 直接 `use oxc_ast`；`FileContext::semantic()` 返回 oxc `Semantic` | 补薄 `ir` façade，或明确修订铁律为「JS 强约束、Rust 绑定 oxc」 |
@@ -582,3 +582,4 @@ interface FrameworkProfile {
 | v0.1 修订 3 | 2026-10-29 | 合并 M1-M3 交付评估：新增评分与结论、语言/框架覆盖面模型（TSX/JSX、Vue、Angular、Nest/Express/ORM）、L0-L4 深度路线、Rust 安全规则扩充清单、精确行基准与验收口径、工程缺口 G1-G11；明确 Angular/React 需求门控与「覆盖矩阵优先于规则数量」 |
 | v0.1 修订 4 | 2026-10-29 | 复核独立评审 v0.1：采纳 B1/B2 + B3（H3 升级）、H1/H2/H4-H9、M1-M9（M9 已复现）与 L1-L4；评分改为 MVP 6.0 / 企业替代 3.3；补 G12-G17（默认预设、配置根、版本源、Vue 图身份、输入面、opt-in 对账）；修正 7 处口径（processor 语义、注册数、空配置安全面、engine degraded 设计冲突、M9 已复现、SQL 表述、评分非事实）；M4 验收增加冷/热等价、默认预设、契约字段与路径/版本一致性 |
 | v0.1 修订 5 | 2026-10-29 | 按执行清单复核调整范围：M4 仅 P0；G6/G8/G9/G14/G15 升 P0；G5/G10 移至 M5；G4/G7/G16 归 M5，G11/G17 归 M6；补 G15 修复目标（Vue→TS 2 条，当前 0 条为 bug 基线）；执行清单补齐证据行、G1 8 组缓存矩阵、G2 schema 细节、G12 规则账、G13 优先级、G3 分阶段 CI、G8/H5/前端包规则 ID 边界 |
+| v0.1 修订 6 | 2026-10-30 | G1 收口口径对齐实现：缓存键 = 路径 + tsconfig + engine/config/plugin 指纹；**引擎诊断不缓存、每轮全量 pass**，文件集/依赖闭包/影响集不进键；空结果缓存；图规则矩阵由 `REQUIRE_ENGINE=1` 硬门禁防静默 skip |

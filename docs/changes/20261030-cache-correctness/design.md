@@ -7,15 +7,17 @@
 ### 1. 缓存键 v2（路径 + tsconfig + 既有指纹）
 
 ```text
-key = sha256([
+key = sha256(JSON.stringify([
   'entry@2',
   engineFp,
   configFp,
   pluginFp,
   `path@${storeRel}`,
   `content@${contentHash}`
-].join('|'))
+]))
 ```
+
+> 用 JSON 数组序列化而不是 `|` 拼接：路径/内容中出现 `|` 等字符时不会产生成分边界歧义。
 
 - `storeRel`：诊断归属文件的项目根相对 POSIX 路径；`.vue` 用**原始 `.vue`**（不是虚拟块路径），与缓存条目里的 `file` 口径一致。
 - `contentHash`：原始文件内容 SHA-256（`.vue` 仍取原文件；虚拟块由原文件确定性生成）。
@@ -50,7 +52,7 @@ await rename(tmp, target)          // 同目录 rename：POSIX 原子；Windows 
 ```
 
 - 任一步失败 → 删除 tmp（尽力而为）+ debug 日志，不抛错（缓存写失败不影响扫描）。
-- 并发写同一 key：最后 rename 者胜出；读者只会看到「旧完整文件」或「新完整文件」，不会读到半截 JSON。
+- 并发写同一 key：rename 是原子的，但**不保证最后写者胜出**；Windows 共享冲突下个别写入会重试 3 次后 fail-open 丢弃。读者只会看到「旧完整文件」或「新完整文件」，不会读到半截 JSON；同 key 意味着内容/配置一致，旧条目与新条目语义等价，丢写无害。
 - tmp 名含 pid + 进程内自增序号，避免并发进程互相覆盖 tmp。
 
 ### 4. 插件路径解析修正
@@ -153,9 +155,9 @@ collectFiles
 | 1 | 同内容不同路径 | `同内容不同路径：诊断归属各自文件，冷/热一致` | 两个内容相同的坏文件，各自 `file` 正确、条数 2；二轮命中后仍为 2 且归属不变 |
 | 2 | 干净文件命中（空结果缓存） | `干净文件空结果入缓存：二轮全 hit` | 首轮 `cache.misses=2`；二轮 `hits=2/misses=0`；诊断集合不变 |
 | 3 | 文件删除 | `文件删除后不命中旧条目：诊断不含已删文件` | 删 `b.ts` 后重跑只报 `a.ts`；不出现 `b.ts` 的陈旧诊断；exit 仍按现存 error 计算 |
-| 4a | config 变化 | 现有 `配置变更击穿缓存`（保留）+ `lintsight.config.json 变化击穿` | 规则集/ignore 变化 → 新键 → 诊断随配置更新 |
+| 4a | config 变化 | `配置变更击穿缓存：.oxlintrc.json 规则集变化 → 重新扫描` | 规则集变化 → 新键 → 诊断随配置更新 |
 | 4b | engine 版本/指纹变化 | `引擎版本指纹变化：lintsightVersion / engine bin 内容 → 新键` | 单元级 `initCache` + `createCacheKey`：版本或二进制内容变化 → 键不同 |
-| 4c | plugin 变化 | `插件产物内容变化击穿：jsPlugins 相对路径按配置目录解析` | 改插件文件内容 → `plugin` 指纹变化、键不同；相对路径不再算 `missing` |
+| 4c | plugin 变化 | `插件产物内容变化击穿：jsPlugins 相对路径按配置目录解析` + `手写 .oxlintrc.json 的 jsPlugins 相对路径：oxlint 实际加载` | 改插件文件内容 → 指纹/键变化、相对路径不再算 `missing`；端到端确认 oxlint 相对配置目录解析 |
 | 4d | 引擎降级恢复 | `引擎降级期间写 M1 缓存，恢复后引擎诊断仍出现`（skipIf 无引擎） | `OXLINT_ENGINE_BIN` 指向不存在路径 → `degraded=true`；恢复后同项目热扫出现 `lintsight-engine/no-eval` |
 | 5 | `--no-cache` 与 cache 一致 | `--no-cache 与 cache 冷/热诊断集合一致` | 冷扫 / 热扫 / `cache:false` 三者 `JSON.stringify(report.diagnostics)` 相等 |
 | 6a | 同 key 并发原子性 | `同 key 并发写入：条目始终完整可解析` | 8 个并发 `writeCacheEntry`（不同载荷）+ 并发读：每次读到完整数组且属于某一完整版本，无 null/半截 |
@@ -164,21 +166,51 @@ collectFiles
 | 8a | tsconfig 指纹 | `tsconfig 内容变化 → config 指纹变化` | 单元级：同一 `lintsightVersion` 下改 tsconfig 内容 → `config` 与键不同 |
 | 8b | tsconfig 变更冷热等价 | `tsconfig 别名变化冷热等价：别名解析成环`（skipIf 无引擎） | 无 tsconfig 时 `@/a` 不解析 → 0 环；加 `paths` 后（不改源码）热扫得到 2 环；`cache:false` 同结果 |
 
+前置门禁：
+
+- `REQUIRE_ENGINE=1`：`cache.test.ts` 顶部前置用例断言引擎产物存在；CI 设置该变量，无 cargo release 产物直接 fail，不允许图规则矩阵静默 skip。
+
 回归命令与范围：
 
 - `bun run build:rules && bun test packages/lintsight-cli/test/cache.test.ts`
+- `REQUIRE_ENGINE=1 bun test packages/lintsight-cli/test/cache.test.ts`（Linux/macOS；Windows 用 `$env:REQUIRE_ENGINE='1'; bun test ...`）
 - `bun run test`（全量；含 `closed-loop` / `report-snapshot` / `engine-bridge` / `ignore` / `fix`）
 - `cargo test --release --manifest-path crates/lintsight-engine/Cargo.toml`（无 Rust 改动，按完工自检执行）
 - `bun run lint` / `bun run format:check`
-- `bun run corpus:check`（缓存行为变化，语料冷/热基线必须一致）
-- 手工冷/热 diff：同一目标连续两轮 `--format json --output`，`diff` 为空（作为执行清单证据）。
+- `bun run corpus:check`：本 change 走 `cache:false`，与缓存路径无关；当前 FAIL 归 G3 基线重建，不作为 G1 收口条件。
+
+### 证据复现命令（2026-10-30）
+
+```powershell
+# 1) 冷 / 首次 cache / 热扫 JSON 逐字节一致（PowerShell，Windows）
+Remove-Item -Recurse -Force .lintsight-cache -ErrorAction SilentlyContinue
+$cold="$env:TEMP\lintsight-nocache.json"; $first="$env:TEMP\lintsight-cold.json"; $hot="$env:TEMP\lintsight-hot.json"
+bun run cli -- fixtures/ts --format json --no-cache --output $cold > $null
+bun run cli -- fixtures/ts --format json --output $first > $null
+bun run cli -- fixtures/ts --format json --output $hot > $null
+Compare-Object (Get-Content -Raw $cold) (Get-Content -Raw $first)   # 空
+Compare-Object (Get-Content -Raw $first) (Get-Content -Raw $hot)    # 空
+
+# 2) 100 文件热扫计时（临时项目，100 × 5 行）
+$d = Join-Path $env:TEMP 'lintsight-100'
+Remove-Item $d -Recurse -Force -ErrorAction SilentlyContinue; New-Item -ItemType Directory $d | Out-Null
+1..100 | ForEach-Object {
+  $c = "export function f$_(a: number): number {`n  const x = a + 1`n  console.log(x)`n  return x`n}`n"
+  Set-Content -LiteralPath (Join-Path $d "f$_.ts") -Value $c -NoNewline
+}
+$out = Join-Path $env:TEMP 'lintsight-100.json'
+$sw=[Diagnostics.Stopwatch]::StartNew(); bun run cli -- $d --format json --output $out > $null; $t1=$sw.ElapsedMilliseconds
+$sw.Restart(); bun run cli -- $d --format json --output $out > $null; $t2=$sw.ElapsedMilliseconds
+Write-Output "cold-ish=$t1 ms, warm=$t2 ms"   # 实测 309ms / 109ms
+```
 
 ## 风险与已知坑
 
 1. **热扫成本**：引擎每轮全量 pass。bench（`--no-cache` 冷扫）不受影响；需在验收时补一次百文件热扫计时，确认仍满足 M4 退出条件「百文件增量 <1s」。若超标，优先缩引擎启动开销，不回退正确性设计。
-2. **Windows rename 语义**：依赖 libuv `uv_fs_rename`（MoveFileExW 替换目标）。6a 用例在 Windows 本地必须稳定通过；若某环境 rename 失败，仍按 fail-open 跳过写入，且测试会暴露。
+2. **Windows rename 语义**：依赖 libuv `uv_fs_rename`（MoveFileExW 替换目标）。6a 用例在 Windows 本地可能观察到 `EPERM` 重试后 fail-open 丢弃写入；测试只断言读者看到完整条目，不保证最后写者胜出（同 key 内容等价，丢写无害）。
 3. **tsconfig 边界**：不解析 `extends`、500 文件上限。超出范围的变化可能不击穿缓存——与现状一致，文档标注，G13 调整 root 语义时复核。
 4. **无项目配置时的自动发现**：cwd 无 `lintsight.config.json`/`.oxlintrc.json` 时，oxlint 可能向上发现祖先配置，缓存指纹只覆盖 cwd 两个固定路径与生成配置。已知边界，G13 明确 `--root > --config > cwd` 后收敛。
 5. **v1 条目残留**：版本 bump 后旧条目不被读取但占磁盘；不做主动清理（fail-open，删除由用户/后续维护处理）。
 6. **`.vue` 虚拟块生成规则变更**：缓存键的 `lintsightVersion` 以 CLI 包版本兜底；若 processor 独立发版且 CLI 未 bump，可能短暂陈旧，G14 单一版本源后消除。
 7. **不得越界**：G1 不修 Vue 图身份（G15）、不修重复输入（G16）、不做跨文件 taint 缓存（M5）；矩阵第 7 组只用 TS fixture，验收口径不得写成 Vue 环通过。
+8. **`.oxlintrc.json` 的 `extends` 继承链未纳入指纹**：生成配置不走 `extends`，手写配置若通过 `extends` 引用上游规则集，上游文件变化不会击穿缓存；与 tsconfig `extends` 同属已知边界，G13 显式化配置根时复核。

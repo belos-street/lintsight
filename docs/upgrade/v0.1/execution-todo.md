@@ -112,10 +112,10 @@
 
 ### W5 工程正确性
 
-- [x] **G1 缓存正确性**
+- [~] **G1 缓存正确性**
   - owner：engine
-  - 变更：`docs/changes/20261030-cache-correctness/`（已实现）
-  - 内容：缓存键含路径 + tsconfig + 依赖闭包/影响集 + 文件集；空结果也缓存；图规则全量 pass 或标不可缓存。
+  - 变更：`docs/changes/20261030-cache-correctness/`（实现完成，收口待 corpus 基线重建/例外批准）
+  - 内容：缓存键含路径 + tsconfig + engine/config/plugin 指纹；空结果也缓存；**引擎结果不缓存、每轮按当前文件集全量 pass**（文件集/依赖闭包/影响集由此覆盖，不进缓存键）。
   - 验收测试矩阵（至少 8 组）：
     1. 同内容不同路径（当前 bug 的直接回归）；
     2. 干净文件命中（空结果缓存）；
@@ -125,11 +125,12 @@
     6. 同 key 并发写入原子性；
     7. 图规则（断环/加文件）冷热等价；
     8. tsconfig 变更冷热等价。
+  - 阻塞（2026-10-30）：`corpus:check` FAIL 属既有基线陈旧（基线 `52b03db`；后续规则提交 `027fd8f`/`abe8326` 未重建基线），corpus 走 `cache:false`，与本次缓存改动无因果关系。按验收纪律暂不置 `[x]`，待 G3 重建基线重跑或用户明确批准「corpus 例外」后再收口。
   - 证据（2026-10-30）：
-    - `cache.test.ts` 17 pass / 0 fail：8 组矩阵全部落地（同内容不同路径、空结果命中、文件删除、config/plugin/engine 击穿、`--no-cache` 一致、同 key 并发原子性、图规则成环/断环/加文件冷热等价、tsconfig 变更冷热等价、引擎降级不毒化）。
-    - `bun run test`：178 pass / 0 fail；`cargo test --release`：52 passed；`bun run lint`：0 warnings；`bun run format:check`：clean。
-    - 冷/热报告 diff：`fixtures/ts` 三轮（`--no-cache` / 首次 cache miss / 二次 cache hit）JSON 逐字节一致；100 文件热扫 109ms（<1s）。
-    - `bun run corpus:check`：FAIL（基线停在 `52b03db`，后续规则提交 `027fd8f`/`abe8326` 已使诊断面陈旧；corpus 走 `cache:false`，与本次缓存改动无关；未执行 `--save`，归 G3 基线重建）。
+    - `cache.test.ts` 19 pass / 0 fail：8 组矩阵 + `REQUIRE_ENGINE=1` 前置门禁 + 手写 oxlintrc 相对 jsPlugins 端到端加载。
+    - `bun run test`：180 pass / 0 fail；`cargo test --release`：52 passed；`bun run lint`：0 warnings；`bun run format:check`：clean。
+    - 冷/热报告 diff：`fixtures/ts` 三轮（`--no-cache` / 首次 cache miss / 二次 cache hit）JSON 逐字节一致；100 文件热扫 109ms（<1s）。复现命令见 `docs/changes/20261030-cache-correctness/design.md` §证据复现命令。
+    - `bun run corpus:check`：FAIL（归因与阻塞说明见上；未执行 `--save`）。
 - [ ] **G3 CI 与基线（分阶段）**
   - owner：CI
   - 内容：

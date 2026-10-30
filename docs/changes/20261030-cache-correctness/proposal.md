@@ -2,6 +2,10 @@
 
 > change-id：`20261030-cache-correctness` · 日期：`2026-10-30` · 状态：已实现
 
+## 确认记录
+
+- 2026-10-30：用户在本会话确认「按这个方案开始执行 G1」；确认范围 = 本目录 `proposal.md` / `design.md` / `tasks.md` 全量方案（含「引擎诊断不缓存、每轮全量 pass」与 8 组矩阵验收口径）。确认后才开始改代码面。
+
 ## 背景与问题
 
 独立评审（MVP **6.0** / 企业级替代 **3.3**，±0.5）把「增量缓存与契约不可信」列为企业替代视角的主要失分项；升级计划 §7 G1 与执行清单 W5 要求「先修正确性再谈性能」，并给出 8 组验收矩阵。现状实现存在六个具体缺陷：
@@ -13,7 +17,7 @@
 5. **条目写入非原子**：直接 `writeFile` 到最终路径；并发进程/并发 run 下读者可能读到半截 JSON（当前按 miss 兜底，但不满足矩阵第 6 组「同 key 并发原子性」）。
 6. **引擎降级会毒化缓存**：引擎诊断与 M1 诊断混存；引擎崩溃时空结果被写进条目，后续命中将永久缺失引擎诊断。
 
-旧实现的已知测试缺口：`packages/lintsight-cli/test/cache.test.ts` 只覆盖 config 击穿与 `--fix` 禁用，8 组矩阵中的路径/空结果/删除/图规则/tsconfig/并发均无用例。
+旧实现已有键敏感性、条目 roundtrip、config 击穿、miss→hit、`--fix` 禁用等用例，但缺少 8 组矩阵中的路径归属、空结果缓存、文件删除、图规则冷热、tsconfig 击穿与并发原子性。
 
 ## 目标与非目标
 
@@ -82,5 +86,6 @@
   7. 图规则（成环/断环/加文件）冷热等价；
   8. tsconfig 变更冷热等价。
 - 冷/热报告 `JSON.stringify` 相等（测试断言）；引擎可用时图规则冷/热条数一致。
-- 全量命令：`bun run test`、`cargo test --release --manifest-path crates/lintsight-engine/Cargo.toml`、`bun run lint`、`bun run format:check`、`bun run corpus:check` 全部通过并附输出摘要。
-- 证据写入 `execution-todo.md` G1 行：测试名、命令、冷/热 diff 结果；不提前宣称 M4 完成。
+- G1 相关命令：`bun run test`、`cargo test --release --manifest-path crates/lintsight-engine/Cargo.toml`、`bun run lint`、`bun run format:check` 全部通过并附输出摘要；矩阵强制门禁 `REQUIRE_ENGINE=1` 下引擎用例不得 skip。
+- 仓级 `bun run corpus:check`：本次走 `cache:false`，与缓存改动无因果关系；当前 FAIL 属既有基线陈旧（基线 `52b03db`，后续规则提交未重建），归 G3。**G1 不以该项收口**，但按验收纪律 G1 暂记 `[~]`，待 G3 重建基线重跑或用户明确批准例外后再置 `[x]`。
+- 证据写入 `execution-todo.md` G1 行：测试名、复现命令、冷/热 diff 结果；不提前宣称 M4 完成。

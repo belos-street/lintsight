@@ -64,3 +64,14 @@
     - `.agents/memory/decisions.md` 追加 D11：M4 引擎诊断不缓存（引擎每轮全量 pass；缓存只存 M1 按文件诊断；M5 跨文件增量另行设计）；
     - `proposal.md` 状态改为「已实现」。
   - 验收点：上述命令输出摘要齐全；`git diff` 中 golden 无静默漂移；本 change 三层文档无占位符；`bun run check:change-id -- <commit-msg-file>` 通过（`change/20261030-cache-correctness`）。
+
+- [x] **任务 6：评审整改（2026-10-30）**
+  - 涉及文件：`packages/lintsight-cli/src/cache.ts`、`packages/lintsight-cli/test/cache.test.ts`、`packages/lintsight-cli/test/fix.test.ts`、本 change 三层文档、`docs/upgrade/v0.1/{upgrade-plan,execution-todo}.md`
+  - 内容：
+    - B1：G1 回退 `[~]`，写明 corpus 基线陈旧阻塞与收口条件（G3 重建或用户批准例外）；
+    - B2：proposal 补确认记录（2026-10-30，用户确认范围）；
+    - H1：plan/execution-todo 的 G1 口径改为「引擎结果不缓存 + 全量 pass 覆盖文件集/依赖闭包」；
+    - H2：`REQUIRE_ENGINE=1` 前置门禁，无引擎产物时不得静默 skip；
+    - Medium：design 修正并发写语义、补证据复现命令、补相对 jsPlugins 端到端用例、fix 测试补缓存 tmp 零残留断言；
+    - Low：修正旧测试覆盖描述、补 `.oxlintrc.json` `extends` 风险、缓存键改 JSON 数组序列化。
+  - 验收点：`REQUIRE_ENGINE=1 bun test packages/lintsight-cli/test/cache.test.ts` 全绿；`bun run test` / `lint` / `format:check` / `cargo test --release` 全绿；G1 状态为 `[~]` 且有阻塞说明。
