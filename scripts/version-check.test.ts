@@ -6,7 +6,9 @@ import {
 } from './version-check'
 
 describe('version:check（G14）', () => {
-  test('当前三载体版本一致', () => {
+  // 口径：三载体 = 根 package.json / CLI package.json / Cargo.toml；
+  // 两个消费面 = JSON toolVersion 与 SARIF driver.version（由 version-consistency.test.ts 覆盖）
+  test('三载体（root/cli/engine）版本一致', () => {
     const v = collectVersions()
     expect(v.root).toBe(v.cli)
     expect(v.root).toBe(v.engine)

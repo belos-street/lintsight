@@ -38,7 +38,7 @@
     - `suppression.test.ts`：合法/缺 reason/不匹配/.vue/冷热/引擎 no-eval 抑制；`fail-on.test.ts`：low/medium/high、抑制、warning；`cli-output.test.ts`：`--output` stdout 为空、无 output 走 stdout、非法/缺值 `--fail-on` exit 2。
     - `cweTags` 对外统一大写 `CWE-79`（JSON 与 SARIF 同口径），golden 已同步。
     - `sarif.test.ts`：`taxonomies/taxa/properties.confidence/suppressions/rules[].properties.cweTags`；CLI SARIF 实测 `taxonomies=1/taxa=15`，55 条结果带 taxa。
-    - `bun run corpus:check`：G3 重建基线后已通过（3540 diagnostics / 双报率 0；基线漂移由 `027fd8f`/`abe8326` 解释，见 G3）。
+    - `bun run corpus:check`：G3 重建基线后已通过（3392 diagnostics / 双报率 0；相对 52b03db 的 -61 全归因：`027fd8f` no-floating -28、i18n 抑制 no-hardcoded -33；指纹逐条一致，见 G3）。
     - scanner 签字：**待补**（用户已在任务约定「G2 的 scanner 签字可后补」；未签字前 G2 保持 `[~]`，不宣称平台侧验收闭合）。
   - 依赖：scanner 调用契约。
 - [~] **G6 fail-open 可观测**
@@ -54,20 +54,21 @@
     - `sarif.test.ts`：`invocations[0].executionSuccessful` 五态与 `properties.engineStatus`；`formatter.test.ts`：text 摘要末行 `engine: <status>`。
     - golden：`report-v3.json` engineStatus 由 crashed 更新为 missing（固定 `OXLINT_ENGINE_BIN` 不存在路径）。
     - 默认引擎超时 120s（`LINTSIGHT_ENGINE_TIMEOUT_MS` 覆盖，0 关闭）；非 ok 状态统一 warn。
-    - `bun run corpus:check`：G3 重建基线后已通过（3540 diagnostics / 双报率 0）。
+    - `bun run corpus:check`：G3 重建基线后已通过（3392 diagnostics / 双报率 0）。
     - scanner 签字：**待补**（不伪造；未签字前不宣称 G6 外部验收闭合）。
-- [x] **G13 配置根与路径契约**
+- [~] **G13 配置根与路径契约**
   - owner：engine
-  - 变更：`docs/changes/20261030-config-root/`（已实现）
+  - 变更：`docs/changes/20261030-config-root/`（代码验收完成）
+  - 阻塞：scanner 对 `--root` 的传参（root/cwd/输出路径基准）签字待补；与 G2/G6 同口径，未签字前保持 `[~]`。
   - 内容：明确优先级 **`--root` > `--config` > cwd**；config/ignore/tsconfig/报告路径全部 root 相对。
   - 验收：扫描外部绝对路径项目，配置正确发现、报告路径不含 `C:/`/`/Users/` 绝对前缀。
-  - 证据（2026-10-30）：`config-root.test.ts` 7 pass——外部绝对路径 root（config 来自目标、`file=src/a.ts`、缓存落目标）、嵌套 `--config`、显式覆盖、root 不存在/非目录 exit 2、CLI `--root`、`--output` 按调用方 cwd；oxlint/引擎 bin/spawn 均以 root 为基准；`bun run test` 234 pass。
+  - 证据（2026-10-30）：`config-root.test.ts` 10 pass——外部绝对路径 root（config 来自目标、`file=src/a.ts`、缓存落目标）、嵌套 `--config`、显式覆盖、root 不存在/非目录/缺值（`--root --output` 不被当作值）、CLI `--root`、`--output` 按调用方 cwd、root 相对 `ignore`、root 下 `.vue` 虚拟块回映射 + 行内抑制（`summary.suppressed=1`）、root 外输入告警且保留绝对路径。引擎 bin 相对解析由 `engine-bridge.test.ts` 覆盖；pipeline 级引擎 spawn 未单列断言（证据不扩大口径）。
 - [x] **G14 单一版本源**
   - owner：release
   - 变更：`docs/changes/20261030-version-source/`（已实现）
   - 内容：CLI、根包、引擎、SARIF driver 版本一致。
   - 验收：`--version` / SARIF / 包版本 / 引擎版本检查进 CI。
-  - 证据（2026-10-30）：`bun run version:check` → `root=cli=engine=0.1.0-alpha.0`；`version-consistency.test.ts` 4 pass（三载体、SARIF driver.version/semanticVersion、`--version`、Cargo `[package]` 段解析）；`scripts/version-check.test.ts` 3 pass；`bun run build:binary` 产物 `--version` = `lintsight v0.1.0-alpha.0`；golden `toolVersion` 同步；CLI/Cargo 版本已对齐根版本。
+  - 证据（2026-10-30）：`bun run version:check` → `root=cli=engine=0.1.0-alpha.0`（**三载体** = 根 package.json / CLI package.json / Cargo.toml；**两个消费面** = JSON `toolVersion` 与 SARIF `driver.version`，由 `version-consistency.test.ts` 覆盖）；`version-consistency.test.ts` 4 pass；`scripts/version-check.test.ts` 3 pass；`bun run build:binary` 产物 `--version` = `lintsight v0.1.0-alpha.0`；golden `toolVersion` 同步。
 
 ### W2 Vue 模板语义
 
@@ -152,7 +153,7 @@
     - `cache.test.ts` 19 pass / 0 fail：8 组矩阵 + `REQUIRE_ENGINE=1` 前置门禁 + 手写 oxlintrc 相对 jsPlugins 端到端加载。
     - `bun run test`：180 pass / 0 fail；`cargo test --release`：52 passed；`bun run lint`：0 warnings；`bun run format:check`：clean。
     - 冷/热报告 diff：`fixtures/ts` 三轮（`--no-cache` / 首次 cache miss / 二次 cache hit）JSON 逐字节一致；100 文件热扫 109ms（<1s）。复现命令见 `docs/changes/20261030-cache-correctness/design.md` §证据复现命令。
-    - `bun run corpus:check`：G3 重建基线后已通过（3540 diagnostics / 双报率 0）；此前的用户批准例外随之闭合。
+    - `bun run corpus:check`：G3 重建基线后已通过（3392 diagnostics / 双报率 0）；此前的用户批准例外随之闭合。
 - [~] **G3 CI 与基线（分阶段）**
   - owner：CI
   - 变更：`docs/changes/20261030-ci-baseline/`（CI 代码与 corpus 基线已落地；branch protection / heavy runner / bench 基线为外部或工具依赖）
@@ -164,10 +165,12 @@
     - branch protection：CI 红即阻断合并。
   - 验收：流水线红即阻断合并；基线按版本可追溯。
   - 证据（2026-10-30）：
-    - `.github/workflows/ci.yml`：static（lint/format/version:check/change-id range）、test（Linux+Windows，cargo build 后 `REQUIRE_ENGINE=1`）、rust（fmt/clippy/test）、heavy（schedule/manual + 预检）；Bun 1.4.2 / Rust 1.97.1 固定。
-    - 首轮 CI（2026-10-30）rust 矩阵红灯：`cargo fmt/clippy` 未带 `--manifest-path`（仓库根无 Cargo.toml）+ clippy 存量 8 error + rustfmt 存量 9 处 diff；已修复（workflow 三处命令改 manifest-path、修 `never_loop`/`needless_return`×5/`manual_flatten`/`non_upper_case_globals`、`cargo fmt` 应用、`actions/checkout@v4→v5`）。本地等价门禁：fmt exit 0、clippy exit 0、`cargo test --release` 52 passed。待 CI 复跑链接。
-    - `check:change-id:ci --range` 已实现；`scripts/check-change-id.test.ts` 3 pass；本提交范围实测 `309291c..HEAD` exit 0。
-    - corpus 基线已重建（`corpus/baseline-v0.json`：3453 → **3540** diagnostics，双报率 0，`corpus:check` 通过）；漂移归因 `027fd8f`（floating-promise 误报治理）/`abe8326`（serve-index 路径前缀）。
+    - `.github/workflows/ci.yml`：static（lint/format/version:check/change-id range + `--since`）、test（Linux+Windows，cargo build 后 `REQUIRE_ENGINE=1`）、rust（fmt/clippy/test）、heavy（schedule/manual + 预检）；Bun 1.4.2 / Rust 1.97.1 固定。
+    - check-change-id 真实 CI 范围：`origin/main...HEAD` exit 1（历史提交 `4b73641`/`027fd8f` 早于 spec-first 制度，不可补 change-id）；`--since d98c457`（workflow env `SPEC_FIRST_CUTOFF`，制度生效提交）exit 0。`scripts/check-change-id.test.ts` 6 pass（含 cutoff 合成与非法范围）。
+    - corpus 基线：**3392 diagnostics**（双报率 0）；`corpus:check` 通过。相对 `52b03db` 基线（3453）逐条归因：`no-floating-promise 276→248`（`027fd8f` self-handled async 收紧，-28）；`no-hardcoded-credentials 61→28`（`027fd8f` i18n 文案抑制，-33）；其余规则计数与指纹全部一致（旧基线指纹 overlap=3392/3392，newOnly=0）。
+    - 归因过程中发现并修复两处跨平台复现缺陷（此前 Windows 基线 3540 的 `no-hardcoded +115`、指纹 churn 1502/1589 均由此产生，非提交漂移）：①`isTestFile` 只按 `/` 分段，Windows 下 `context.filename` 为反斜杠绝对路径 → 测试文件豁免失效（148/156 新增命中在 test/fixture 目录）；改为 `split(/[/\\]/)` 并补 `fixtures/options/tests/**` 用例。②`corpus:sync` 未锁定 LF，Windows 全局 `core.autocrlf=true` 使无 `eol=lf` attributes 的仓库检出 CRLF → offset 漂移；改为 LF 克隆 + `.git/lintsight-lf` 标记（非 LF 检出自动重建）。
+    - 首轮 CI（2026-10-30）rust 矩阵红灯：`cargo fmt/clippy` 未带 `--manifest-path`（仓库根无 Cargo.toml）+ clippy 存量 8 error + rustfmt 存量 9 处 diff；已修复（workflow 三处命令改 manifest-path、修 `never_loop`/`needless_return`×5/`manual_flatten`/`non_upper_case_globals`、`cargo fmt` 应用、`actions/checkout@v4→v5`）。本地等价门禁：fmt exit 0、clippy exit 0、`cargo test --release` 52 passed。
+    - `check:change-id:ci --range` 已实现；`scripts/check-change-id.test.ts` 覆盖纯函数与 cutoff；staged 模式保留。
     - **未完成（外部依赖）**：branch protection 未配置、无 CI 运行链接、无 `lintsight-heavy` runner、bench 基线未重建（本机无 hyperfine）。G3 保持 `[~]`，不伪造签字。
 - [ ] **G9 TSX/JSX 契约（拆分）**
   - owner：rules + QA
