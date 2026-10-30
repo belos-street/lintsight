@@ -38,7 +38,7 @@
     - `suppression.test.ts`：合法/缺 reason/不匹配/.vue/冷热/引擎 no-eval 抑制；`fail-on.test.ts`：low/medium/high、抑制、warning；`cli-output.test.ts`：`--output` stdout 为空、无 output 走 stdout、非法/缺值 `--fail-on` exit 2。
     - `cweTags` 对外统一大写 `CWE-79`（JSON 与 SARIF 同口径），golden 已同步。
     - `sarif.test.ts`：`taxonomies/taxa/properties.confidence/suppressions/rules[].properties.cweTags`；CLI SARIF 实测 `taxonomies=1/taxa=15`，55 条结果带 taxa。
-    - `bun run corpus:check`：FAIL（与 G1 相同的既有基线陈旧：`no-floating-promise -28`、`no-hardcoded-credentials +115`；本 change 不改检测面，未 `--save`）。
+    - `bun run corpus:check`：G3 重建基线后已通过（3540 diagnostics / 双报率 0；基线漂移由 `027fd8f`/`abe8326` 解释，见 G3）。
     - scanner 签字：**待补**（用户已在任务约定「G2 的 scanner 签字可后补」；未签字前 G2 保持 `[~]`，不宣称平台侧验收闭合）。
   - 依赖：scanner 调用契约。
 - [~] **G6 fail-open 可观测**
@@ -54,20 +54,20 @@
     - `sarif.test.ts`：`invocations[0].executionSuccessful` 五态与 `properties.engineStatus`；`formatter.test.ts`：text 摘要末行 `engine: <status>`。
     - golden：`report-v3.json` engineStatus 由 crashed 更新为 missing（固定 `OXLINT_ENGINE_BIN` 不存在路径）。
     - 默认引擎超时 120s（`LINTSIGHT_ENGINE_TIMEOUT_MS` 覆盖，0 关闭）；非 ok 状态统一 warn。
-    - `bun run corpus:check`：FAIL（与 G1/G2 相同的既有基线陈旧；本 change 不改检测面，未 `--save`）。
+    - `bun run corpus:check`：G3 重建基线后已通过（3540 diagnostics / 双报率 0）。
     - scanner 签字：**待补**（不伪造；未签字前不宣称 G6 外部验收闭合）。
-- [~] **G13 配置根与路径契约**
+- [x] **G13 配置根与路径契约**
   - owner：engine
-  - 进行中：方案文档 `docs/changes/20261030-config-root/`（待确认，未改代码）
+  - 变更：`docs/changes/20261030-config-root/`（已实现）
   - 内容：明确优先级 **`--root` > `--config` > cwd**；config/ignore/tsconfig/报告路径全部 root 相对。
   - 验收：扫描外部绝对路径项目，配置正确发现、报告路径不含 `C:/`/`/Users/` 绝对前缀。
-  - 证据：新增 `config-root.test.ts` 三组：外部绝对路径、嵌套 config、显式 `--config`；`ignore.test.ts` 回归。
-- [~] **G14 单一版本源**
+  - 证据（2026-10-30）：`config-root.test.ts` 7 pass——外部绝对路径 root（config 来自目标、`file=src/a.ts`、缓存落目标）、嵌套 `--config`、显式覆盖、root 不存在/非目录 exit 2、CLI `--root`、`--output` 按调用方 cwd；oxlint/引擎 bin/spawn 均以 root 为基准；`bun run test` 234 pass。
+- [x] **G14 单一版本源**
   - owner：release
-  - 进行中：方案文档 `docs/changes/20261030-version-source/`（待确认，未改代码）
+  - 变更：`docs/changes/20261030-version-source/`（已实现）
   - 内容：CLI、根包、引擎、SARIF driver 版本一致。
   - 验收：`--version` / SARIF / 包版本 / 引擎版本检查进 CI。
-  - 证据：`version-check` CI 脚本 + `sarif.test.ts` 快照；发布检查清单。
+  - 证据（2026-10-30）：`bun run version:check` → `root=cli=engine=0.1.0-alpha.0`；`version-consistency.test.ts` 4 pass（三载体、SARIF driver.version/semanticVersion、`--version`、Cargo `[package]` 段解析）；`scripts/version-check.test.ts` 3 pass；`bun run build:binary` 产物 `--version` = `lintsight v0.1.0-alpha.0`；golden `toolVersion` 同步；CLI/Cargo 版本已对齐根版本。
 
 ### W2 Vue 模板语义
 
@@ -152,10 +152,10 @@
     - `cache.test.ts` 19 pass / 0 fail：8 组矩阵 + `REQUIRE_ENGINE=1` 前置门禁 + 手写 oxlintrc 相对 jsPlugins 端到端加载。
     - `bun run test`：180 pass / 0 fail；`cargo test --release`：52 passed；`bun run lint`：0 warnings；`bun run format:check`：clean。
     - 冷/热报告 diff：`fixtures/ts` 三轮（`--no-cache` / 首次 cache miss / 二次 cache hit）JSON 逐字节一致；100 文件热扫 109ms（<1s）。复现命令见 `docs/changes/20261030-cache-correctness/design.md` §证据复现命令。
-    - `bun run corpus:check`：FAIL（归因与阻塞说明见上；未执行 `--save`）。
+    - `bun run corpus:check`：G3 重建基线后已通过（3540 diagnostics / 双报率 0）；此前的用户批准例外随之闭合。
 - [~] **G3 CI 与基线（分阶段）**
   - owner：CI
-  - 进行中：方案文档 `docs/changes/20261030-ci-baseline/`（待确认，未改代码）
+  - 变更：`docs/changes/20261030-ci-baseline/`（CI 代码与 corpus 基线已落地；branch protection / heavy runner / bench 基线为外部或工具依赖）
   - 内容：
     - 第一阶段最小 CI：`cargo build --release` → `REQUIRE_ENGINE=1 bun run test` + `lint` + `format:check` + `check:change-id`（无引擎产物时图规则矩阵必须 fail 而非 skip）；
     - 第二阶段：`cargo test` + `clippy` + `cargo fmt`；
@@ -163,7 +163,11 @@
     - 写明 OS 矩阵（Windows/Linux/macOS 至少 Linux+Windows）；
     - branch protection：CI 红即阻断合并。
   - 验收：流水线红即阻断合并；基线按版本可追溯。
-  - 证据：`.github/workflows/ci.yml`；分支保护配置；一次成功/失败运行链接。
+  - 证据（2026-10-30）：
+    - `.github/workflows/ci.yml`：static（lint/format/version:check/change-id range）、test（Linux+Windows，cargo build 后 `REQUIRE_ENGINE=1`）、rust（fmt/clippy/test）、heavy（schedule/manual + 预检）；Bun 1.4.2 / Rust 1.97.1 固定。
+    - `check:change-id:ci --range` 已实现；`scripts/check-change-id.test.ts` 3 pass；本提交范围实测 `309291c..HEAD` exit 0。
+    - corpus 基线已重建（`corpus/baseline-v0.json`：3453 → **3540** diagnostics，双报率 0，`corpus:check` 通过）；漂移归因 `027fd8f`（floating-promise 误报治理）/`abe8326`（serve-index 路径前缀）。
+    - **未完成（外部依赖）**：branch protection 未配置、无 CI 运行链接、无 `lintsight-heavy` runner、bench 基线未重建（本机无 hyperfine）。G3 保持 `[~]`，不伪造签字。
 - [ ] **G9 TSX/JSX 契约（拆分）**
   - owner：rules + QA
   - 范围：

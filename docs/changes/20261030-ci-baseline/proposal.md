@@ -1,6 +1,10 @@
 # Proposal: G3 CI 与基线（分阶段）
 
-> change-id：`20261030-ci-baseline` · 日期：`2026-10-30` · 状态：草稿
+> change-id：`20261030-ci-baseline` · 日期：`2026-10-30` · 状态：已实现（CI 代码与 corpus 基线；branch protection / heavy runner / bench 基线外部 pending）
+
+## 确认记录
+
+- 2026-10-30：方案评审补强后，用户以消息全文 **「好的，按这个方案开始实现 G13、G14 和 G3」** 确认进入实现（无独立消息 ID，仓库内只能引用原话）；确认范围 = G13/G14/G3 三份 change 的三层文档全量方案。
 
 ## 背景与问题
 

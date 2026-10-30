@@ -413,7 +413,7 @@ interface FrameworkProfile {
 | G10 | P2 | Vue fixture 仅 1 个 | fixtures 中仅 `no-empty-catch.vue` | 增加 SFC 多场景 fixture（script setup、template、宏、样式） |
 | G11 | P2 | 发布/供应链无自动化 | 无 changesets/release；`oxlint-tsgolint: "7"` 浮大版本；无 cargo-deny/SBOM/签名/校验和 | changesets + 多平台产物 + 校验和 + 依赖审计；clippy/cargo fmt 入 CI |
 | G12 | P0 | 27 条 JS 规则（11 正确性 + 16 安全）默认全关、无推荐集 | `builtin-mapping.rules={}`；空配置项目 JS 0 启用；引擎可用且文件为 cache miss 时 6 条常驻规则仍运行；1b 映射未落地 | 新增 `recommended` / `security` 预设；补齐 1b 清单；空配置坏样本能出安全诊断 |
-| G13 | P0 | 配置/路径契约不适配 scanner | 配置按 cwd 解析、无 `--root`；外部绝对路径报告为绝对路径 | 明确 `--root`/cwd 语义；外部目标用其自身配置且报告相对路径 |
+| G13 | P0 | 配置/路径契约不适配 scanner | 配置按 cwd 解析、无 `--root`；外部绝对路径报告为绝对路径 | 明确 `--root`/cwd 语义；外部目标用其自身配置且报告相对路径；`--output` 按调用方 cwd、报告 `file` 按 root |
 | G14 | P0 | 版本号三处不一致 | CLI `0.0.1`、根 `0.1.0-alpha.0`、引擎 `0.1.0`、SARIF driver `0.0.1` | 单一版本源；`--version`/SARIF/包版本发布检查 |
 | G15 | P0 | Vue 虚拟路径进入图身份 | 引擎收到 `Foo.vue.lintsight-<pid>.ts`，指向 `Foo.vue` 的 import 与虚拟节点不同键；当前 bug 基线 Vue→TS 环 0 条，同结构 TS→TS 对照 2 条（`src/A.ts:1`、`src/B.ts:1`） | 修复目标 Vue→TS 环 2 条（`src/A.vue:1`、`src/B.ts:1`）；图节点映射回原 `.vue`；把 TS→TS 对照写成回归用例 |
 | G16 | P2 | 输入面细节与文档不符 | arch `*` 仅前缀*后缀单星；默认忽略任意 `build/out` 段；重复输入未去重，已复现 `src src` → 引擎 `no-eval`/`no-path-traversal` 各 ×2（eslint 侧 1 条） | 文档标注或换 globset；忽略可配置+告警；输入 Set 去重，并加「重复 `src src` → 引擎诊断 ×2」回归测试 |
@@ -598,3 +598,4 @@ interface FrameworkProfile {
 | v0.1 修订 6 | 2026-10-30 | G1 收口口径对齐实现：缓存键 = 路径 + tsconfig + engine/config/plugin 指纹；**引擎诊断不缓存、每轮全量 pass**，文件集/依赖闭包/影响集不进键；空结果缓存；图规则矩阵由 `REQUIRE_ENGINE=1` 硬门禁防静默 skip |
 | v0.1 修订 7 | 2026-10-30 | 补 M4 契约 v3 实现约定（G2）：报告/诊断字段、engineStatus 五态、行内抑制审计口径、`--fail-on` 语义、SARIF taxonomies/suppressions、`--output` stdout 静默；G6 仍独立负责 fail-closed 与超时接线 |
 | v0.1 修订 8 | 2026-10-30 | G6 收口口径：missing/crashed/协议→crashed/timeout/degraded 归因；默认 120s 引擎超时 + env 覆盖；非 ok 统一 warn；`--fail-closed` exit 2 且保留 report（scanner 签字项）；SARIF `invocations.executionSuccessful` + `properties.engineStatus` |
+| v0.1 修订 9 | 2026-10-30 | G13/G14/G3 落地口径：`--root` > `--config`(相对 root) > cwd，oxlint/引擎 bin 与 spawn 均按 root；`--output` 按调用方 cwd；版本唯一源 = 根 `package.json`（CLI/Cargo 同步 + `version:check`）；CI 固定 Bun 1.4.2/Rust 1.97.1，change-id 支持 `--range`；corpus 基线重建为 3540 diagnostics（双报率 0），bench 基线待 hyperfine runner |
