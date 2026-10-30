@@ -1,10 +1,17 @@
 # Proposal: G13 配置根与路径契约（--root）
 
-> change-id：`20261030-config-root` · 日期：`2026-10-30` · 状态：已实现
+> change-id：`20261030-config-root` · 日期：`2026-10-30` · 状态：代码验收完成；**scanner 对 `--root` 传参签字待补 → G13 保持 `[~]`**（与 G2/G6 同口径）
 
 ## 确认记录
 
 - 2026-10-30：方案评审补强后，用户以消息全文 **「好的，按这个方案开始实现 G13、G14 和 G3」** 确认进入实现（无独立消息 ID，仓库内只能引用原话）；确认范围 = G13/G14/G3 三份 change 的三层文档全量方案。
+
+## 评审整改（2026-10-30）
+
+- **Medium 1（状态口径）**：G13 原标 `[x]` 与「scanner 传参签字可后补」不一致；按 G2/G6 同口径回退 `[~]`，代码验收完成、外部签字 pending，证据中显式写明。
+- **Medium 2（覆盖不足/证据过度声明）**：新增 3 组 root 回归：root 相对 `ignore`、root 下 `.vue` 虚拟块回映射 + 行内抑制、root 外输入告警且保留绝对路径；证据不再声称「引擎 spawn 已断言」——引擎 bin 相对解析由 `engine-bridge.test.ts` 覆盖，pipeline 级 spawn 未单列。
+- **Low 1（根外判定）**：`relOf` 从 `rel.startsWith('..')` 改为 `path.isAbsolute(rel) || rel.split('/')[0] === '..'`，避免文件名以 `..` 开头时误报 warning。
+- **Low 2（缺值语义）**：`--root` 后接另一个选项（如 `--output`）时按「缺少取值」exit 2，而不是把 `--output` 当 root 值后报 `root path not found`；补 CLI 用例。
 
 ## 背景与问题
 

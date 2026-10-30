@@ -55,7 +55,10 @@ if (!['high', 'medium', 'low'].includes(failOn)) {
 }
 
 const rootArg = readOption('--root')
-if (args.includes('--root') && rootArg === undefined) {
+if (
+  args.includes('--root') &&
+  (rootArg === undefined || rootArg.startsWith('--'))
+) {
   console.error('lintsight: --root 缺少取值（项目根目录）')
   process.exit(2)
 }

@@ -128,6 +128,74 @@ describe('G13 配置根：pipeline root', () => {
     }
   })
 
+  test('root 相对 ignore：dist/** 不进入报告', async () => {
+    const dir = await makeProject('lintsight-root-ignore-', {
+      rules: { 'lintsight/no-empty-catch': 'error' },
+      ignore: ['dist/**']
+    })
+    try {
+      await mkdir(path.join(dir, 'dist'), { recursive: true })
+      await writeFile(
+        path.join(dir, 'dist/skip.ts'),
+        'try { foo() } catch {}\n'
+      )
+      const r = await runPipeline(['.'], {
+        cwd: PROJECT_ROOT,
+        root: dir,
+        cache: false
+      })
+      const own =
+        r.report?.diagnostics.filter(
+          (d) => d.ruleId === 'lintsight/no-empty-catch'
+        ) ?? []
+      expect(own.some((d) => d.file === 'src/a.ts')).toBe(true)
+      expect(own.some((d) => d.file === 'dist/skip.ts')).toBe(false)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('root 下 .vue 虚拟块回映射与行内抑制', async () => {
+    const dir = await makeProject('lintsight-root-vue-', {
+      rules: { 'lintsight/no-empty-catch': 'error' }
+    })
+    try {
+      await writeFile(
+        path.join(dir, 'src/comp.vue'),
+        [
+          '<template>',
+          '  <div />',
+          '</template>',
+          '',
+          '<script>',
+          'try { one() } catch {}',
+          '// lintsight-ignore-next-line lintsight/no-empty-catch: vue-mapped',
+          'try { two() } catch {}',
+          '</script>',
+          ''
+        ].join('\n')
+      )
+      const r = await runPipeline(['.'], {
+        cwd: PROJECT_ROOT,
+        root: dir,
+        cache: false
+      })
+      const own =
+        r.report?.diagnostics.filter(
+          (d) =>
+            d.ruleId === 'lintsight/no-empty-catch' &&
+            d.file === 'src/comp.vue' &&
+            !d.suppression
+        ) ?? []
+      expect(own).toHaveLength(1)
+      expect(own[0].file).toBe('src/comp.vue')
+      expect(own[0].span.line).toBe(6)
+      expect(r.report?.summary.suppressed).toBe(1)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
   test('root 不存在 / 不是目录 → exit 2', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-root-invalid-'))
     try {
@@ -186,6 +254,16 @@ describe('G13 配置根：CLI', () => {
       expect(missingValue.code).toBe(2)
       expect(missingValue.stderr).toContain('--root 缺少取值')
 
+      // 后接另一个选项（--output）不能被当成 root 值
+      const optionAsValue = await spawnCli(dir, [
+        '.',
+        '--root',
+        '--output',
+        'report.json'
+      ])
+      expect(optionAsValue.code).toBe(2)
+      expect(optionAsValue.stderr).toContain('--root 缺少取值')
+
       const notFound = await spawnCli(dir, [
         '.',
         '--root',
@@ -195,6 +273,42 @@ describe('G13 配置根：CLI', () => {
       expect(notFound.stderr).toContain('root path not found')
     } finally {
       await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('root 外输入：保留原路径并告警', async () => {
+    const dir = await makeProject('lintsight-root-outside-', {
+      rules: { 'lintsight/no-empty-catch': 'error' }
+    })
+    const outside = await mkdtemp(
+      path.join(tmpdir(), 'lintsight-root-ext-file-')
+    )
+    try {
+      const ext = path.join(outside, 'ext.ts')
+      await writeFile(ext, 'try { foo() } catch {}\n')
+      const r = await spawnCli(PROJECT_ROOT, [
+        ext,
+        '--root',
+        dir,
+        '--format',
+        'json',
+        '--log-level',
+        'warn'
+      ])
+      expect(r.code).toBe(1)
+      expect(r.stderr).toContain('在 root 之外')
+      const report = JSON.parse(r.stdout) as {
+        diagnostics: { ruleId: string; file: string }[]
+      }
+      const extDiag = report.diagnostics.find(
+        (d) =>
+          d.ruleId === 'lintsight/no-empty-catch' && d.file.includes('ext.ts')
+      )
+      expect(extDiag).toBeDefined()
+      expect(path.isAbsolute(extDiag!.file)).toBe(true)
+    } finally {
+      await rm(dir, { recursive: true, force: true })
+      await rm(outside, { recursive: true, force: true })
     }
   })
 

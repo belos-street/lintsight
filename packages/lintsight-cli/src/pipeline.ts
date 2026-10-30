@@ -379,7 +379,8 @@ export async function runPipeline(
   // 缓存筛减（T1.16）：units = 本次运行的扫描单元；storeRel = 诊断归属文件（vue 回映射后的原路径）
   const relOf = (abs: string) => {
     const rel = normalizeFilePath(abs, root)
-    if (path.isAbsolute(rel) || rel.startsWith('..')) {
+    // 根外判定：绝对路径或首段为 '..'（不能用 startsWith('..')——文件名以 .. 开头会误报）
+    if (path.isAbsolute(rel) || rel.split('/')[0] === '..') {
       // G13：根外输入保留原路径（不伪装成 root 相对），显式告警
       logger.warn(`path: ${abs} 在 root 之外，报告保留原路径`)
     }

@@ -17,13 +17,16 @@
   - 涉及文件：`packages/lintsight-cli/src/cli.ts`
   - 内容：解析 `--root <dir>`（缺值/不存在/非目录 exit 2）；传入 pipeline；usage 更新；`--output` 明确按进程 cwd 解析。
   - 验收点：`config-root.test.ts` 增加 CLI spawn：外部绝对路径 + `--root`，报告 file 相对、无盘符前缀；`--root` 缺值/不存在 exit 2；`--output` 落调用方 cwd。
+  - 评审整改：`--root --output` 不被当成 root 值（按缺值 exit 2），补用例。
 
 - [x] **任务 4：外部路径/嵌套 config/ignore 回归矩阵**
   - 涉及文件：`packages/lintsight-cli/test/config-root.test.ts`、`test/ignore.test.ts`
   - 内容：三组主用例 + ignore/Vue/缓存落点断言；报告 `file` 不含 `C:/`、`/Users/`。
   - 验收点：`bun test packages/lintsight-cli/test/{config-root,ignore,closed-loop}.test.ts` 全绿。
+  - 评审整改：补 root 相对 ignore、root 下 `.vue` 虚拟块回映射 + 行内抑制（`summary.suppressed=1`）、root 外输入告警 + 绝对路径保留；`config-root.test.ts` 10 pass。
 
 - [x] **任务 5：全量验证、证据与状态同步**
   - 涉及文件：`docs/upgrade/v0.1/execution-todo.md`、`upgrade-plan.md`、本 change
   - 内容：跑 `bun run test`、`cargo test --release`、`lint`、`format:check`、`corpus:check`；记录外部路径证据；scanner 传参签字可后补。
   - 验收点：命令输出摘要齐全；G13 证据含测试名/报告路径断言；不伪造 scanner 签字。
+  - 评审整改：G13 状态回 `[~]`（scanner 签字 pending）；证据收窄到实际断言（引擎 pipeline spawn 未单列）。
