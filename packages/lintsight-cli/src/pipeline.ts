@@ -50,6 +50,7 @@ import {
   type CacheContext
 } from './cache'
 import {
+  DEFAULT_ENGINE_TIMEOUT_MS,
   discoverTsconfigs,
   resolveEngineBin,
   resolveTsPaths,
@@ -142,6 +143,24 @@ async function loadInlineSuppressions(
     })
   )
   return out
+}
+
+/** G6：引擎进程超时（override > env > 默认 120s；env 0 = 禁用） */
+function resolveEngineTimeoutMs(
+  override: number | undefined,
+  logger: Logger
+): number {
+  if (override !== undefined) return override
+  const raw = process.env.LINTSIGHT_ENGINE_TIMEOUT_MS
+  if (!raw) return DEFAULT_ENGINE_TIMEOUT_MS
+  const n = Number(raw)
+  if (!Number.isInteger(n) || n < 0) {
+    logger.warn(
+      `engine: LINTSIGHT_ENGINE_TIMEOUT_MS 非法（'${raw}'），使用默认 ${DEFAULT_ENGINE_TIMEOUT_MS}ms`
+    )
+    return DEFAULT_ENGINE_TIMEOUT_MS
+  }
+  return n
 }
 
 export interface LintsightReport {
@@ -239,6 +258,10 @@ export async function runPipeline(
     cache?: boolean
     /** 契约 v3：CI 门禁置信度阈值（缺省 low = 现有「任何 error 即 1」） */
     failOn?: Confidence
+    /** G6：引擎非 ok 时 fail-closed（exit 2，但保留报告）；缺省 fail-open */
+    failClosed?: boolean
+    /** G6：引擎进程超时（0 = 禁用；缺省 env/120s） */
+    engineTimeoutMs?: number
   } = {}
 ): Promise<PipelineResult> {
   const cwd = opts.cwd ?? process.cwd()
@@ -523,11 +546,15 @@ export async function runPipeline(
         cwd,
         arch,
         tsPaths,
-        logger
+        logger,
+        timeoutMs: resolveEngineTimeoutMs(opts.engineTimeoutMs, logger)
       }
     )
-    if (engineResult.degraded) {
-      logger.warn('engine: M2 sidecar 降级（启动/协议失败），本轮为纯 M1 扫描')
+    // G6：所有非 ok 状态统一可见（含 missing）；fail-open 下仍出纯 M1 结果
+    if (engineResult.status !== 'ok') {
+      logger.warn(
+        `engine: status=${engineResult.status}（fail-open，本轮为纯 M1 结果）`
+      )
     }
     const degraded = engineResult.degraded
 
@@ -614,18 +641,31 @@ export async function runPipeline(
       `scanned ${scannedFiles} file(s) (cache: ${hits} hit / ${misses.length} miss), ${diagnostics.length} diagnostic(s)`
     )
 
+    const report: LintsightReport = {
+      contractVersion: diagnostics[0]?.contractVersion ?? CONTRACT_VERSION,
+      toolVersion: pkg.version,
+      engineStatus: engineResult.status,
+      files: units.length,
+      summary,
+      diagnostics
+    }
+
+    // G6：可选 fail-closed —— 引擎非 ok 即 exit 2，但保留报告（engineStatus 可见）
+    if (opts.failClosed && engineResult.status !== 'ok') {
+      return {
+        exitCode: 2,
+        degraded,
+        error: `engine fail-closed: status=${engineResult.status}`,
+        cache: { enabled: cacheCtx.enabled, hits, misses: misses.length },
+        report
+      }
+    }
+
     return {
       exitCode: failing ? 1 : 0,
       degraded,
       cache: { enabled: cacheCtx.enabled, hits, misses: misses.length },
-      report: {
-        contractVersion: diagnostics[0]?.contractVersion ?? CONTRACT_VERSION,
-        toolVersion: pkg.version,
-        engineStatus: engineResult.status,
-        files: units.length,
-        summary,
-        diagnostics
-      }
+      report
     }
   } finally {
     // 就地临时文件清理：只删本次运行自己创建的（pid+序号隔离并发双跑，互不误删）

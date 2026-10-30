@@ -162,8 +162,99 @@ export interface EngineRunResult {
   status: EngineStatus
 }
 
-/** engineStatus 映射（契约 v3）：优先级 missing > timeout > crashed > degraded > ok。
- * `timeout` 的真实信号由 G6/G5 接线；G2 仅定义映射并单测。 */
+/** 引擎进程默认超时（G6）：给 M5 10 万行 <60s 目标留 2 倍裕度；env 可覆盖 */
+export const DEFAULT_ENGINE_TIMEOUT_MS = 120_000
+
+/** 可注入的进程面（Bun.spawn 子进程结构兼容；单测可用 fake 进程） */
+export interface EngineProcessLike {
+  exited: Promise<number>
+  stdout: ReadableStream<Uint8Array>
+  stderr: ReadableStream<Uint8Array>
+  kill(): void
+}
+
+export type EngineProcessOutcome =
+  | { kind: 'exited'; stdout: string; stderr: string; code: number }
+  | { kind: 'timeout' }
+
+/** 同时 race exited/stdout/stderr 与超时（G6）：
+ * 不能先读完流再等 exit，否则挂死进程上 timeout 永远不生效。
+ * 超时后 kill（kill 抛错仍按 timeout），再给 2s 宽限等流关闭，避免僵尸/测试卡死。 */
+export async function awaitEngineProcess(
+  proc: EngineProcessLike,
+  timeoutMs: number
+): Promise<EngineProcessOutcome> {
+  const collected = Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited
+  ]).then(([stdout, stderr, code]) => ({
+    kind: 'exited' as const,
+    stdout,
+    stderr,
+    code
+  }))
+
+  if (timeoutMs <= 0) return collected
+
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const timeout = new Promise<{ kind: 'timeout' }>((resolve) => {
+    timer = setTimeout(() => resolve({ kind: 'timeout' }), timeoutMs)
+  })
+
+  try {
+    const first = await Promise.race([collected, timeout])
+    if (first.kind === 'timeout') {
+      try {
+        proc.kill()
+      } catch (e) {
+        // kill 失败仍按 timeout 处理，不得降级为 crashed
+        void e
+      }
+      // collected 可能长期不 settle（进程忽略 kill）；吞掉潜在 rejection 防 unhandled
+      await Promise.race([
+        collected.catch(() => undefined),
+        new Promise((r) => setTimeout(r, 2_000))
+      ])
+      return { kind: 'timeout' }
+    }
+    return first
+  } finally {
+    if (timer) clearTimeout(timer)
+  }
+}
+
+/** 解析引擎 stdout（JSON Lines）为诊断/摘要；任一行损坏 → protocolError（映射 crashed） */
+export function parseEngineStdout(stdout: string): {
+  diagnostics: EngineDiagnostic[]
+  summary: { version?: string; rules: string[] } | null
+  protocolError: boolean
+} {
+  const diagnostics: EngineDiagnostic[] = []
+  let summary: { version?: string; rules: string[] } | null = null
+  for (const line of stdout.split('\n')) {
+    if (!line.trim()) continue
+    let obj: unknown
+    try {
+      obj = JSON.parse(line)
+    } catch {
+      return { diagnostics: [], summary: null, protocolError: true }
+    }
+    const rec = obj as { type?: string; ruleId?: string } & Partial<{
+      version: string
+      rules: string[]
+    }>
+    if (rec.type === 'summary') {
+      summary = { version: rec.version, rules: rec.rules ?? [] }
+      continue
+    }
+    if (rec.type !== 'diagnostic' || !rec.ruleId) continue
+    diagnostics.push(obj as EngineDiagnostic)
+  }
+  return { diagnostics, summary, protocolError: false }
+}
+
+/** engineStatus 映射（契约 v3）：优先级 missing > timeout > crashed > degraded > ok。 */
 export function deriveEngineStatus(input: {
   bin: string | null
   timedOut?: boolean
@@ -201,7 +292,9 @@ export function missingEngineRules(reported: readonly string[]): string[] {
 }
 
 export function resolveEngineBin(cwd: string = process.cwd()): string | null {
-  if (process.env.OXLINT_ENGINE_BIN) return process.env.OXLINT_ENGINE_BIN
+  // G6：显式路径不存在 = missing（不回退探测链，避免静默换引擎）
+  const explicit = process.env.OXLINT_ENGINE_BIN
+  if (explicit) return existsSync(explicit) ? explicit : null
   // Windows 下 cargo/bin shim 带 .exe 后缀（无扩展名文件不存在）
   const bin =
     process.platform === 'win32' ? 'lintsight-engine.exe' : 'lintsight-engine'
@@ -226,6 +319,8 @@ export async function runEngine(
     cwd?: string
     arch?: ArchConfig
     tsPaths?: TsPathMapping[] | null
+    /** G6：进程超时（0 = 禁用；缺省 120s） */
+    timeoutMs?: number
     /** 规则面对账告警出口；缺省不对账（纯调用方语义） */
     logger?: Logger
   } = {}
@@ -258,37 +353,24 @@ export async function runEngine(
       })
     )
     void proc.stdin.end()
-    // stderr 流必须消费（防子进程阻塞），内容不进结果（降级细节由调用方按需取 stderr）
-    const [stdout] = await Promise.all([
-      new Response(proc.stdout).text(),
-      new Response(proc.stderr).text().catch(() => '')
-    ])
-    const exitCode = await proc.exited
-    if (exitCode !== 0) {
+    // G6：exited/stdout/stderr 与超时同时竞速（挂死进程也能触发 timeout）
+    const outcome = await awaitEngineProcess(
+      proc,
+      opts.timeoutMs ?? DEFAULT_ENGINE_TIMEOUT_MS
+    )
+    if (outcome.kind === 'timeout') {
+      return { diagnostics: null, degraded: true, status: 'timeout' }
+    }
+    if (outcome.code !== 0) {
       return { diagnostics: null, degraded: true, status: 'crashed' }
     }
 
-    const diagnostics: EngineDiagnostic[] = []
-    let summary: { version?: string; rules: string[] } | null = null
-    for (const line of stdout.split('\n')) {
-      if (!line.trim()) continue
-      let obj: unknown
-      try {
-        obj = JSON.parse(line)
-      } catch {
-        return { diagnostics: null, degraded: true, status: 'crashed' } // 协议损坏 → 降级
-      }
-      const rec = obj as { type?: string; ruleId?: string } & Partial<{
-        version: string
-        rules: string[]
-      }>
-      if (rec.type === 'summary') {
-        summary = { version: rec.version, rules: rec.rules ?? [] }
-        continue
-      }
-      if (rec.type !== 'diagnostic' || !rec.ruleId) continue
-      diagnostics.push(obj as EngineDiagnostic)
+    const parsed = parseEngineStdout(outcome.stdout)
+    if (parsed.protocolError) {
+      return { diagnostics: null, degraded: true, status: 'crashed' } // 协议损坏 → 降级
     }
+    const diagnostics = parsed.diagnostics
+    const summary = parsed.summary
     // 规则面对账（M3 review 发现 ②）：常驻面缺席 = 陈旧引擎产物信号（静默丢规则）
     const missing = summary
       ? missingEngineRules(summary.rules)

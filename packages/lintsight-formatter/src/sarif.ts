@@ -244,6 +244,17 @@ export function formatSarif(
             })
           }
         },
+        // G6：SARIF 消费面承载 engineStatus（五态；ok 才 executionSuccessful）
+        ...(report.engineStatus
+          ? {
+              invocations: [
+                {
+                  executionSuccessful: report.engineStatus === 'ok',
+                  properties: { engineStatus: report.engineStatus }
+                }
+              ]
+            }
+          : {}),
         ...(taxonomies.length > 0 ? { taxonomies } : {}),
         results
       }

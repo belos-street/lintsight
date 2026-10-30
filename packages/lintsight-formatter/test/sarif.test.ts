@@ -145,6 +145,19 @@ describe('formatSarif v3（契约 v3：CWE / confidence / suppressions）', () =
     const plain = JSON.parse(formatSarif(report))
     expect(plain.runs[0].taxonomies).toBeUndefined()
   })
+
+  test('G6 invocations：五态 executionSuccessful/properties.engineStatus', () => {
+    const statuses = ['ok', 'degraded', 'missing', 'crashed', 'timeout']
+    for (const status of statuses) {
+      const out = JSON.parse(formatSarif({ ...v3Report, engineStatus: status }))
+      const inv = out.runs[0].invocations[0]
+      expect(inv.executionSuccessful).toBe(status === 'ok')
+      expect(inv.properties.engineStatus).toBe(status)
+    }
+    // 无 engineStatus 的旧报告不输出 invocations（向后兼容）
+    const legacy = JSON.parse(formatSarif(report))
+    expect(legacy.runs[0].invocations).toBeUndefined()
+  })
 })
 
 describe('formatSarif（SARIF 2.1.0）', () => {

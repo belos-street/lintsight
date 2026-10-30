@@ -11,7 +11,8 @@ import { createLogger, type LogLevel } from '@lintsight/shared'
 
 const args = process.argv.slice(2)
 
-const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text|sarif] [--output <file>] [--log-level debug|info|warn|error] [--fail-on high|medium|low] [--fix] [--no-cache]`
+const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text|sarif] [--output <file>] [--log-level debug|info|warn|error] [--fail-on high|medium|low] [--fail-closed] [--fix] [--no-cache]
+  --fail-closed：引擎非 ok（missing/crashed/timeout/degraded）时 exit 2，仍输出报告；与 --fix 组合不回滚已改写文件`
 
 function readOption(name: string): string | undefined {
   const i = args.indexOf(name)
@@ -72,6 +73,7 @@ const result = await runPipeline(paths, {
   config: readOption('--config'),
   logLevel: logLevel as LogLevel,
   failOn: failOn as 'high' | 'medium' | 'low',
+  failClosed: args.includes('--fail-closed'),
   fix: args.includes('--fix'),
   cache: !args.includes('--no-cache')
 })

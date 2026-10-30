@@ -3,7 +3,7 @@
  * 用手工 golden file（CI 环境下 bun 内置 snapshot 禁用；golden file 可提交、可 review）。
  * 重新生成：删除 __golden__/report-v3.json 后重跑 bun test。
  *
- * G2：固定 OXLINT_ENGINE_BIN 为不存在路径 → engineStatus='crashed'，使 golden 与
+ * G6：固定 OXLINT_ENGINE_BIN 为不存在路径 → engineStatus='missing'，使 golden 与
  * 本机是否有 cargo 产物无关；引擎真实路径由 engine-bridge 单测覆盖。
  */
 import { describe, expect, test } from 'bun:test'
@@ -31,7 +31,7 @@ describe('JSON 报告 golden（contractVersion=3）', () => {
         cwd: PROJECT_ROOT
       })
       expect(r.report).not.toBeNull()
-      expect(r.report!.engineStatus).toBe('crashed')
+      expect(r.report!.engineStatus).toBe('missing')
       // golden 统一以换行结尾（文件惯例），比对时对齐
       const actual = `${formatJson(r.report!)}\n`
       if (!existsSync(GOLDEN)) {

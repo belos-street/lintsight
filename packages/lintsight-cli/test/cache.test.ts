@@ -473,7 +473,7 @@ describe('cache: pipeline 集成（G1 矩阵 1/2/3/5）', () => {
 })
 
 describe.skipIf(!engineBin)('cache: 引擎降级不毒化（真实引擎）', () => {
-  test('引擎降级期间写 M1 缓存，恢复后引擎诊断仍出现', async () => {
+  test('引擎 missing 期间写 M1 缓存，恢复后引擎诊断仍出现', async () => {
     const dir = await tempProject('lintsight-cache-degraded-')
     const restore = setEngineBin(path.join(dir, 'no-such-engine'))
     try {
@@ -481,7 +481,8 @@ describe.skipIf(!engineBin)('cache: 引擎降级不毒化（真实引擎）', ()
       await writeFile(path.join(dir, 'a.ts'), 'eval("1")\nvar a = 1\n')
 
       const r1 = await runPipeline(['.'], { cwd: dir })
-      expect(r1.degraded).toBe(true)
+      expect(r1.degraded).toBe(false)
+      expect(r1.report?.engineStatus).toBe('missing')
       expect(diagnosticsOf(r1, 'lintsight-engine/no-eval')).toHaveLength(0)
       expect(diagnosticsOf(r1, 'eslint/no-var')).toHaveLength(1)
 
@@ -506,6 +507,7 @@ describe.skipIf(!engineBin)('cache: 引擎降级不毒化（真实引擎）', ()
     try {
       const r2 = await runPipeline(['.'], { cwd: dir })
       expect(r2.degraded).toBe(false)
+      expect(r2.report?.engineStatus).toBe('ok')
       expect(diagnosticsOf(r2, 'lintsight-engine/no-eval')).toHaveLength(1)
     } finally {
       await rm(dir, { recursive: true, force: true })

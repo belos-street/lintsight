@@ -4,14 +4,16 @@
  * 降级用例通过 OXLINT_ENGINE_BIN 注入假二进制（不存在 / 协议损坏）。
  */
 import { describe, expect, test } from 'bun:test'
-import { chmod, cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  awaitEngineProcess,
   deriveEngineStatus,
   expectedEngineRules,
   missingEngineRules,
+  parseEngineStdout,
   resolveEngineBin,
   resolveTsPaths,
   runEngine
@@ -31,12 +33,18 @@ function setEngineBin(value: string | undefined): () => void {
 }
 
 describe('engine-bridge: 二进制解析与降级', () => {
-  test('OXLINT_ENGINE_BIN 显式优先于探测链', () => {
-    const restore = setEngineBin('/opt/custom-engine')
+  test('OXLINT_ENGINE_BIN：存在时优先；不存在 → null（missing，不回退）', () => {
+    const restore = setEngineBin(process.execPath)
     try {
-      expect(resolveEngineBin(tmpdir())).toBe('/opt/custom-engine')
+      expect(resolveEngineBin(tmpdir())).toBe(process.execPath)
     } finally {
       restore()
+    }
+    const restoreMissing = setEngineBin('/opt/no-such-engine')
+    try {
+      expect(resolveEngineBin(tmpdir())).toBeNull()
+    } finally {
+      restoreMissing()
     }
   })
 
@@ -56,7 +64,7 @@ describe('engine-bridge: 二进制解析与降级', () => {
   })
 
   test('files 为空 → 不调用引擎，正常形态返回', async () => {
-    const restore = setEngineBin('/opt/never-spawned')
+    const restore = setEngineBin(process.execPath)
     try {
       const r = await runEngine([], { cwd: tmpdir() })
       expect(r).toEqual({ diagnostics: null, degraded: false, status: 'ok' })
@@ -65,10 +73,26 @@ describe('engine-bridge: 二进制解析与降级', () => {
     }
   })
 
-  test('二进制不存在 → spawn 失败 → 降级（degraded=true）', async () => {
+  test('missing：OXLINT_ENGINE_BIN 指向不存在路径 → status missing', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-engine-miss-'))
     const restore = setEngineBin(path.join(dir, 'no-such-bin'))
     try {
+      const r = await runEngine(['a.ts'], { cwd: dir })
+      expect(r.diagnostics).toBeNull()
+      expect(r.degraded).toBe(false)
+      expect(r.status).toBe('missing')
+    } finally {
+      restore()
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
+  test('crashed：存在但不可执行的文件 → spawn 失败 → status crashed', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-engine-bad-'))
+    const fake = path.join(dir, 'fake-engine')
+    const restore = setEngineBin(fake)
+    try {
+      await writeFile(fake, 'not an executable\n')
       const r = await runEngine(['a.ts'], { cwd: dir })
       expect(r.diagnostics).toBeNull()
       expect(r.degraded).toBe(true)
@@ -79,21 +103,40 @@ describe('engine-bridge: 二进制解析与降级', () => {
     }
   })
 
-  test('协议损坏（exit 0 但输出非 JSON）→ 降级', async () => {
-    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-engine-bad-'))
-    const restore = setEngineBin(path.join(dir, 'fake-engine.sh'))
-    try {
-      const fake = path.join(dir, 'fake-engine.sh')
-      await writeFile(fake, '#!/bin/sh\necho "not json"\n')
-      await chmod(fake, 0o755)
-      const r = await runEngine(['a.ts'], { cwd: dir })
-      expect(r.diagnostics).toBeNull()
-      expect(r.degraded).toBe(true)
-      expect(r.status).toBe('crashed')
-    } finally {
-      restore()
-      await rm(dir, { recursive: true, force: true })
-    }
+  test('protocol：parseEngineStdout 非 JSON → protocolError（映射 crashed）', () => {
+    expect(parseEngineStdout('not json')).toEqual({
+      diagnostics: [],
+      summary: null,
+      protocolError: true
+    })
+    const ok = parseEngineStdout(
+      JSON.stringify({ type: 'summary', version: '1', rules: [] })
+    )
+    expect(ok.protocolError).toBe(false)
+    expect(ok.summary?.rules).toEqual([])
+  })
+
+  test('timeout：进程忽略 kill / 流不关闭 → 10ms 检测 + ≤2s 宽限后返回 timeout', async () => {
+    let kills = 0
+    const never = new Promise<number>(() => {})
+    const openStream = (): ReadableStream<Uint8Array> =>
+      new ReadableStream<Uint8Array>({ start() {} })
+    const started = Date.now()
+    const outcome = await awaitEngineProcess(
+      {
+        exited: never,
+        stdout: openStream(),
+        stderr: openStream(),
+        kill: () => {
+          kills++
+          throw new Error('kill denied')
+        }
+      },
+      10
+    )
+    expect(outcome).toEqual({ kind: 'timeout' })
+    expect(kills).toBe(1)
+    expect(Date.now() - started).toBeLessThan(3_000)
   })
 
   test('deriveEngineStatus 五态：missing > timeout > crashed > degraded > ok', () => {
@@ -158,10 +201,12 @@ describe.skipIf(!engineBin)('engine-bridge: spawn 联通（真实 sidecar）', (
 })
 
 describe('engine-bridge: pipeline 集成（degraded 透传）', () => {
-  test('引擎失败 → runPipeline 仍出纯 M1 结果且 degraded=true', async () => {
+  test('引擎崩溃 → runPipeline 仍出纯 M1 结果且 degraded=true', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-engine-pipe-'))
-    const restore = setEngineBin(path.join(dir, 'no-such-bin'))
+    const bad = path.join(dir, 'bad-engine')
+    const restore = setEngineBin(bad)
     try {
+      await writeFile(bad, 'not an executable\n')
       await writeFile(
         path.join(dir, '.oxlintrc.json'),
         JSON.stringify({ rules: { 'no-var': 'error' } })
@@ -170,6 +215,7 @@ describe('engine-bridge: pipeline 集成（degraded 透传）', () => {
       const r = await runPipeline(['.'], { cwd: dir })
       expect(r.exitCode).toBe(1)
       expect(r.degraded).toBe(true)
+      expect(r.report?.engineStatus).toBe('crashed')
       expect(
         r.report?.diagnostics.some((d) => d.ruleId === 'eslint/no-var')
       ).toBe(true)
