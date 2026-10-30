@@ -18,10 +18,11 @@ G6 只解决**引擎进程级 fail-open 可观测**；单文件超时、大小/�
 
 - 目标：
   - 明确状态归因：`missing`（显式/探测二进制不存在）、`crashed`（存在但 spawn 失败/exit≠0/**协议损坏**）、`timeout`（进程超时）、`degraded`（规则面缺失）、`ok`。
-  - 引擎进程超时：默认 30s，`LINTSIGHT_ENGINE_TIMEOUT_MS` 可覆盖（`0` 关闭），超时 kill 并标 `timeout`。
-  - 所有非 `ok` 状态统一 `logger.warn`（含 `missing`），报告 `engineStatus` 保持可见。
-  - 可选的 fail-closed：`--fail-closed` 时任一非 `ok` 状态 → exit 2，且**保留报告**（`engineStatus` 与 M1 诊断仍可见）。
-  - 四组失败场景测试：missing / crashed / protocol / timeout；golden 的 `engineStatus` 随 missing 语义更新。
+  - 引擎进程超时：默认 **120s**（M5 10 万行 <60s 的 2 倍裕度），`LINTSIGHT_ENGINE_TIMEOUT_MS` 可覆盖（`0` 关闭），超时 kill 并标 `timeout`；超时判定必须与 stdout/stderr 读取同时 race。
+  - 所有非 `ok` 状态统一 `logger.warn`（含 `missing`）；JSON/text 报告可见 `engineStatus`；SARIF 通过 `runs[0].invocations[0].executionSuccessful` + `properties.engineStatus` 承载。
+  - 可选的 fail-closed：`--fail-closed` 时任一非 `ok` 状态 → exit 2，且**保留报告**（`engineStatus` 与 M1 诊断仍可见）；该新形态需 scanner 签字确认。
+  - 四组失败场景测试：missing / crashed / protocol / timeout；timeout 测试覆盖「进程忽略 kill / 永不退出」。
+  - golden 的 `engineStatus` 随 missing 语义更新。
 - 非目标：
   - 不做引擎自动重试/回退到其它引擎、不做跨进程健康检查。
   - 不做单文件超时、内存/并发上限（M5 G5）。
@@ -35,7 +36,7 @@ G6 只解决**引擎进程级 fail-open 可观测**；单文件超时、大小/�
 | --- | --- | --- | --- |
 | 协议损坏状态 | A. 新增 `protocol` 第六态；B. 复用 `crashed` | A 破坏 G2 已发布的枚举与 SARIF/平台对账；B 语义合理（引擎进程已坏） | **采纳 B**，但单独加解析单测与场景证据 |
 | missing 判定 | A. 保留「路径不存在 → spawn 失败 → crashed」；B. 显式路径不存在即 `missing` | A 无法区分未安装/坏了；B 与枚举语义一致 | **采纳 B** |
-| timeout 默认 | A. 不设默认，只能显式开启；B. 默认 30s + env 覆盖 | A 状态仍不可达；B 能兜住挂死引擎，30s 远高于现有引擎耗时 | **采纳 B** |
+| timeout 默认 | A. 不设默认；B. 默认 120s + env 覆盖 | A 状态仍不可达；B 能兜住挂死引擎，120s 给 M5 的 60s 目标留 2 倍裕度 | **采纳 B** |
 | fail-closed 输出 | A. exit 2 + report null；B. exit 2 + 保留报告 | A 丢失 engineStatus 可观测性；B 平台能同时看到状态与 M1 结果 | **采纳 B**（需在契约中写明 exit 2 可带报告） |
 | fail-closed 开关 | A. 配置项；B. CLI `--fail-closed` | A 改 config schema 面；B 与现有参数面一致，CI 直接传 | **采纳 B** |
 
@@ -65,8 +66,10 @@ G6 只解决**引擎进程级 fail-open 可观测**；单文件超时、大小/�
   - missing：`OXLINT_ENGINE_BIN` 指向不存在路径 → status missing；
   - crashed：指向存在但不可执行的文件 → status crashed；
   - protocol：`parseEngineStdout('not json')` → protocolError，映射 crashed；
-  - timeout：`awaitEngineExit` 对永不退出进程在 timeoutMs 后返回 timeout。
+  - timeout：`awaitEngineProcess` 对「忽略 kill / 永不退出」的 fake proc 在 timeoutMs 后返回 timeout 且不悬挂。
 - pipeline：非 ok 状态均有 warn；fail-open 默认 exit 0/1 不变；`failClosed=true` 时 exit 2 且 report 非空、`engineStatus` 正确。
 - CLI：`--fail-closed` 与 `--output` 组合 exit 2 仍写文件；无 `--fail-closed` 行为不变。
+- SARIF：`invocations[0].executionSuccessful` 与 `properties.engineStatus` 正确反映五态。
+- scanner 签字确认「exit 2 + report」形态；未签字前 G6 保持 `[~]`（不伪造签字）。
 - golden：`report-v3.json` 的 `engineStatus` 更新为 `missing`，其余字段无漂移。
 - `bun run test` / `cargo test --release` / `lint` / `format:check` 全绿；`corpus:check` 不改检测面，漂移只归因、不 `--save`。

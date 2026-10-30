@@ -8,7 +8,7 @@
   - 内容：
     - `resolveEngineBin`：`OXLINT_ENGINE_BIN` 指向不存在路径 → null（missing），不回退；
     - 抽取 `parseEngineStdout(stdout)` 纯函数，协议损坏 → `protocolError`，映射 crashed；
-    - `DEFAULT_ENGINE_TIMEOUT_MS=30_000` 与 `awaitEngineExit(proc, timeoutMs)`（kill + 兜底等待）；
+    - `DEFAULT_ENGINE_TIMEOUT_MS=120_000` 与 `awaitEngineProcess(proc, timeoutMs)`（exited + stdout + stderr 同时 race；kill 异常仍 timeout；2s 宽限兜底）；
     - `runEngine` 接受 `timeoutMs`，超时返回 status timeout。
   - 验收点：`engine-bridge.test.ts` 新增/更新 missing、crashed、protocol、timeout 四组；`bun test packages/lintsight-cli/test/engine-bridge.test.ts`。
 
@@ -20,10 +20,10 @@
     - `failClosed` 选项：非 ok → exit 2，保留 report（engineStatus + M1 诊断）。
   - 验收点：新增 `fail-closed.test.ts`（missing/crashed/timeout + fail-open 默认 + report 非空）；既有 cache/closed-loop 回归。
 
-- [ ] **任务 3：CLI --fail-closed**
-  - 涉及文件：`packages/lintsight-cli/src/cli.ts`
-  - 内容：usage 增加 `--fail-closed`；布尔开关透传 pipeline；`--output` 组合仍只落文件。
-  - 验收点：`fail-closed.test.ts` 增加 CLI spawn：`--fail-closed --output` + missing 引擎 → exit 2、stdout 为空、文件 engineStatus=missing。
+- [ ] **任务 3：CLI --fail-closed + SARIF invocations**
+  - 涉及文件：`packages/lintsight-cli/src/cli.ts`、`packages/lintsight-formatter/src/sarif.ts`
+  - 内容：usage 增加 `--fail-closed`（含与 `--fix` 组合的风险提示）；布尔开关透传 pipeline；`--output` 组合仍只落文件；SARIF `invocations[0].executionSuccessful` + `properties.engineStatus`。
+  - 验收点：`fail-closed.test.ts` 增加 CLI spawn：`--fail-closed --output` + missing 引擎 → exit 2、stdout 为空、文件 engineStatus=missing；`sarif.test.ts` 断言五态 invocations。
 
 - [ ] **任务 4：golden 与降级用例口径同步**
   - 涉及文件：`packages/lintsight-cli/test/__golden__/report-v3.json`、`report-snapshot.test.ts`、`cache.test.ts`
@@ -36,5 +36,5 @@
     - 跑 `bun run test`、`cargo test --release`、`lint`、`format:check`、`corpus:check`（漂移只归因不 `--save`）；
     - execution-todo G6 写证据（四组场景、fail-closed exit、golden 路径）；
     - upgrade-plan 契约补充「exit 2 可携带 report（fail-closed）」与超时 env；
-    - proposal 状态改「已实现」；不伪造平台签字、不宣称 G5 资源上限完成。
+    - proposal 状态改「已实现」；scanner 对「exit 2 + report」的签字确认是 G6 收口条件，未签字保持 `[~]`；不伪造签字、不宣称 G5 资源上限完成。
   - 验收点：命令输出摘要齐全；golden diff 可解释；G6 证据含测试名/命令/exit 语义。

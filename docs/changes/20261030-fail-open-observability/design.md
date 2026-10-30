@@ -44,27 +44,48 @@ export function parseEngineStdout(stdout: string): ParsedEngineOutput
 - `runEngine` 在 `protocolError` 时返回 `{ diagnostics: null, degraded: true, status: 'crashed' }`。
 - 单测可直接喂 `"not json"` / 混合合法行 + 损坏行。
 
-### 3. 引擎进程超时
+### 3. 引擎进程超时（必须与流读取同时竞速）
 
 ```ts
-export const DEFAULT_ENGINE_TIMEOUT_MS = 30_000
+export const DEFAULT_ENGINE_TIMEOUT_MS = 120_000
 // pipeline 读取 env：
 // LINTSIGHT_ENGINE_TIMEOUT_MS 为正整数 → 覆盖；0 → 禁用超时；非法 → 用默认并 warn
 ```
 
-实现：
+> 默认 120s：M5 目标是 10 万行 <60s，30s 会在目标规模一半处误杀；120s 是 2 倍裕度。CI 可显式调小。
+
+实现必须**同时 race 三件事**，不能先读完 stdout/stderr 再等 exit。抽成可测试助手：
 
 ```ts
-export function awaitEngineExit(
-  proc: { exited: Promise<number>; kill: () => void },
+export async function awaitEngineProcess(
+  proc: { exited: Promise<number>; stdout: ReadableStream; stderr: ReadableStream; kill: () => void },
   timeoutMs: number
-): Promise<'exited' | 'timeout'>
+): Promise<{ kind: 'exited'; stdout: string; stderr: string; code: number } | { kind: 'timeout' }>
+
+const timed = (async () => {
+  const [stdout, stderr, code] = await Promise.all([
+    new Response(proc.stdout).text(),
+    new Response(proc.stderr).text(),
+    proc.exited
+  ])
+  return { kind: 'exited' as const, stdout, stderr, code }
+})()
+
+const timeout = sleep(timeoutMs).then(() => ({ kind: 'timeout' as const }))
+const first = await Promise.race([timed, timeout])
+
+if (first.kind === 'timeout') {
+  try { proc.kill() } catch { /* kill 失败仍按 timeout 处理 */ }
+  // 宽限：再等 exit + 流关闭，避免僵尸/测试卡死；上限 2s
+  await Promise.race([timed, sleep(2_000)])
+  return { diagnostics: null, degraded: true, status: 'timeout' }
+}
 ```
 
-- `Promise.race([proc.exited, sleep(timeoutMs)])`；超时 → `proc.kill()`，再等待 `exited`（带兜底），返回 `timeout`。
-- `runEngine` 拿到 `timeout` 后：`{ diagnostics: null, degraded: true, status: 'timeout' }`，stderr 继续消费避免子进程阻塞。
+- 超时路径不再读取半截输出（诊断置 null）；stdout/stderr 已被 `Promise.all` 消费，kill 后不会阻塞。
+- `kill()` 抛异常也返回 `timeout`，不得降级成 `crashed`。
 - `timeoutMs=0` 不创建定时器（禁用）。
-- 默认 30s：远高于现有引擎耗时（445 文件 <1s 量级），仅兜住挂死；平台可用 env 调整。
+- 测试必须覆盖「进程忽略 kill / exited 永不 resolve」：用 fake proc（`exited: new Promise(() => {})`、`kill` 抛错或只记录）调用 `awaitEngineProcess`，断言 10ms 后返回 timeout 且不悬挂。
 - **不**做单文件/内存/并发上限（G5）。
 
 ### 4. 统一非 ok 告警
@@ -99,8 +120,32 @@ usage: ... [--fail-closed]
 - 无值校验（与 `--fix` 同形态）。
 - CLI 在 `result.report` 存在时照常格式化；`--output` 仍只写文件且 stdout 为空；exit 2 由 `process.exit` 返回。
 - 失败原因通过 `logger.error(result.error)` 走 stderr。
+- usage 注明：`--fail-closed` 与 `--fix` 组合时，引擎异常会 exit 2，但已完成的 fix 改写不回滚。
 
-### 7. 缓存与指纹
+### 7. SARIF 承载 engineStatus
+
+G6 让 SARIF 消费面也能看到引擎状态：
+
+```jsonc
+runs[0].invocations[0] = {
+  "executionSuccessful": engineStatus === "ok",
+  "properties": { "engineStatus": "missing" }
+}
+```
+
+- 仅当报告带 `engineStatus` 时输出；`ok` → `executionSuccessful: true`，其余四态 false。
+- 这是 SARIF 2.1.0 标准字段（invocation），不写 schema 外属性。
+- JSON/text 仍以报告级 `engineStatus` 为准；`--output` 静默、exit 语义不变。
+
+### 8. fail-closed 与 scanner 契约
+
+-「exit 2 + report」是新增形态，G6 验收必须包含 **scanner 消费确认**：
+  - scanner 不得因 exit 2 丢弃 report；
+  - 需读取 `engineStatus` 并在任务界面/门禁中体现；
+  - 未签字前 G6 状态保持 `[~]`（与 G2 scanner 签字同纪律）。
+- 默认 fail-open 路径的 exit 2 仍 report null，不变。
+
+### 9. 缓存与指纹
 
 - `engineStatus` 不进缓存（报告级、每轮重算）。
 - engine 指纹中 `engine@<bin 内容哈希|none>` 已覆盖二进制变化；timeout/status 不影响缓存条目。
@@ -111,7 +156,9 @@ usage: ... [--fail-closed]
 - 改动：`packages/lintsight-cli/src/engine-bridge.ts`
 - 改动：`packages/lintsight-cli/src/pipeline.ts`
 - 改动：`packages/lintsight-cli/src/cli.ts`
+- 改动：`packages/lintsight-formatter/src/sarif.ts`（invocations.engineStatus）
 - 改动（测试）：`packages/lintsight-cli/test/engine-bridge.test.ts`
+- 改动（测试）：`packages/lintsight-formatter/test/sarif.test.ts`（invocations）
 - 新增（测试）：`packages/lintsight-cli/test/fail-closed.test.ts`
 - 改动（golden）：`packages/lintsight-cli/test/__golden__/report-v3.json`（engineStatus crashed → missing）
 - 改动（测试）：`packages/lintsight-cli/test/cache.test.ts`（G1「降级不毒化」用例的 missing/degraded 断言同步）
@@ -143,8 +190,8 @@ usage: ... [--fail-closed]
 ## 风险与已知坑
 
 1. **missing 语义变更**：`OXLINT_ENGINE_BIN` 无效从 crashed 改为 missing；golden 与 G1 降级用例同步更新。平台若按旧口径统计 crashed 会看到一次迁移。
-2. **默认 30s 超时**：极大仓库（M5 目标 10 万行 <60s）可能超过 30s → 需要平台设 `LINTSIGHT_ENGINE_TIMEOUT_MS`；G6 不解决吞吐，只兜挂死。
-3. **timeout kill 的平台差异**：Windows kill 后仍需等待进程退出；`awaitEngineExit` 对 kill 后 `exited` 加兜底超时（再 2s），避免测试/CI 卡死。
+2. **默认 120s 超时**：给 M5 的 10 万行 <60s 目标留 2 倍裕度；更大仓库仍可能超时，平台可设 `LINTSIGHT_ENGINE_TIMEOUT_MS`；G6 不解决吞吐，只兜挂死。
+3. **timeout kill 的平台差异**：Windows kill 后仍需等待进程退出；`awaitEngineProcess` 对 kill 后的 exit/流关闭加 2s 宽限，避免测试/CI 卡死。
 4. **protocol 仍映射 crashed**：不新增枚举，平台无法区分「协议坏」与「进程坏」；失败细节进 stderr/debug 日志。若平台需要区分，后续单独评审。
 5. **exit 2 + report 的新形态**：scanner 若假定 exit 2 必无报告需调整；本 change 只在 fail-closed 生效，默认路径不变。
 6. **`--fail-closed` 与 `--fix`**：fix 模式同样生效；引擎异常时 exit 2 但文件可能已被 fix 改写（与现有 fix 语义一致，需文档说明）。
