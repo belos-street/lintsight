@@ -71,6 +71,8 @@ export function formatText(report: ReportLike): string {
   lines.push(
     `summary: ${report.summary.error} error(s), ${report.summary.warning} warning(s), ${report.summary.info} info, ${suppressed} suppressed, ${report.files} file(s)`
   )
+  // G6：text 与 JSON/SARIF 同口径暴露引擎状态
+  if (report.engineStatus) lines.push(`engine: ${report.engineStatus}`)
   return lines.join('\n')
 }
 

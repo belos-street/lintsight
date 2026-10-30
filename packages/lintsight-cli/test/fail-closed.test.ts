@@ -8,8 +8,11 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runPipeline } from '../src/pipeline'
+import { resolveEngineBin } from '../src/engine-bridge'
 
 const CLI = fileURLToPath(new URL('../src/cli.ts', import.meta.url))
+const PROJECT_ROOT = fileURLToPath(new URL('../../../', import.meta.url))
+const engineBin = resolveEngineBin(PROJECT_ROOT)
 
 async function makeProject(prefix: string): Promise<string> {
   const dir = await mkdtemp(path.join(tmpdir(), prefix))
@@ -89,6 +92,28 @@ describe('G6 fail-closed：pipeline', () => {
     }
   })
 })
+
+describe.skipIf(!engineBin)(
+  'G6 fail-closed：timeout（真实引擎 + 1ms 超时）',
+  () => {
+    test('timeout + failClosed：exit 2，report engineStatus=timeout', async () => {
+      const dir = await makeProject('lintsight-failclosed-timeout-')
+      try {
+        const r = await runPipeline(['.'], {
+          cwd: dir,
+          failClosed: true,
+          engineTimeoutMs: 1
+        })
+        expect(r.exitCode).toBe(2)
+        expect(r.report).not.toBeNull()
+        expect(r.report?.engineStatus).toBe('timeout')
+        expect(r.error).toContain('status=timeout')
+      } finally {
+        await rm(dir, { recursive: true, force: true })
+      }
+    })
+  }
+)
 
 describe('G6 fail-closed：CLI', () => {
   test('--fail-closed --output：exit 2、stdout 为空、文件保留 engineStatus', async () => {

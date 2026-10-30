@@ -240,6 +240,9 @@ export function parseEngineStdout(stdout: string): {
     } catch {
       return { diagnostics: [], summary: null, protocolError: true }
     }
+    if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) {
+      return { diagnostics: [], summary: null, protocolError: true }
+    }
     const rec = obj as { type?: string; ruleId?: string } & Partial<{
       version: string
       rules: string[]
@@ -292,9 +295,15 @@ export function missingEngineRules(reported: readonly string[]): string[] {
 }
 
 export function resolveEngineBin(cwd: string = process.cwd()): string | null {
-  // G6：显式路径不存在 = missing（不回退探测链，避免静默换引擎）
+  // G6：显式路径不存在 = missing（不回退探测链，避免静默换引擎）。
+  // 相对路径按调用方 root/cwd 解析，而不是进程 cwd（扫描外部项目时后者会误判 missing）。
   const explicit = process.env.OXLINT_ENGINE_BIN
-  if (explicit) return existsSync(explicit) ? explicit : null
+  if (explicit) {
+    const abs = path.isAbsolute(explicit)
+      ? explicit
+      : path.resolve(cwd, explicit)
+    return existsSync(abs) ? abs : null
+  }
   // Windows 下 cargo/bin shim 带 .exe 后缀（无扩展名文件不存在）
   const bin =
     process.platform === 'win32' ? 'lintsight-engine.exe' : 'lintsight-engine'

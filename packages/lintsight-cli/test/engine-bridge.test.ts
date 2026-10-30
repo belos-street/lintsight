@@ -48,6 +48,18 @@ describe('engine-bridge: 二进制解析与降级', () => {
     }
   })
 
+  test('显式相对路径按调用方 cwd/root 解析（不是进程 cwd）', async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), 'lintsight-engine-rel-'))
+    const restore = setEngineBin('engine-bin')
+    try {
+      await writeFile(path.join(dir, 'engine-bin'), 'x')
+      expect(resolveEngineBin(dir)).toBe(path.join(dir, 'engine-bin'))
+    } finally {
+      restore()
+      await rm(dir, { recursive: true, force: true })
+    }
+  })
+
   test('规则面对账（M3 review ②）：常驻面缺席检出，opt-in 缺席不误报', () => {
     // 期望面由注册表驱动：常驻引擎规则必含（陈旧二进制丢的就是这些）
     expect(expectedEngineRules()).toContain('lintsight-engine/no-open-redirect')
@@ -109,6 +121,8 @@ describe('engine-bridge: 二进制解析与降级', () => {
       summary: null,
       protocolError: true
     })
+    expect(parseEngineStdout('null').protocolError).toBe(true)
+    expect(parseEngineStdout('[]').protocolError).toBe(true)
     const ok = parseEngineStdout(
       JSON.stringify({ type: 'summary', version: '1', rules: [] })
     )

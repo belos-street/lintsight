@@ -150,7 +150,11 @@ function resolveEngineTimeoutMs(
   override: number | undefined,
   logger: Logger
 ): number {
-  if (override !== undefined) return override
+  if (override !== undefined) {
+    if (Number.isInteger(override) && override >= 0) return override
+    logger.warn(`engine: engineTimeoutMs 非法（${override}），使用默认`)
+    return DEFAULT_ENGINE_TIMEOUT_MS
+  }
   const raw = process.env.LINTSIGHT_ENGINE_TIMEOUT_MS
   if (!raw) return DEFAULT_ENGINE_TIMEOUT_MS
   const n = Number(raw)

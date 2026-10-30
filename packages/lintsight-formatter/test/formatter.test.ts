@@ -52,4 +52,18 @@ describe('formatter', () => {
       })
     ).toBe('summary: 0 error(s), 0 warning(s), 0 info, 0 suppressed, 1 file(s)')
   })
+
+  test('G6：text 输出 engineStatus（五态与 JSON/SARIF 同口径）', () => {
+    expect(
+      formatText({
+        contractVersion: '3',
+        engineStatus: 'missing',
+        files: 1,
+        summary: { error: 0, warning: 0, info: 0, suppressed: 0 },
+        diagnostics: []
+      })
+    ).toBe(
+      'summary: 0 error(s), 0 warning(s), 0 info, 0 suppressed, 1 file(s)\nengine: missing'
+    )
+  })
 })
