@@ -20,8 +20,9 @@
 
 ### W1 集成契约与可观测性
 
-- [ ] **G2 契约 v3**
+- [~] **G2 契约 v3**
   - owner：engine + platform
+  - 进行中：方案文档 `docs/changes/20261030-contract-v3/`（待确认，未改代码）
   - 内容：
     - 诊断 JSON/SARIF 增加 `confidence`（**逐 finding**，规则 meta 只做默认值）、`cweTags`、`engineStatus`、`toolVersion`。
     - `engineStatus` 枚举：`ok | degraded | missing | crashed | timeout`。
