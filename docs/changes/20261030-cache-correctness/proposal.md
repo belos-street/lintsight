@@ -88,5 +88,5 @@
   8. tsconfig 变更冷热等价。
 - 冷/热报告 `JSON.stringify` 相等（测试断言）；引擎可用时图规则冷/热条数一致。
 - G1 相关命令：`bun run test`、`cargo test --release --manifest-path crates/lintsight-engine/Cargo.toml`、`bun run lint`、`bun run format:check` 全部通过并附输出摘要；矩阵强制门禁 `REQUIRE_ENGINE=1` 下引擎用例不得 skip。
-- 仓级 `bun run corpus:check`：本次走 `cache:false`，与缓存改动无因果关系；当前 FAIL 属既有基线陈旧（基线 `52b03db`，后续规则提交未重建），归 G3。**G1 不以该项收口**，但按验收纪律 G1 暂记 `[~]`，待 G3 重建基线重跑或用户明确批准例外后再置 `[x]`。
+- 仓级 `bun run corpus:check`：本次走 `cache:false`，与缓存改动无因果关系；当前 FAIL 属既有基线陈旧（基线 `52b03db`，后续规则提交未重建），归 G3。**G1 不以该项收口**；用户已于 2026-10-30 明确批准该例外（选择「批准 corpus 例外，G1 置 `[x]`，开始 G2 方案」），G3 重建基线后仍须重跑该门禁。
 - 证据写入 `execution-todo.md` G1 行：测试名、复现命令、冷/热 diff 结果；不提前宣称 M4 完成。

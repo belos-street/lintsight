@@ -112,9 +112,9 @@
 
 ### W5 工程正确性
 
-- [~] **G1 缓存正确性**
+- [x] **G1 缓存正确性**
   - owner：engine
-  - 变更：`docs/changes/20261030-cache-correctness/`（实现完成，收口待 corpus 基线重建/例外批准）
+  - 变更：`docs/changes/20261030-cache-correctness/`（实现完成，已按用户批准的例外收口）
   - 内容：缓存键含路径 + tsconfig + engine/config/plugin 指纹；空结果也缓存；**引擎结果不缓存、每轮按当前文件集全量 pass**（文件集/依赖闭包/影响集由此覆盖，不进缓存键）。
   - 验收测试矩阵（至少 8 组）：
     1. 同内容不同路径（当前 bug 的直接回归）；
@@ -125,7 +125,7 @@
     6. 同 key 并发写入原子性；
     7. 图规则（断环/加文件）冷热等价；
     8. tsconfig 变更冷热等价。
-  - 阻塞（2026-10-30）：`corpus:check` FAIL 属既有基线陈旧（基线 `52b03db`；后续规则提交 `027fd8f`/`abe8326` 未重建基线），corpus 走 `cache:false`，与本次缓存改动无因果关系。按验收纪律暂不置 `[x]`，待 G3 重建基线重跑或用户明确批准「corpus 例外」后再收口。
+  - 收口例外（2026-10-30 用户批准）：`corpus:check` FAIL 属既有基线陈旧（基线 `52b03db`；后续规则提交 `027fd8f`/`abe8326` 未重建基线），corpus 走 `cache:false`，与本次缓存改动无因果关系。用户明确选择「批准 corpus 例外，G1 置 `[x]`，开始 G2 方案」，故 G1 不以该项收口；G3 重建基线后仍须重跑该门禁。
   - 证据（2026-10-30）：
     - `cache.test.ts` 19 pass / 0 fail：8 组矩阵 + `REQUIRE_ENGINE=1` 前置门禁 + 手写 oxlintrc 相对 jsPlugins 端到端加载。
     - `bun run test`：180 pass / 0 fail；`cargo test --release`：52 passed；`bun run lint`：0 warnings；`bun run format:check`：clean。
