@@ -85,7 +85,7 @@ if (first.kind === 'timeout') {
 - 超时路径不再读取半截输出（诊断置 null）；stdout/stderr 已被 `Promise.all` 消费，kill 后不会阻塞。
 - `kill()` 抛异常也返回 `timeout`，不得降级成 `crashed`。
 - `timeoutMs=0` 不创建定时器（禁用）。
-- 测试必须覆盖「进程忽略 kill / exited 永不 resolve」：用 fake proc（`exited: new Promise(() => {})`、`kill` 抛错或只记录）调用 `awaitEngineProcess`，断言 10ms 后返回 timeout 且不悬挂。
+- 测试必须覆盖「进程忽略 kill / exited 永不 resolve」：用 fake proc（`exited: new Promise(() => {})`、`kill` 抛错、流不关闭）调用 `awaitEngineProcess`，断言 10ms 检测到超时、≤2s 宽限内返回 timeout 且不悬挂（测试上界 3s）。
 - **不**做单文件/内存/并发上限（G5）。
 
 ### 4. 统一非 ok 告警

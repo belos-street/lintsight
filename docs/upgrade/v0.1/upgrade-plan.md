@@ -479,6 +479,9 @@ interface FrameworkProfile {
 - **exit**：`--fail-on high|medium|low`（默认 `low` = 现有「任何 error 即 1」）；仅未抑制的 `severity=error` 且 `confidence` 不低于阈值时 exit 1；运行错误仍 exit 2。
 - **SARIF**：`run.taxonomies`（CWE）+ `results[].taxa`、`results[].properties.confidence`、`results[].suppressions`、`driver.version = toolVersion`；ruleId/位置/指纹不变。
 - **输出通道**：有 `--output` 时 stdout 必须为空（报告只落文件）。
+- **G6 fail-open 细化**：引擎显式路径不存在 = `missing`；存在但不可执行/exit≠0/协议损坏 = `crashed`；进程超时 = `timeout`（默认 120s，`LINTSIGHT_ENGINE_TIMEOUT_MS` 覆盖，0 关闭）；规则面缺失 = `degraded`。非 `ok` 统一 warn。
+- **G6 fail-closed**：`--fail-closed` 时任一非 `ok` → exit 2 **且保留 report**（scanner 必须消费；这是唯一「exit 2 + report」形态，其余 exit 2 仍 report null）。
+- **SARIF engineStatus**：`runs[0].invocations[0].executionSuccessful = status === 'ok'` + `properties.engineStatus`。
 
 ### M5（P1）— 深度与规模化
 
@@ -594,3 +597,4 @@ interface FrameworkProfile {
 | v0.1 修订 5 | 2026-10-29 | 按执行清单复核调整范围：M4 仅 P0；G6/G8/G9/G14/G15 升 P0；G5/G10 移至 M5；G4/G7/G16 归 M5，G11/G17 归 M6；补 G15 修复目标（Vue→TS 2 条，当前 0 条为 bug 基线）；执行清单补齐证据行、G1 8 组缓存矩阵、G2 schema 细节、G12 规则账、G13 优先级、G3 分阶段 CI、G8/H5/前端包规则 ID 边界 |
 | v0.1 修订 6 | 2026-10-30 | G1 收口口径对齐实现：缓存键 = 路径 + tsconfig + engine/config/plugin 指纹；**引擎诊断不缓存、每轮全量 pass**，文件集/依赖闭包/影响集不进键；空结果缓存；图规则矩阵由 `REQUIRE_ENGINE=1` 硬门禁防静默 skip |
 | v0.1 修订 7 | 2026-10-30 | 补 M4 契约 v3 实现约定（G2）：报告/诊断字段、engineStatus 五态、行内抑制审计口径、`--fail-on` 语义、SARIF taxonomies/suppressions、`--output` stdout 静默；G6 仍独立负责 fail-closed 与超时接线 |
+| v0.1 修订 8 | 2026-10-30 | G6 收口口径：missing/crashed/协议→crashed/timeout/degraded 归因；默认 120s 引擎超时 + env 覆盖；非 ok 统一 warn；`--fail-closed` exit 2 且保留 report（scanner 签字项）；SARIF `invocations.executionSuccessful` + `properties.engineStatus` |

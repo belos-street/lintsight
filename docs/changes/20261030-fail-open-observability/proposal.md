@@ -1,6 +1,10 @@
 # Proposal: G6 fail-open 可观测（missing / crashed / protocol / timeout / fail-closed）
 
-> change-id：`20261030-fail-open-observability` · 日期：`2026-10-30` · 状态：草稿
+> change-id：`20261030-fail-open-observability` · 日期：`2026-10-30` · 状态：已实现（外部 scanner 签字 pending）
+
+## 确认记录
+
+- 2026-10-30：三层文档评审补强后，用户以消息全文 **「好的，按这个方案开始实现 G6」** 确认进入实现（无独立消息 ID，仓库内只能引用原话）；确认范围 = 本目录 `proposal.md` / `design.md` / `tasks.md` 全量方案（含 120s 超时、timeout 竞速、SARIF invocations、`--fail-closed` exit 2 + report）。
 
 ## 背景与问题
 
@@ -66,7 +70,7 @@ G6 只解决**引擎进程级 fail-open 可观测**；单文件超时、大小/�
   - missing：`OXLINT_ENGINE_BIN` 指向不存在路径 → status missing；
   - crashed：指向存在但不可执行的文件 → status crashed；
   - protocol：`parseEngineStdout('not json')` → protocolError，映射 crashed；
-  - timeout：`awaitEngineProcess` 对「忽略 kill / 永不退出」的 fake proc 在 timeoutMs 后返回 timeout 且不悬挂。
+  - timeout：`awaitEngineProcess` 对「忽略 kill / 流不关闭」的 fake proc 在 10ms 检测到超时、≤2s 宽限内返回 timeout 且不悬挂（测试上界 3s）。
 - pipeline：非 ok 状态均有 warn；fail-open 默认 exit 0/1 不变；`failClosed=true` 时 exit 2 且 report 非空、`engineStatus` 正确。
 - CLI：`--fail-closed` 与 `--output` 组合 exit 2 仍写文件；无 `--fail-closed` 行为不变。
 - SARIF：`invocations[0].executionSuccessful` 与 `properties.engineStatus` 正确反映五态。

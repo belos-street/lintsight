@@ -43,10 +43,19 @@
   - 依赖：scanner 调用契约。
 - [~] **G6 fail-open 可观测**
   - owner：engine
-  - 进行中：方案文档 `docs/changes/20261030-fail-open-observability/`（待确认，未改代码）
+  - 变更：`docs/changes/20261030-fail-open-observability/`（代码与本地验收完成；scanner 对「exit 2 + report」签字待补）
+  - 阻塞：scanner 消费签字（exit 2 不得丢弃 report，需读取 engineStatus）；未签字前 G6 保持 `[~]`。
   - 内容：引擎缺失/崩溃/协议损坏/超时统一标注；CI 可选 fail-closed。
   - 验收：四种失败场景均有 `engineStatus` 与退出码语义，不再静默。
-  - 证据：`engine-bridge.test.ts` 增加 missing/crashed/timeout/protocol 四组；报告 golden 增加 `engineStatus`。
+  - 证据（2026-10-30）：
+    - `bun run test`：214 pass / 0 fail；`cargo test --release`：52 passed；`lint`：0 warnings；`format:check`：clean。
+    - `engine-bridge.test.ts`：missing（显式路径不存在）/crashed（存在但不可执行）/protocol（`parseEngineStdout` 非 JSON）/timeout（fake proc 忽略 kill、流不关闭，10ms 检测 + ≤2s 宽限）；`deriveEngineStatus` 五态。
+    - `fail-closed.test.ts`：missing/crashed + `failClosed` → exit 2 且 report 保留；fail-open 默认不变；CLI `--fail-closed --output` → exit 2、stdout 为空、文件 engineStatus=missing。
+    - `sarif.test.ts`：`invocations[0].executionSuccessful` 五态与 `properties.engineStatus`。
+    - golden：`report-v3.json` engineStatus 由 crashed 更新为 missing（固定 `OXLINT_ENGINE_BIN` 不存在路径）。
+    - 默认引擎超时 120s（`LINTSIGHT_ENGINE_TIMEOUT_MS` 覆盖，0 关闭）；非 ok 状态统一 warn。
+    - `bun run corpus:check`：FAIL（与 G1/G2 相同的既有基线陈旧；本 change 不改检测面，未 `--save`）。
+    - scanner 签字：**待补**（不伪造；未签字前不宣称 G6 外部验收闭合）。
 - [ ] **G13 配置根与路径契约**
   - owner：engine
   - 内容：明确优先级 **`--root` > `--config` > cwd**；config/ignore/tsconfig/报告路径全部 root 相对。
