@@ -120,14 +120,16 @@ describe('cache: 键敏感性与条目读写', () => {
       const key = createCacheKey(ctx, 'a.ts', 'hash-x')
       const diagnostics = [
         {
-          contractVersion: '1',
+          contractVersion: '3',
           ruleId: 'lintsight/no-empty-catch',
           severity: 'error' as const,
           message: 'm',
           file: 'a.ts',
           span: { offset: 0, length: 1, line: 1, column: 1 },
           fingerprint: 'f'.repeat(64),
-          owner: 'lintsight-js' as const
+          owner: 'lintsight-js' as const,
+          confidence: 'high' as const,
+          cweTags: []
         }
       ]
       await writeCacheEntry(ctx, key, diagnostics)
@@ -280,14 +282,16 @@ describe('cache: 键敏感性与条目读写', () => {
       const key = createCacheKey(ctx, 'a.ts', 'hash-a')
       const payload = (i: number) => [
         {
-          contractVersion: '2',
+          contractVersion: '3',
           ruleId: 'lintsight/no-empty-catch',
           severity: 'error' as const,
           message: `m${i}`,
           file: 'a.ts',
           span: { offset: 0, length: 1, line: 1, column: 1 },
           fingerprint: `${i}`.padEnd(64, '0'),
-          owner: 'lintsight-js' as const
+          owner: 'lintsight-js' as const,
+          confidence: 'high' as const,
+          cweTags: []
         }
       ]
       const payloads = Array.from({ length: 8 }, (_, i) => payload(i))

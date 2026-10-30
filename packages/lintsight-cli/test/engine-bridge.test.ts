@@ -9,6 +9,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  deriveEngineStatus,
   expectedEngineRules,
   missingEngineRules,
   resolveEngineBin,
@@ -58,7 +59,7 @@ describe('engine-bridge: 二进制解析与降级', () => {
     const restore = setEngineBin('/opt/never-spawned')
     try {
       const r = await runEngine([], { cwd: tmpdir() })
-      expect(r).toEqual({ diagnostics: null, degraded: false })
+      expect(r).toEqual({ diagnostics: null, degraded: false, status: 'ok' })
     } finally {
       restore()
     }
@@ -71,6 +72,7 @@ describe('engine-bridge: 二进制解析与降级', () => {
       const r = await runEngine(['a.ts'], { cwd: dir })
       expect(r.diagnostics).toBeNull()
       expect(r.degraded).toBe(true)
+      expect(r.status).toBe('crashed')
     } finally {
       restore()
       await rm(dir, { recursive: true, force: true })
@@ -87,10 +89,21 @@ describe('engine-bridge: 二进制解析与降级', () => {
       const r = await runEngine(['a.ts'], { cwd: dir })
       expect(r.diagnostics).toBeNull()
       expect(r.degraded).toBe(true)
+      expect(r.status).toBe('crashed')
     } finally {
       restore()
       await rm(dir, { recursive: true, force: true })
     }
+  })
+
+  test('deriveEngineStatus 五态：missing > timeout > crashed > degraded > ok', () => {
+    expect(deriveEngineStatus({ bin: null })).toBe('missing')
+    expect(deriveEngineStatus({ bin: '/x', timedOut: true })).toBe('timeout')
+    expect(deriveEngineStatus({ bin: '/x', crashed: true })).toBe('crashed')
+    expect(deriveEngineStatus({ bin: '/x', missingRules: ['rule-a'] })).toBe(
+      'degraded'
+    )
+    expect(deriveEngineStatus({ bin: '/x', missingRules: [] })).toBe('ok')
   })
 })
 
@@ -104,6 +117,7 @@ describe.skipIf(!engineBin)('engine-bridge: spawn 联通（真实 sidecar）', (
       await writeFile(path.join(dir, 'ok.ts'), 'const a = 1\nconsole.log(a)\n')
       const r = await runEngine(['bad.ts', 'ok.ts'], { cwd: dir })
       expect(r.degraded).toBe(false)
+      expect(r.status).toBe('ok')
       expect(r.diagnostics).not.toBeNull()
       const hits = r.diagnostics!.filter(
         (d) => d.ruleId === 'lintsight-engine/no-eval'

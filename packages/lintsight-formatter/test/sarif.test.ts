@@ -61,6 +61,92 @@ const report = {
   ]
 }
 
+const v3Report = {
+  contractVersion: '3',
+  toolVersion: '0.0.1',
+  engineStatus: 'ok',
+  files: 2,
+  summary: { error: 1, warning: 1, info: 0, suppressed: 1 },
+  diagnostics: [
+    {
+      file: 'a.ts',
+      span: { line: 2, column: 1 },
+      severity: 'error',
+      ruleId: 'lintsight/no-sql-concat',
+      message: 'SQL injection via concat',
+      confidence: 'high',
+      cweTags: ['cwe-89'],
+      suppression: {
+        kind: 'inSource',
+        justification: '旧代码兼容',
+        directiveLine: 1
+      },
+      fingerprint: 'a'.repeat(64)
+    },
+    {
+      file: 'b.ts',
+      span: { line: 1, column: 1 },
+      severity: 'warning',
+      ruleId: 'lintsight/no-innerhtml-assignment',
+      message: 'innerHTML sink',
+      confidence: 'medium',
+      cweTags: ['cwe-79'],
+      fingerprint: 'b'.repeat(64)
+    }
+  ]
+}
+
+describe('formatSarif v3（契约 v3：CWE / confidence / suppressions）', () => {
+  const sarif = JSON.parse(
+    formatSarif(v3Report, {
+      toolVersion: '0.0.1',
+      rules: [
+        {
+          id: 'lintsight/no-sql-concat',
+          name: 'no-sql-concat',
+          cweTags: ['cwe-89']
+        }
+      ]
+    })
+  )
+  const result = sarif.runs[0].results[0]
+
+  test('taxonomies：只收录报告出现的 CWE，排序去重', () => {
+    expect(sarif.runs[0].taxonomies).toHaveLength(1)
+    expect(sarif.runs[0].taxonomies[0].name).toBe('CWE')
+    expect(
+      sarif.runs[0].taxonomies[0].taxa.map((t: { id: string }) => t.id)
+    ).toEqual(['CWE-79', 'CWE-89'])
+  })
+
+  test('results[].taxa / properties.confidence / suppressions', () => {
+    expect(result.taxa).toEqual([
+      { id: 'CWE-89', index: 1, toolComponent: { name: 'CWE' } }
+    ])
+    expect(result.properties).toEqual({ confidence: 'high' })
+    expect(result.suppressions).toEqual([
+      {
+        kind: 'inSource',
+        justification: '旧代码兼容',
+        properties: { directiveLine: 1 }
+      }
+    ])
+  })
+
+  test('rules[].properties.cweTags + driver.version 同源 toolVersion', () => {
+    expect(sarif.runs[0].tool.driver.version).toBe('0.0.1')
+    const rule = sarif.runs[0].tool.driver.rules.find(
+      (r: { id: string }) => r.id === 'lintsight/no-sql-concat'
+    )
+    expect(rule.properties).toEqual({ cweTags: ['cwe-89'] })
+  })
+
+  test('无 CWE 的报告不输出 taxonomies（保持快照干净）', () => {
+    const plain = JSON.parse(formatSarif(report))
+    expect(plain.runs[0].taxonomies).toBeUndefined()
+  })
+})
+
 describe('formatSarif（SARIF 2.1.0）', () => {
   const sarif = JSON.parse(formatSarif(report))
 

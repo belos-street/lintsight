@@ -30,7 +30,7 @@ describe('formatter', () => {
         'a.ts:5:3  error    lintsight/no-empty-catch  Unexpected empty catch block.',
         "b.ts:1:1  warning  eslint/no-unused-vars  Variable 'x' is declared but never used.",
         '',
-        'summary: 1 error(s), 1 warning(s), 0 info, 2 file(s)'
+        'summary: 1 error(s), 1 warning(s), 0 info, 0 suppressed, 2 file(s)'
       ].join('\n')
     )
   })
@@ -50,6 +50,6 @@ describe('formatter', () => {
         summary: { error: 0, warning: 0, info: 0 },
         diagnostics: []
       })
-    ).toBe('summary: 0 error(s), 0 warning(s), 0 info, 1 file(s)')
+    ).toBe('summary: 0 error(s), 0 warning(s), 0 info, 0 suppressed, 1 file(s)')
   })
 })

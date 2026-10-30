@@ -1,14 +1,17 @@
 {
-  "contractVersion": "2",
+  "contractVersion": "3",
+  "toolVersion": "0.0.1",
+  "engineStatus": "crashed",
   "files": 149,
   "summary": {
     "error": 74,
     "warning": 39,
-    "info": 0
+    "info": 0,
+    "suppressed": 0
   },
   "diagnostics": [
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-array-map-side-effect",
       "severity": "warning",
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
@@ -20,10 +23,12 @@
         "column": 3
       },
       "fingerprint": "3f0e18a6e3b8d5e689f1aa3f65e02f9d53861739e8df309d059b12fa754ca844",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-array-map-side-effect",
       "severity": "warning",
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
@@ -35,10 +40,12 @@
         "column": 3
       },
       "fingerprint": "f383f52416f30ffd3339bddc43279a645e47e268ce9bed57896231d0e3d7b8f2",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-array-map-side-effect",
       "severity": "warning",
       "message": "Return value of .map() is discarded: use forEach for side effects, or consume the mapped result. (no-array-map-side-effect)",
@@ -50,10 +57,12 @@
         "column": 3
       },
       "fingerprint": "78acf27e333571ef6efc946bc25f1c2eb04915132570d8cf4d153230a4536e51",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-async-array-method",
       "severity": "error",
       "message": "Array.prototype.forEach does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
@@ -65,10 +74,12 @@
         "column": 3
       },
       "fingerprint": "c14ae7005f2c4a2c62409b039a88d1861f3b089841ba7fe9fe15a382c4eeb5ee",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-async-array-method",
       "severity": "error",
       "message": "Array.prototype.map does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
@@ -80,10 +91,12 @@
         "column": 10
       },
       "fingerprint": "909c73c140c9bed184e0556a32edfca0d9e640481756a96ed7f3267ad8225a19",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-async-array-method",
       "severity": "error",
       "message": "Array.prototype.reduce does not await async callbacks: the returned Promise is ignored. Use for...of with await, or Promise.all. (no-async-array-method)",
@@ -95,10 +108,12 @@
         "column": 10
       },
       "fingerprint": "5bf76dabe39dd9057cc5a09ead02fe6f0dd3f026e22a2a7e852651c34991ffae",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Client' is declared but never used.",
@@ -110,10 +125,12 @@
         "column": 7
       },
       "fingerprint": "d5cdfb10c8a6dad34234b2eea07037cc14e3a212f534f1e01dfd82abcd44cfc3",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-async-constructor-call",
       "severity": "warning",
       "message": "Async method \"connect\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
@@ -125,10 +142,12 @@
         "column": 5
       },
       "fingerprint": "0d4e582233d7e82888ad2895ff20573e7e13c47fcc823071c77df213d2f47c21",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -140,10 +159,12 @@
         "column": 5
       },
       "fingerprint": "517181dd7fdabb5133d4ffdb979ffafdd18a986e3ecdd8d745d818ce55fdd477",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Pool' is declared but never used.",
@@ -155,10 +176,12 @@
         "column": 7
       },
       "fingerprint": "c1cf90ffc402cbf4af6e4c64c6c906c039d297ef12284b1232e79033e4598f24",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-async-constructor-call",
       "severity": "warning",
       "message": "Async method \"open\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
@@ -170,10 +193,12 @@
         "column": 5
       },
       "fingerprint": "172bc67561be04f0b16a9f1f412ea398b56959ce407b07533e65bd1316873cda",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -185,10 +210,12 @@
         "column": 5
       },
       "fingerprint": "2efb83f83c72462d9720fda56d97429f2294becbb8c9e816d734504ee05b25b3",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Cache' is declared but never used.",
@@ -200,10 +227,12 @@
         "column": 7
       },
       "fingerprint": "39ce3bb1d76fb6a909f73ebb709c58d8b842cbb0fcf775517d5f56bd911070c4",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-async-constructor-call",
       "severity": "warning",
       "message": "Async method \"load\" is called in constructor without await: async initialization is not complete. Use void to make it explicit, or move it out. (no-async-constructor-call)",
@@ -215,10 +244,12 @@
         "column": 5
       },
       "fingerprint": "03a8875582bbb49e28ae160476bef397c2b1a443630c582500128f16b4b260c8",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -230,10 +261,12 @@
         "column": 5
       },
       "fingerprint": "852bd814bc463fe351d239f0b9721a26d38616369605e4ec7ca48f48e2f3afb1",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Client2' is declared but never used.",
@@ -245,10 +278,12 @@
         "column": 7
       },
       "fingerprint": "8eed0feb78df804d24c7b2955e54b9daee3cde5a28081ad8dfaafd4e6cae046c",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Class 'Pool2' is declared but never used.",
@@ -260,10 +295,12 @@
         "column": 7
       },
       "fingerprint": "34f595289db1f93e6dc59aaaa72c6348e84622c35f998bdf2cdb714a54032b18",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-child-process-nonliteral",
       "severity": "error",
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
@@ -275,10 +312,14 @@
         "column": 10
       },
       "fingerprint": "3fc1c336f594915d40a6c8b7b3df66ec35fc010274e6f93ea43aec73507f8f02",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-78"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-child-process-nonliteral",
       "severity": "error",
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
@@ -290,10 +331,14 @@
         "column": 10
       },
       "fingerprint": "d76749cd225ff2975db630368e01bb67aff9e094ccf308eca64b2b5f75b67bb4",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-78"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-child-process-nonliteral",
       "severity": "error",
       "message": "child_process command is not a string literal: user-controlled input can enable command injection. (no-child-process-nonliteral)",
@@ -305,10 +350,14 @@
         "column": 10
       },
       "fingerprint": "50e29cd716715a8e8d20fcfa46526600ae99d6705de6ebe11037417202755fad",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-78"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-closure-loop-var",
       "severity": "error",
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
@@ -320,10 +369,12 @@
         "column": 3
       },
       "fingerprint": "a9a23a750d7577a593f37277ea86adf2b25badd36f50e711446d8cfd768ff5dc",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-closure-loop-var",
       "severity": "error",
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
@@ -335,10 +386,12 @@
         "column": 3
       },
       "fingerprint": "0e9568729ea93c4b3b68978d3b71958d22781eebf1ec448e309eeec7687c7ccd",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-closure-loop-var",
       "severity": "error",
       "message": "Variable declared with \"var\" inside a loop is captured by a closure: all closures share one binding. Use \"let\" instead. (no-closure-loop-var)",
@@ -350,10 +403,12 @@
         "column": 3
       },
       "fingerprint": "41eb8061f6efa2d0d75f3fcf0b7d73a06ddec4adfc14385b7dc5fa6391221342",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-cors-wildcard",
       "severity": "warning",
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
@@ -365,10 +420,14 @@
         "column": 3
       },
       "fingerprint": "c34b7371ac892e7d35c05a704b93af94a2e684ea8baff26c1628341423ab0741",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-942"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-cors-wildcard",
       "severity": "warning",
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
@@ -380,10 +439,14 @@
         "column": 5
       },
       "fingerprint": "aef9871b669228ffd7cea0a91810c64e31d5484567472d8b8979c8a1f884af67",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-942"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-cors-wildcard",
       "severity": "warning",
       "message": "CORS policy allows any origin (\"*\" / reflect-all): restrict to an explicit origin allowlist. (no-cors-wildcard)",
@@ -395,10 +458,14 @@
         "column": 10
       },
       "fingerprint": "4d22bd2b82ad9841cd48b3185e608790a281ac37b78916cd3532e58dc42ca39a",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-942"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -410,10 +477,12 @@
         "column": 5
       },
       "fingerprint": "2d7030d56dc6a3f665d3af1ab3125e5bc2e303a15d3a814af8cd7f31da9601df",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -425,10 +494,12 @@
         "column": 5
       },
       "fingerprint": "cd07eef57510bac0ece83f8a12d369aa5ac7c15fa63511f8879e889a0d1d0988",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -440,10 +511,12 @@
         "column": 5
       },
       "fingerprint": "1d795cae523f979f09932777ae612ea575e0f67a0f883b979a038cba373b6181",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'e' is caught but never used.",
@@ -455,10 +528,12 @@
         "column": 12
       },
       "fingerprint": "f770a4c31ac0ab0e9c0a0a092f3d2eb7aeef957354971026ceff66fd12a492d1",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -470,10 +545,12 @@
         "column": 7
       },
       "fingerprint": "b54370b54658f4345f479055968ce7401ee34c991d9dc8ae9817c02fc276c338",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -485,10 +562,12 @@
         "column": 5
       },
       "fingerprint": "7281e5e84c8613e5cabe11404fe26bafec0e961f7263ac6a2589bdd55292ba44",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -500,10 +579,12 @@
         "column": 5
       },
       "fingerprint": "25dbf016ef2ee7970abd576d7788cdb2d89326898eeac1df727e002fe5eaca5a",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'e' is caught but never used.",
@@ -515,10 +596,12 @@
         "column": 12
       },
       "fingerprint": "f4d902583ea4b64b652b834baf9cfa5605b543aefdaca5958d94bb88e5c5ba77",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-promise-catch",
       "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
@@ -530,10 +613,12 @@
         "column": 10
       },
       "fingerprint": "eac37104a70cc1ac41e052b11242b5163f8209cba04a7a4618105be2d5f45680",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-promise-catch",
       "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
@@ -545,10 +630,12 @@
         "column": 10
       },
       "fingerprint": "019caaa6e0e4e373931d268d688d087c4bcf98f6c84b93ae514cf290ed496d03",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-promise-catch",
       "severity": "warning",
       "message": ".catch() handler is empty: the rejection is silently swallowed. Handle the error or rethrow it. (no-empty-promise-catch)",
@@ -560,10 +647,12 @@
         "column": 10
       },
       "fingerprint": "01e9794a45bd785030296635786e2be40e84b0f73fe4a178ed7c3b24db9e26f0",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -575,10 +664,12 @@
         "column": 3
       },
       "fingerprint": "166786cc4c37dbb7bf55ae151daa95c9a69bbe192611a4a1d25fe7dac910aa7c",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -590,10 +681,12 @@
         "column": 3
       },
       "fingerprint": "4905c87376f7bd6af8c3d116a954b652ffda4e9c41453e7004d58c3e2bf80184",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -605,10 +698,12 @@
         "column": 3
       },
       "fingerprint": "792739733ada173fa89083ee70f357d44924dbdf4928f8fb0f199f77be40cbcb",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-useless-catch",
       "severity": "error",
       "message": "Unnecessary try/catch wrapper",
@@ -620,10 +715,12 @@
         "column": 12
       },
       "fingerprint": "c1fbe3d342e383325740da294db812ad6014327f33fe4e3af09a9f7d2506f3fa",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-floating-promise",
       "severity": "error",
       "message": "Promise is created but its result is neither awaited, voided, nor returned; rejections become unhandled. (no-floating-promise)",
@@ -635,10 +732,12 @@
         "column": 1
       },
       "fingerprint": "2e774db84f1641b4a00e292f2268d7380d177cdd1338205cb094ee31ca4e5156",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-hardcoded-credentials",
       "severity": "error",
       "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
@@ -650,10 +749,14 @@
         "column": 3
       },
       "fingerprint": "1ad55efd51619bf5d0a9d4ecd31c1f1f71c34b85854797961c883ac1416ba011",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-798"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-hardcoded-credentials",
       "severity": "error",
       "message": "Possible hardcoded credential for \"apiKey\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
@@ -665,10 +768,14 @@
         "column": 14
       },
       "fingerprint": "ea34bfb49a703794c2b62b2ed0f71a5ad00f72e22606739cd37a8867ddc6df86",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-798"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-hardcoded-credentials",
       "severity": "error",
       "message": "Possible hardcoded credential for \"password\": move it to environment variables or a secret manager. (no-hardcoded-credentials)",
@@ -680,10 +787,14 @@
         "column": 3
       },
       "fingerprint": "dfaeb1fd49f7428f3a0fb9ddef04248e1dda61a3d0aab7151719057577a97de7",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-798"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-ignored-reduce-result",
       "severity": "error",
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
@@ -695,10 +806,12 @@
         "column": 3
       },
       "fingerprint": "b3ae7992dd319fbcbe16661d66bd657d4cd8dbf6a83303085510f99e20c7a458",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-ignored-reduce-result",
       "severity": "error",
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
@@ -710,10 +823,12 @@
         "column": 3
       },
       "fingerprint": "40ae8efd9402922e0457177e7708b468f9b9f7abe1804f251a4a64f07d98a29f",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-ignored-reduce-result",
       "severity": "error",
       "message": "Return value of .reduce() is discarded: the aggregation result is lost. (no-ignored-reduce-result)",
@@ -725,10 +840,12 @@
         "column": 3
       },
       "fingerprint": "058d7fa78c58200a508338a13ed0b0f9f24d33dba6cb64907b8ba6dc43fa9938",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -740,10 +857,14 @@
         "column": 3
       },
       "fingerprint": "82f00223c0b9a3776c6511b705258f9161ed6e8db441d5b2f0e4f176706c6b67",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -755,10 +876,14 @@
         "column": 3
       },
       "fingerprint": "3c202ba21af659f42923fed1dd164fe782ef528826bc3cac6e3f276bc76038ef",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"document.write\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -770,10 +895,14 @@
         "column": 3
       },
       "fingerprint": "c74d98c42526e57ec8946d53d19a4c5d6755cb3bbedb57f9d96195ac71d8f4af",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-insecure-cookie",
       "severity": "warning",
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
@@ -785,10 +914,15 @@
         "column": 3
       },
       "fingerprint": "3191ab47f853a039af71390ef474dfda6bec3009457f4f9653f8f34ab499ccf5",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-614",
+        "cwe-1004"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-insecure-cookie",
       "severity": "warning",
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
@@ -800,10 +934,15 @@
         "column": 3
       },
       "fingerprint": "3f47e3a507539b3cc6a5ca90c416b88f3ba3f18c4617aebe5110c2d623265e75",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-614",
+        "cwe-1004"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-insecure-cookie",
       "severity": "warning",
       "message": "Cookie is set without HttpOnly/Secure: it is readable by scripts and sent over plain HTTP. (no-insecure-cookie)",
@@ -815,10 +954,15 @@
         "column": 3
       },
       "fingerprint": "cc7275e01dc28e998f04aeea9310f9eab7b212171336882ee3e71fffd1580d83",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-614",
+        "cwe-1004"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-json-structured-clone",
       "severity": "warning",
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
@@ -830,10 +974,12 @@
         "column": 10
       },
       "fingerprint": "630f3eb94d26b4a2443bc48b1d5c6c3bf29866735d6b64cfaf4c90c4bf6fae5f",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-json-structured-clone",
       "severity": "warning",
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
@@ -845,10 +991,12 @@
         "column": 47
       },
       "fingerprint": "2ef51dd6356bb6f113da30f5b567a5a1197cca35871fd168d0d1afc5db0ac187",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-json-structured-clone",
       "severity": "warning",
       "message": "JSON.parse(JSON.stringify(...)) silently drops Date, Map, Set, undefined and functions; use structuredClone(). (no-json-structured-clone)",
@@ -860,10 +1008,12 @@
         "column": 18
       },
       "fingerprint": "0776b897c78631de8ed64b5f7655e4f5c8b92e9aee129ba404460d0b117e3b2f",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-math-random-secret",
       "severity": "error",
       "message": "\"token\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
@@ -875,10 +1025,14 @@
         "column": 9
       },
       "fingerprint": "12fc5c95fb4e6a301ba3b8336c49154e2900dd9638563d7ef8f6124ac8cb98f1",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-338"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-math-random-secret",
       "severity": "error",
       "message": "\"otpSeed\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
@@ -890,10 +1044,14 @@
         "column": 9
       },
       "fingerprint": "501f3f3c7e2e55b88bf9f8d8f903f309ed069eee80841fd4b9534d015d470de7",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-338"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-math-random-secret",
       "severity": "error",
       "message": "\"nonce\" is seeded with Math.random(): it is not cryptographically secure. Use crypto.randomUUID()/getRandomValues. (no-math-random-secret)",
@@ -905,10 +1063,14 @@
         "column": 3
       },
       "fingerprint": "29db75078de95d86a2ad20ae140ed009948173084cd27914b0e6649c536391a2",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-338"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -920,10 +1082,14 @@
         "column": 3
       },
       "fingerprint": "0f1e64c40281040d8195dcac74ecd6b76db74422c5eddf6ba0c0adf4b804d45a",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "low",
+      "cweTags": [
+        "cwe-22"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -935,10 +1101,14 @@
         "column": 10
       },
       "fingerprint": "5db305841a86b665a85b3ca554fe5814aa078fe382cc5449503a5ee5fc2df422",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "low",
+      "cweTags": [
+        "cwe-22"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -950,10 +1120,14 @@
         "column": 3
       },
       "fingerprint": "72bfb79b666e4bd73b4e9092326cfff2b561c1feae6046fd486418399ddcfdae",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "low",
+      "cweTags": [
+        "cwe-22"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Function 'loadFromUser' is declared but never used.",
@@ -965,10 +1139,12 @@
         "column": 10
       },
       "fingerprint": "b226b0b8b0d49ab821348e2f7566200cff7563d894d061f9bf19d176a2f14159",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -980,10 +1156,14 @@
         "column": 10
       },
       "fingerprint": "80aa3231f0d6ee29e4b600971b39cc746b945f563845e7c997a4926615a42251",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "low",
+      "cweTags": [
+        "cwe-22"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -995,10 +1175,14 @@
         "column": 10
       },
       "fingerprint": "fa1bd7808ce2b7ca3f4de654fd96b8b4812490293befe4a6d15a20bf4dd5cf09",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "low",
+      "cweTags": [
+        "cwe-22"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Function 'readMdFile' is declared but never used.",
@@ -1010,10 +1194,12 @@
         "column": 10
       },
       "fingerprint": "f03072a3866b42b3dbcc8b7b0f4ec8552b6e54a3b2252908949ab82182ceb060",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Function 'listPosts' is declared but never used.",
@@ -1025,10 +1211,12 @@
         "column": 10
       },
       "fingerprint": "042b639c69f8c8d40b647d5d35ff7decbdf3b3f6713e4495d1ef741c26d12606",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-require",
       "severity": "error",
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
@@ -1040,10 +1228,14 @@
         "column": 15
       },
       "fingerprint": "2d7c997ad84faf3a59c1e21aaef909e2c1b5a60eeb33e7cfc9532a39fd340565",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-94"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-require",
       "severity": "error",
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
@@ -1055,10 +1247,14 @@
         "column": 18
       },
       "fingerprint": "a5385cb8c687de9ba5ca554d45a7a5bf38e24a26f3f19e1fa13781549897e201",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-94"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-require",
       "severity": "error",
       "message": "Module specifier is not a string literal: dynamic require/import can load arbitrary code. (no-non-literal-require)",
@@ -1070,10 +1266,14 @@
         "column": 19
       },
       "fingerprint": "7aa834adf143d20b3586d426804b9fd436c47ffe939072cb7ab5612b60ca54c1",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-94"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-prototype-pollution-syntax",
       "severity": "error",
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
@@ -1085,10 +1285,14 @@
         "column": 3
       },
       "fingerprint": "c14319b5d9e07cfb533031130093e2125616870488f013232383c51b64c48547",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-1321"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-prototype-pollution-syntax",
       "severity": "error",
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
@@ -1100,10 +1304,14 @@
         "column": 3
       },
       "fingerprint": "7c88ace30e50c8b5babf698e3c8159995abc0ad44495674928b03b86c37951f5",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-1321"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-prototype-pollution-syntax",
       "severity": "error",
       "message": "Writing to \"__proto__\"/\"constructor.prototype\" pollutes Object.prototype for every object; use Object.defineProperty or a Map. (no-prototype-pollution-syntax)",
@@ -1115,10 +1323,14 @@
         "column": 12
       },
       "fingerprint": "588133e9ea935a15acf0b78eb1ac0d2f2f79c838477954264a38fe6284480566",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-1321"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sensitive-storage",
       "severity": "error",
       "message": "Storing sensitive data (\"token\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
@@ -1130,10 +1342,14 @@
         "column": 3
       },
       "fingerprint": "13c21f494b4c3fe5650f420ac9c19e65f952f64642299aa34eabedd352b121e9",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-312"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sensitive-storage",
       "severity": "error",
       "message": "Storing sensitive data (\"userPassword\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
@@ -1145,10 +1361,14 @@
         "column": 3
       },
       "fingerprint": "11c65655b726acfdf80e3165ae65bd1249d9447eeb6887d0d94e6bc771ff12f6",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-312"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sensitive-storage",
       "severity": "error",
       "message": "Storing sensitive data (\"STORED_JWT\") in Web Storage exposes it to XSS; use HttpOnly cookies. (no-sensitive-storage)",
@@ -1160,10 +1380,14 @@
         "column": 3
       },
       "fingerprint": "6fca71bf6532bee4b1ff6ba7c51b7fa4a10699c5fbe79fbf24458628ecaba7bd",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-312"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-serve-index",
       "severity": "warning",
       "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
@@ -1175,10 +1399,14 @@
         "column": 26
       },
       "fingerprint": "872be95b61d03f8b1f82b86f343a5eb517731d5fabf2070219cb903ceb35fe8d",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-548"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-serve-index",
       "severity": "warning",
       "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
@@ -1190,10 +1418,14 @@
         "column": 39
       },
       "fingerprint": "097c8516e18e1caa7dbb02f1c15b9cf18b99dae09e0c663f8f05600a331dd494",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-548"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-serve-index",
       "severity": "warning",
       "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
@@ -1205,10 +1437,14 @@
         "column": 18
       },
       "fingerprint": "51da39310aa7e3bb3580e99ee4ea1e35393d4f7f570712eac76e4be890b26b5e",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-548"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-serve-index",
       "severity": "warning",
       "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
@@ -1220,10 +1456,14 @@
         "column": 1
       },
       "fingerprint": "b3b8181ceff01f33c39ed49d1b9778f138ff798370c35e31b9a0eda8feec339b",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-548"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-serve-index",
       "severity": "warning",
       "message": "Serving a directory listing with serveIndex exposes file names and metadata; serve only the needed files explicitly. (no-serve-index)",
@@ -1235,10 +1475,14 @@
         "column": 19
       },
       "fingerprint": "629726141014cddb93907ab23dbde376d2728687414b47e4bdfb5cd09fa3ae9c",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-548"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sql-concat",
       "severity": "error",
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
@@ -1250,10 +1494,14 @@
         "column": 13
       },
       "fingerprint": "3920c407bac33ed2c42545ee1e03b00f362dc3783d8492fb0b6b211a065d112e",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-89"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sql-concat",
       "severity": "error",
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
@@ -1265,10 +1513,14 @@
         "column": 13
       },
       "fingerprint": "f86ac61c9c3169fcda6c27e8ebe552370626ca6cdfffed600d70e319076e3859",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-89"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sql-concat",
       "severity": "error",
       "message": "SQL built by string interpolation/concatenation enables injection; use parameterized queries (?, $1, :name). (no-sql-concat)",
@@ -1280,10 +1532,14 @@
         "column": 13
       },
       "fingerprint": "288756c4947f53d0749582f21c800802647aea63588f7861643e03741a246565",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-89"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"e\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -1295,10 +1551,12 @@
         "column": 5
       },
       "fingerprint": "4a957f92ad895af9db0933ffc607eaef54161860fc15a59339eb9b870c4351ad",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'e' is caught but never used.",
@@ -1310,10 +1568,12 @@
         "column": 12
       },
       "fingerprint": "5691460f6b2706150af6b417b5d55393fbbe0122e88eeb2031161bc04a22aa87",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"err\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -1325,10 +1585,12 @@
         "column": 5
       },
       "fingerprint": "fee89e4348bfc9b96f75b5fc584676d5e75c438841fabd62393c876e7735fa52",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'err' is caught but never used.",
@@ -1340,10 +1602,12 @@
         "column": 12
       },
       "fingerprint": "15e5f88a807acde437f78e4fbd8c2c9915f601de2c8bc0eabdf663c4c3b0896c",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-swallowed-promise-error",
       "severity": "error",
       "message": "Caught error \"error\" is neither referenced nor rethrown: the failure is silently swallowed. (no-swallowed-promise-error)",
@@ -1355,10 +1619,12 @@
         "column": 5
       },
       "fingerprint": "c113cd50c80960c137853773e42dda9250e9bf5c351a93498ea1614801311831",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Catch parameter 'error' is caught but never used.",
@@ -1370,10 +1636,12 @@
         "column": 12
       },
       "fingerprint": "8f7f3960365870d08b94b583018836c074cde6e75cadb2d8392067cbbd9e6ffb",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-useless-catch",
       "severity": "error",
       "message": "Unnecessary try/catch wrapper",
@@ -1385,10 +1653,12 @@
         "column": 12
       },
       "fingerprint": "4336385cc9d2ad403f6e2407b179c92b54e4d2e999f0c67933535c2f96bcc6c5",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"readFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1400,10 +1670,12 @@
         "column": 10
       },
       "fingerprint": "88666fa4338f6ac292fe7e5229b9ab70bebe7373ef7eb2672ac6d3699ab10742",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-non-literal-fs-filename",
       "severity": "warning",
       "message": "fs path argument is non-literal: validate/normalize against a base directory to prevent path traversal. (no-non-literal-fs-filename)",
@@ -1415,10 +1687,14 @@
         "column": 3
       },
       "fingerprint": "b8d7407ce4f60ea259b8abac151f692af78f09c979e57968de4bbb1d72c7fd1e",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "low",
+      "cweTags": [
+        "cwe-22"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"writeFileSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1430,10 +1706,12 @@
         "column": 3
       },
       "fingerprint": "1019d7fbe8a03ffccb2b4b7b50152ee3af5b268285baf24fc8af5039747b09ad",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1445,10 +1723,12 @@
         "column": 8
       },
       "fingerprint": "19280a566446878ae6ef3045e026b25abf6724e5ad4c9d458f3f9151faf88697",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-sync-io-in-async",
       "severity": "warning",
       "message": "\"existsSync\" blocks the event loop inside an async function; use the promise API instead. (no-sync-io-in-async)",
@@ -1460,10 +1740,12 @@
         "column": 5
       },
       "fingerprint": "4451a3f8baf97627163e86f0e229ba0c4771090fdd28e57c2ac5e12570d2b8f2",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-unsafe-regex",
       "severity": "warning",
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
@@ -1475,10 +1757,14 @@
         "column": 10
       },
       "fingerprint": "013049388f087d5cc7541f02ee3058a9af306e7e95302b12922ce0861b65b96d",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-1333"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-unsafe-regex",
       "severity": "warning",
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
@@ -1490,10 +1776,14 @@
         "column": 10
       },
       "fingerprint": "68e5a4fe1c96ff0235dfa81fcc0e245f894ce3e871679723610c4199ef358d02",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-1333"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-unsafe-regex",
       "severity": "warning",
       "message": "Regex has a nested quantifier (ReDoS backtracking pattern); constrain the inner group or use a linear alternative. (no-unsafe-regex)",
@@ -1505,10 +1795,14 @@
         "column": 10
       },
       "fingerprint": "3290429c8c67c0d1c38ac79df4717c44c1847aa0e3e6bc3a8dba12f0508fc365",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-1333"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-unsafe-trust-bypass",
       "severity": "error",
       "message": "Passing non-literal content to \"bypassSecurityTrustResourceUrl\" disables the framework XSS defense; sanitize instead of marking untrusted input as safe. (no-unsafe-trust-bypass)",
@@ -1520,10 +1814,14 @@
         "column": 23
       },
       "fingerprint": "a3e7ad8ec1eed057c22322d443f78374fe22ab27cc6c25c7e4d3c9750c6d71a7",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -1535,10 +1833,14 @@
         "column": 3
       },
       "fingerprint": "a6946362e764ac9b896b16bf98873bc24ca1d9be9fced0ad11e7b9ffb690ebd7",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-unsafe-trust-bypass",
       "severity": "error",
       "message": "Passing non-literal content to \"bypassSecurityTrustHtml\" disables the framework XSS defense; sanitize instead of marking untrusted input as safe. (no-unsafe-trust-bypass)",
@@ -1550,10 +1852,14 @@
         "column": 18
       },
       "fingerprint": "bd963ccf96f1492dff9568785965cb25bb0e19bb7713ddb9b8049eaee1fbc6d8",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-unsafe-trust-bypass",
       "severity": "error",
       "message": "Passing non-literal content to \"bypassSecurityTrustScript\" disables the framework XSS defense; sanitize instead of marking untrusted input as safe. (no-unsafe-trust-bypass)",
@@ -1565,10 +1871,14 @@
         "column": 19
       },
       "fingerprint": "0461ac5d0264498cf4c251042823d30d7957eeca6b7f203e6ccbbff360a5cbae",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-innerhtml-assignment",
       "severity": "error",
       "message": "Assigning non-literal content to \"innerHTML\" enables XSS; sanitize the input or use textContent. (no-innerhtml-assignment)",
@@ -1580,10 +1890,14 @@
         "column": 3
       },
       "fingerprint": "cb6e09100cf80701fd5444d81feae3d4257b3baaa653fa0953af7e05286f46e7",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-79"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-vm-dynamic-code",
       "severity": "error",
       "message": "\"runInContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
@@ -1595,10 +1909,14 @@
         "column": 10
       },
       "fingerprint": "3395659d49bec35136f98b82da88c9212ed716c185d3c74ac424bf9f0b009265",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-94"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-vm-dynamic-code",
       "severity": "error",
       "message": "\"runInNewContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
@@ -1610,10 +1928,14 @@
         "column": 10
       },
       "fingerprint": "b3ad723e8a211be6e8dbcfc6bf4212f5850da8688c43dd37e52a95164408cb64",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-94"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-vm-dynamic-code",
       "severity": "error",
       "message": "\"runInThisContext\" executes a non-literal script: arbitrary code execution risk. (no-vm-dynamic-code)",
@@ -1625,10 +1947,14 @@
         "column": 10
       },
       "fingerprint": "e29881591649e953e3b2a673638637fda220bc36b0aa06001df3589e6541c3f3",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "cwe-94"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "eslint/no-unused-vars",
       "severity": "error",
       "message": "Parameter 'body' is declared but never used. Unused parameters should start with a '_'.",
@@ -1640,10 +1966,12 @@
         "column": 25
       },
       "fingerprint": "32be5d73138295ff7eb50dfc60aafb391055480e158a8dc028cd3cdb7e5eb0c4",
-      "owner": "oxlint-native"
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-weak-hash",
       "severity": "warning",
       "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
@@ -1655,10 +1983,14 @@
         "column": 10
       },
       "fingerprint": "470b8b5e7889828e0de1555cb602f3492e7edeb9896b83fc4b15479b177f936b",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-327"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-weak-hash",
       "severity": "warning",
       "message": "\"sha1\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
@@ -1670,10 +2002,14 @@
         "column": 10
       },
       "fingerprint": "b12e1c097ff9eef9360948e4a59355d49d9adae46fd8b0298ed9a11ef79bb688",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-327"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-weak-hash",
       "severity": "warning",
       "message": "\"md5\" is a broken hash algorithm: use SHA-256+ or a password-specific KDF. (no-weak-hash)",
@@ -1685,10 +2021,14 @@
         "column": 10
       },
       "fingerprint": "bd716df35fcc9f4a5c8d7415a87341f50aab765808c33b2df7bd29adf3ca4bcb",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": [
+        "cwe-327"
+      ]
     },
     {
-      "contractVersion": "2",
+      "contractVersion": "3",
       "ruleId": "lintsight/no-empty-catch",
       "severity": "error",
       "message": "Unexpected empty catch block. Handle the error or rethrow it. (no-empty-catch)",
@@ -1700,7 +2040,9 @@
         "column": 5
       },
       "fingerprint": "9c39bee2e77ff06dae4908708fa8139f04d863316ebc26ef87dee4721d361d18",
-      "owner": "lintsight-js"
+      "owner": "lintsight-js",
+      "confidence": "high",
+      "cweTags": []
     }
   ]
 }

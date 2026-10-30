@@ -3,11 +3,14 @@
  */
 import { describe, expect, test } from 'bun:test'
 import {
+  applySuppressions,
   CONTRACT_VERSION,
   computeFingerprint,
   normalizeDiagnostics,
   normalizeFilePath,
   normalizeRuleId,
+  parseInlineSuppressions,
+  refreshDiagnosticMetadata,
   sortDiagnostics,
   suppressSuperseded,
   toLintsightDiagnostic,
@@ -99,7 +102,7 @@ describe('owner 推导与统一模型', () => {
     })
     expect(d.owner).toBe('lintsight-js')
     expect(d.contractVersion).toBe(CONTRACT_VERSION)
-    expect(CONTRACT_VERSION).toBe('2')
+    expect(CONTRACT_VERSION).toBe('3')
     expect(
       toLintsightDiagnostic({
         ruleId: 'eslint/no-debugger',
@@ -292,7 +295,9 @@ describe('suppressSuperseded（M2 T2.5 双报消解，design-m2 §4.4）', () =>
       ? 'lintsight-engine'
       : ruleId.startsWith('lintsight/')
         ? 'lintsight-js'
-        : 'oxlint-native'
+        : 'oxlint-native',
+    confidence: 'high',
+    cweTags: []
   })
 
   test('engine 命中行 → 同文件同行 JS 版抑制；他行/他文件保留', () => {
@@ -316,5 +321,121 @@ describe('suppressSuperseded（M2 T2.5 双报消解，design-m2 §4.4）', () =>
   test('无 engine 命中 → 原样返回（零开销路径）', () => {
     const input = [diag('lintsight/no-non-literal-fs-filename', 'a.ts', 1, 0)]
     expect(suppressSuperseded(input)).toEqual(input)
+  })
+})
+
+describe('契约 v3（G2）：逐 finding confidence / cweTags', () => {
+  const base: NormalizedDiagnostic = {
+    ruleId: 'lintsight/no-empty-catch',
+    severity: 'error',
+    message: 'm',
+    file: 'a.ts',
+    span: { offset: 0, length: 1, line: 1, column: 1 }
+  }
+
+  test('registry 默认：confidence 与 cweTags 来自登记表', () => {
+    const own = toLintsightDiagnostic(base)
+    expect(own.confidence).toBe('high') // no-empty-catch: high
+    expect(own.cweTags).toEqual([])
+
+    const security = toLintsightDiagnostic({
+      ...base,
+      ruleId: 'lintsight/no-insecure-cookie'
+    })
+    expect(security.confidence).toBe('medium')
+    expect(security.cweTags).toEqual(['cwe-614', 'cwe-1004'])
+  })
+
+  test('finding 覆盖优先；未登记规则兜底 medium + 空 CWE', () => {
+    const override = toLintsightDiagnostic({
+      ...base,
+      ruleId: 'lintsight/no-insecure-cookie',
+      confidence: 'low'
+    })
+    expect(override.confidence).toBe('low')
+    const native = toLintsightDiagnostic({
+      ...base,
+      ruleId: 'eslint/no-debugger',
+      severity: 'warning'
+    })
+    expect(native.confidence).toBe('medium')
+    expect(native.cweTags).toEqual([])
+  })
+
+  test('refreshDiagnosticMetadata：缓存条目按当前 registry 水合', () => {
+    const d = toLintsightDiagnostic(base)
+    const stale = { ...d, confidence: 'low' as const, cweTags: ['cwe-999'] }
+    const refreshed = refreshDiagnosticMetadata(stale)
+    expect(refreshed.confidence).toBe('high')
+    expect(refreshed.cweTags).toEqual([])
+  })
+
+  test('指纹不随 confidence/cweTags 变化（契约稳定性）', () => {
+    const d1 = toLintsightDiagnostic({ ...base, confidence: 'high' })
+    const d2 = toLintsightDiagnostic({ ...base, confidence: 'low' })
+    expect(d1.fingerprint).toBe(d2.fingerprint)
+  })
+})
+
+describe('契约 v3（G2）：行内抑制', () => {
+  test('解析：合法指令 / 缺 reason / 缺 ruleId', () => {
+    const content = [
+      '// lintsight-ignore-next-line eslint/no-var: 旧代码兼容',
+      '// lintsight-ignore-next-line eslint/no-var:',
+      '// lintsight-ignore-next-line : 没有规则',
+      'var a = 1'
+    ].join('\n')
+    const parsed = parseInlineSuppressions(content)
+    expect(parsed.directives).toEqual([
+      { ruleId: 'eslint/no-var', reason: '旧代码兼容', line: 1 }
+    ])
+    expect(parsed.invalid.map((i) => i.code)).toEqual([
+      'missing-reason',
+      'missing-rule'
+    ])
+  })
+
+  test('应用：仅下一行 + 同 ruleId 命中；被抑制诊断保留审计字段', () => {
+    const mk = (ruleId: string, line: number): LintsightDiagnostic => ({
+      contractVersion: CONTRACT_VERSION,
+      ruleId,
+      severity: 'error',
+      message: 'm',
+      file: 'a.ts',
+      span: { offset: line, length: 1, line, column: 1 },
+      fingerprint: 'f'.repeat(64),
+      owner: 'oxlint-native',
+      confidence: 'medium',
+      cweTags: []
+    })
+    const parsed = parseInlineSuppressions(
+      '// lintsight-ignore-next-line eslint/no-var: 兼容\nvar a = 1'
+    )
+    const applied = applySuppressions(
+      [
+        mk('eslint/no-var', 2),
+        mk('eslint/no-var', 3),
+        mk('eslint/no-debugger', 2)
+      ],
+      new Map([['a.ts', parsed]])
+    )
+    expect(applied.suppressed).toBe(1)
+    expect(applied.diagnostics[0].suppression).toEqual({
+      kind: 'inSource',
+      justification: '兼容',
+      directiveLine: 1
+    })
+    expect(applied.diagnostics[1].suppression).toBeUndefined()
+    expect(applied.diagnostics[2].suppression).toBeUndefined()
+  })
+
+  test('非法指令透出 file/line/code（pipeline warn 用）', () => {
+    const parsed = parseInlineSuppressions(
+      '// lintsight-ignore-next-line eslint/no-var:'
+    )
+    const applied = applySuppressions([], new Map([['a.ts', parsed]]))
+    expect(applied.invalid).toEqual([
+      { file: 'a.ts', line: 1, code: 'missing-reason' }
+    ])
   })
 })

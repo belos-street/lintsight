@@ -18,5 +18,15 @@
   "trailingComma": "none",
   "useTabs": false,
   // fixtures 是用例契约（断言 line/column 依赖布局），禁止格式化
-  "ignorePatterns": ["node_modules", "dist", "build", "coverage", ".agents", ".lintsight-cache", "fixtures"]
+  // golden 由 formatJson 生成并逐字节比对，格式化会破坏快照（G2）
+  "ignorePatterns": [
+    "node_modules",
+    "dist",
+    "build",
+    "coverage",
+    ".agents",
+    ".lintsight-cache",
+    "fixtures",
+    "packages/lintsight-cli/test/__golden__"
+  ]
 }

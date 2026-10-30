@@ -19,6 +19,7 @@ const plugin = pluginDefault as unknown as {
         category: string
         confidence: Confidence
         severity: 'error' | 'warning'
+        tags?: string[]
         docs: { description: string }
       }
     }
@@ -59,6 +60,48 @@ describe('规则注册表 CI 校验（T1.11）', () => {
         rule.meta.confidence
       )
     }
+  })
+
+  test('注册表 cweTags 与插件 meta.tags 的 cwe-* 集合一致（契约 v3）', () => {
+    for (const [key, rule] of Object.entries(plugin.rules)) {
+      const entry = getRegistryEntry(`${PLUGIN_PREFIX}${key}`)
+      const expected = (rule.meta.tags ?? [])
+        .filter((t) => t.startsWith('cwe-'))
+        .sort()
+      expect(
+        [...(entry!.cweTags ?? [])].sort(),
+        `${PLUGIN_PREFIX}${key}`
+      ).toEqual(expected)
+    }
+    // engine 条目手工登记（新增引擎规则必须同步）
+    expect(getRegistryEntry('lintsight-engine/no-eval')?.cweTags).toEqual([
+      'cwe-95'
+    ])
+    expect(
+      getRegistryEntry('lintsight-engine/no-path-traversal')?.cweTags
+    ).toEqual(['cwe-22'])
+    expect(
+      getRegistryEntry('lintsight-engine/no-command-injection')?.cweTags
+    ).toEqual(['cwe-78'])
+    expect(getRegistryEntry('lintsight-engine/no-ssrf')?.cweTags).toEqual([
+      'cwe-918'
+    ])
+    expect(
+      getRegistryEntry('lintsight-engine/no-prototype-pollution-merge')?.cweTags
+    ).toEqual(['cwe-1321'])
+    expect(
+      getRegistryEntry('lintsight-engine/no-open-redirect')?.cweTags
+    ).toEqual(['cwe-601'])
+    // 非 CWE 规则（架构/循环/深导入）不得乱挂标签
+    expect(
+      getRegistryEntry('lintsight-engine/arch-boundaries')?.cweTags ?? []
+    ).toEqual([])
+    expect(
+      getRegistryEntry('lintsight-engine/no-import-cycle')?.cweTags ?? []
+    ).toEqual([])
+    expect(
+      getRegistryEntry('lintsight-engine/no-deep-import')?.cweTags ?? []
+    ).toEqual([])
   })
 
   test('注册表 description/defaultSeverity 与插件 meta 逐字一致（M3 SARIF rules[] 元数据源）', () => {
