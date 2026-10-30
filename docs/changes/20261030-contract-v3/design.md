@@ -161,9 +161,10 @@ deriveEngineStatus(input: {
 - 新增：`packages/lintsight-diagnostic/src/suppression.ts`（解析为纯函数）
 - 新增/改动测试：`diagnostic.test.ts`、`registry.test.ts`、`engine-bridge.test.ts`、`suppression.test.ts`、`fail-on.test.ts`、`cli-output.test.ts`、`sarif.test.ts`、`report-snapshot.test.ts`、`closed-loop.test.ts`
 - 重命名：`packages/lintsight-cli/test/__golden__/report-v2.json` → `report-v3.json`
+- 改动（工具配置）：`.oxfmtrc.jsonc` 忽略 `packages/lintsight-cli/test/__golden__`（golden 由 `formatJson` 逐字节生成，格式化会破坏快照）
 - 文档：`docs/upgrade/v0.1/execution-todo.md`、`docs/upgrade/v0.1/upgrade-plan.md`（契约章节）、`.agents/memory/decisions.md`（如新增长期决策）
 - Rust：无改动
-- fixtures：新增 suppression 用例目录（规则用例契约面，按代码面管理）
+- fixtures：无新增（抑制用例在测试 tmpdir 自建项目，避免改动规则用例契约面）
 
 ## 规则 / 引擎影响
 

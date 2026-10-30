@@ -70,3 +70,10 @@
 - **理由**：图规则/跨文件结果依赖全局文件集，按单文件缓存无法保证冷热等价；引擎结果不缓存从根上消除陈旧环复用与引擎降级毒化。M5 跨文件增量（变更集/影响面/摘要缓存）另行设计。
 - **来源**：`docs/changes/20261030-cache-correctness/`；`upgrade-plan.md` §7 G1；`execution-todo.md` W5。
 - **日期**：2026-10-30
+
+## D12 · 契约 v3：被抑制诊断保留在报告，summary/exit 以未抑制集合为准
+
+- **结论**：行内抑制 `// lintsight-ignore-next-line <ruleId>: <reason>` 命中的诊断仍保留在 `report.diagnostics`，带 `suppression{kind,justification,directiveLine}`；`summary.error/warning/info`、exit code、`--fail-on` 一律只统计未抑制诊断，`summary.suppressed` 单独计数；SARIF 用 `results[].suppressions` 标记。
+- **理由**：SARIF 规范要求被抑制结果仍在 `results[]`；平台审计需要 reason；删除会造成 JSON/SARIF 口径分裂。消费方必须以 summary 或 suppression 字段为准，不能只看 `diagnostics.length`。
+- **来源**：`docs/changes/20261030-contract-v3/`；`upgrade-plan.md` §8 M4 契约 v3。
+- **日期**：2026-10-30

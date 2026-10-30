@@ -470,6 +470,16 @@ interface FrameworkProfile {
 | 契约 | confidence/cweTags/fail-on/engineStatus/toolVersion/inline suppression 齐全；`--output` 不污染 stdout |
 | 质量 | correctness <5%、security <10% 的独立标注样本 |
 
+#### M4 契约 v3（G2 实现约定）
+
+- **JSON 报告**：`contractVersion` / `toolVersion` / `engineStatus` / `files` / `summary{error,warning,info,suppressed}` / `diagnostics`。
+- **逐 finding 字段**：`confidence`（high|medium|low；finding 覆盖 → registry 默认 → medium 兜底）、`cweTags`（registry 登记）、`suppression?`（仅行内抑制，含 `kind/justification/directiveLine`）。
+- **engineStatus**：`ok | degraded | missing | crashed | timeout`；`timeout` 的状态映射在 G2 定义，真实超时信号由 G6/G5 接线。
+- **行内抑制**：`// lintsight-ignore-next-line <ruleId>: <reason>`；reason 必填；仅下一行生效；被抑制诊断保留在 `diagnostics` 并带 `suppression`，但不计入 summary / exit / `--fail-on`。
+- **exit**：`--fail-on high|medium|low`（默认 `low` = 现有「任何 error 即 1」）；仅未抑制的 `severity=error` 且 `confidence` 不低于阈值时 exit 1；运行错误仍 exit 2。
+- **SARIF**：`run.taxonomies`（CWE）+ `results[].taxa`、`results[].properties.confidence`、`results[].suppressions`、`driver.version = toolVersion`；ruleId/位置/指纹不变。
+- **输出通道**：有 `--output` 时 stdout 必须为空（报告只落文件）。
+
 ### M5（P1）— 深度与规模化
 
 1. **D3 跨文件 taint / 调用图**：函数摘要、参数/返回传播、同包调用图；跨文件 `pathEvents`。
@@ -583,3 +593,4 @@ interface FrameworkProfile {
 | v0.1 修订 4 | 2026-10-29 | 复核独立评审 v0.1：采纳 B1/B2 + B3（H3 升级）、H1/H2/H4-H9、M1-M9（M9 已复现）与 L1-L4；评分改为 MVP 6.0 / 企业替代 3.3；补 G12-G17（默认预设、配置根、版本源、Vue 图身份、输入面、opt-in 对账）；修正 7 处口径（processor 语义、注册数、空配置安全面、engine degraded 设计冲突、M9 已复现、SQL 表述、评分非事实）；M4 验收增加冷/热等价、默认预设、契约字段与路径/版本一致性 |
 | v0.1 修订 5 | 2026-10-29 | 按执行清单复核调整范围：M4 仅 P0；G6/G8/G9/G14/G15 升 P0；G5/G10 移至 M5；G4/G7/G16 归 M5，G11/G17 归 M6；补 G15 修复目标（Vue→TS 2 条，当前 0 条为 bug 基线）；执行清单补齐证据行、G1 8 组缓存矩阵、G2 schema 细节、G12 规则账、G13 优先级、G3 分阶段 CI、G8/H5/前端包规则 ID 边界 |
 | v0.1 修订 6 | 2026-10-30 | G1 收口口径对齐实现：缓存键 = 路径 + tsconfig + engine/config/plugin 指纹；**引擎诊断不缓存、每轮全量 pass**，文件集/依赖闭包/影响集不进键；空结果缓存；图规则矩阵由 `REQUIRE_ENGINE=1` 硬门禁防静默 skip |
+| v0.1 修订 7 | 2026-10-30 | 补 M4 契约 v3 实现约定（G2）：报告/诊断字段、engineStatus 五态、行内抑制审计口径、`--fail-on` 语义、SARIF taxonomies/suppressions、`--output` stdout 静默；G6 仍独立负责 fail-closed 与超时接线 |

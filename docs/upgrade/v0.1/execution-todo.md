@@ -20,9 +20,9 @@
 
 ### W1 集成契约与可观测性
 
-- [~] **G2 契约 v3**
+- [x] **G2 契约 v3**
   - owner：engine + platform
-  - 进行中：方案文档 `docs/changes/20261030-contract-v3/`（待确认，未改代码）
+  - 变更：`docs/changes/20261030-contract-v3/`（已实现；scanner 消费签字按用户约定可后补，未伪造）
   - 内容：
     - 诊断 JSON/SARIF 增加 `confidence`（**逐 finding**，规则 meta 只做默认值）、`cweTags`、`engineStatus`、`toolVersion`。
     - `engineStatus` 枚举：`ok | degraded | missing | crashed | timeout`。
@@ -30,7 +30,14 @@
     - SARIF：`taxonomies` 放 CWE，`properties` 放 confidence，`suppressions` 放抑制。
     - `--fail-on` 支持 `high`；`--output` 时 stdout 必须为空。
   - 验收：golden/SARIF 快照更新；scanner 消费测试通过；缺引擎时报告可见 `engineStatus`。
-  - 证据：`sarif.test.ts` + `report-v2.json` golden 更新；`engine-bridge.test.ts` 增加 engineStatus 五态；CLI 集成测试断言 `--output` 时 stdout 为空；scanner 签字确认。
+  - 证据（2026-10-30）：
+    - `bun run test`：206 pass / 0 fail；`cargo test --release`：52 passed；`lint`：0 warnings；`format:check`：clean。
+    - `report-snapshot.test.ts` → `__golden__/report-v3.json`（contractVersion=3、toolVersion、engineStatus=crashed 固定、summary.suppressed、逐 finding confidence/cweTags）。
+    - `engine-bridge.test.ts`：`deriveEngineStatus` 五态 + missing/crashed/ok 路径。
+    - `suppression.test.ts`：合法/缺 reason/不匹配/.vue/冷热/引擎 no-eval 抑制；`fail-on.test.ts`：low/medium/high、抑制、warning；`cli-output.test.ts`：`--output` stdout 为空、无 output 走 stdout、非法 `--fail-on` exit 2。
+    - `sarif.test.ts`：`taxonomies/taxa/properties.confidence/suppressions/rules[].properties.cweTags`；CLI SARIF 实测 `taxonomies=1/taxa=15`，55 条结果带 taxa。
+    - `bun run corpus:check`：FAIL（与 G1 相同的既有基线陈旧：`no-floating-promise -28`、`no-hardcoded-credentials +115`；本 change 不改检测面，未 `--save`）。
+    - scanner 签字：**待补**（用户已在任务约定「G2 的 scanner 签字可后补」）；未签字前不宣称平台侧验收闭合。
   - 依赖：scanner 调用契约。
 - [ ] **G6 fail-open 可观测**
   - owner：engine

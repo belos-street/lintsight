@@ -1,6 +1,10 @@
 # Proposal: G2 诊断契约 v3（confidence / cweTags / engineStatus / toolVersion / inline suppression / fail-on）
 
-> change-id：`20261030-contract-v3` · 日期：`2026-10-30` · 状态：草稿
+> change-id：`20261030-contract-v3` · 日期：`2026-10-30` · 状态：已实现
+
+## 确认记录
+
+- 2026-10-30：三层文档产出后，用户以消息全文 **「好的，按这个方案开始改代码」** 确认进入实现；确认范围 = 本目录 `proposal.md` / `design.md` / `tasks.md` 全量方案（含契约 v3 字段、抑制口径、`--fail-on` 语义与 SARIF 结构）。确认后才开始改代码面。
 
 ## 背景与问题
 
@@ -78,5 +82,5 @@ M4 契约验收要求「confidence/cweTags/fail-on/engineStatus/toolVersion/inli
   - `fail-on.test.ts` / CLI 集成：high 不拦 medium，默认拦；`--output` stdout 为空。
   - `sarif.test.ts`：taxonomies/taxa/properties/suppressions 快照。
   - `report-snapshot.test.ts`：`report-v3.json` golden；用固定 `OXLINT_ENGINE_BIN` 不存在路径锁定 `engineStatus`，避免环境漂移。
-- 缺引擎时报告含 `engineStatus`；scanner 消费确认可后补（签字前不宣称 G2 外部验收完成）。
+- 缺引擎时报告含 `engineStatus`；scanner 消费确认可后补（用户已约定「G2 的 scanner 签字可后补」；签字前不宣称 G2 外部验收闭合，不伪造签字）。
 - 不修改规则文案/指纹；`corpus:check` 按 G1 同样纪律：本 change 不改检测面，若基线漂移只做归因、不 `--save`。

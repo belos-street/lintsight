@@ -3,7 +3,7 @@
 > change-id：`20261030-contract-v3` · 按依赖排序；每项完成后勾选，最后走 `verification.md`。
 > 实现前需用户确认本方案；未确认禁止改代码面。
 
-- [ ] **任务 1：诊断模型 v3 + 注册表 cweTags + 抑制解析器**
+- [x] **任务 1：诊断模型 v3 + 注册表 cweTags + 抑制解析器**
   - 涉及文件：`packages/lintsight-diagnostic/src/index.ts`、`src/registry.ts`、新增 `src/suppression.ts`
   - 内容：
     - `CONTRACT_VERSION='3'`；`LintsightDiagnostic` 增加 `confidence` / `cweTags` / `suppression?`；
@@ -12,7 +12,7 @@
     - 抑制指令解析纯函数（合法/缺 reason/缺 ruleId/未知规则/多指令）。
   - 验收点：`diagnostic.test.ts` 新增 v3 字段与解析用例；`registry.test.ts` 校验 JS cweTags 与插件 meta 一致；`bun run build:rules && bun test packages/lintsight-diagnostic`。
 
-- [ ] **任务 2：engineStatus 五态（engine-bridge）**
+- [x] **任务 2：engineStatus 五态（engine-bridge）**
   - 涉及文件：`packages/lintsight-cli/src/engine-bridge.ts`
   - 内容：
     - `EngineStatus` 类型与 `deriveEngineStatus` 纯函数（missing > timeout > crashed > degraded > ok）；
@@ -20,7 +20,7 @@
     - `EngineDiagnostic` 预留可选 `confidence`（Rust 本轮不发送）。
   - 验收点：`engine-bridge.test.ts` 五态映射；missing（bin=null）与 crashed（不存在 env bin）路径；既有 degraded 用例兼容。
 
-- [ ] **任务 3：pipeline 报告 v3（toolVersion / engineStatus / 抑制 / 水合 / fail-on）**
+- [x] **任务 3：pipeline 报告 v3（toolVersion / engineStatus / 抑制 / 水合 / fail-on）**
   - 涉及文件：`packages/lintsight-cli/src/pipeline.ts`、`src/cache.ts`
   - 内容：
     - `LintsightReport` 增加 `toolVersion`、`engineStatus`、`summary.suppressed`；
@@ -28,22 +28,22 @@
     - summary / exit / `--fail-on` 只算未抑制 error；`failOn` 选项缺省 `low`。
   - 验收点：新增 `suppression.test.ts`（合法/非法/.vue/引擎诊断/冷热一致）、`fail-on.test.ts`（medium vs high/抑制/默认）；`bun test packages/lintsight-cli/test/{suppression,fail-on}.test.ts`；既有 cache/closed-loop 回归。
 
-- [ ] **任务 4：CLI 参数面（--fail-on / --output stdout 静默）**
+- [x] **任务 4：CLI 参数面（--fail-on / --output stdout 静默）**
   - 涉及文件：`packages/lintsight-cli/src/cli.ts`
   - 内容：解析 `--fail-on high|medium|low`（非法 exit 2）；有 `--output` 时只落文件、不写 stdout。
   - 验收点：新增 `cli-output.test.ts`（spawn CLI：`--output` stdout 为空、文件 JSON 可解析；无 `--output` stdout 有报告；`--fail-on high` 放行 medium error）。
 
-- [ ] **任务 5：formatter / SARIF v3**
+- [x] **任务 5：formatter / SARIF v3**
   - 涉及文件：`packages/lintsight-formatter/src/index.ts`、`src/sarif.ts`
   - 内容：JSON 透传 v3 字段；SARIF `taxonomies`/`taxa`、`properties.confidence`、`suppressions`、`rules[].properties.cweTags`；text 摘要含 suppressed。
   - 验收点：`sarif.test.ts` 新增 taxonomy/properties/suppressions 快照；`formatter.test.ts` 回归。
 
-- [ ] **任务 6：golden 与契约断言迁移**
+- [x] **任务 6：golden 与契约断言迁移**（`.oxfmtrc.jsonc` 增加 `__golden__` 忽略：golden 由 `formatJson` 逐字节生成，格式化会破坏快照）
   - 涉及文件：`packages/lintsight-cli/test/report-snapshot.test.ts`、`__golden__/report-v2.json` → `report-v3.json`、`closed-loop.test.ts`
   - 内容：golden 固定 `OXLINT_ENGINE_BIN` 为不存在路径（`engineStatus='crashed'` 环境无关）；contractVersion 断言升 3；summary 含 suppressed。
   - 验收点：删除旧 golden 后重生成并人工 review diff；`bun test packages/lintsight-cli/test/{report-snapshot,closed-loop}.test.ts`。
 
-- [ ] **任务 7：全量验证、scanner 证据与状态同步**
+- [x] **任务 7：全量验证、scanner 证据与状态同步**（scanner 签字按用户约定待补，未伪造）
   - 涉及文件：`docs/upgrade/v0.1/upgrade-plan.md`（契约章节）、`execution-todo.md`、`.agents/memory/decisions.md`、本 change 目录
   - 内容：
     - 实现前先在 `upgrade-plan.md` 补契约 v3 章节（schema 字段/SARIF/exit 语义）；
