@@ -1,12 +1,27 @@
 /**
  * @lintsight/diagnostic —— 统一诊断模型、oxlint JSON 归一化、指纹、规则注册表（design-m1 §4.4/§4.6）。
- * contractVersion="2"（M3）：字段变更必须递增并以快照测试锁定。
- * v2 变更：诊断可携带 pathEvents（引擎证据链 → SARIF codeFlows/relatedLocations）。
+ * contractVersion="3"（G2）：字段变更必须递增并以快照测试锁定。
+ * v2：pathEvents（引擎证据链）；v3：逐 finding confidence/cweTags + 行内抑制审计字段。
  */
 
 import { getRegistryEntry } from './registry'
 
-export const CONTRACT_VERSION = '2'
+export const CONTRACT_VERSION = '3'
+
+/** 逐 finding 置信度（契约 v3）：finding 覆盖 → registry 默认 → medium 兜底 */
+export type Confidence = 'high' | 'medium' | 'low'
+
+/** 引擎可用性（契约 v3）：缺失/崩溃/降级/超时必须在报告可见（G6 完整接线） */
+export type EngineStatus = 'ok' | 'degraded' | 'missing' | 'crashed' | 'timeout'
+
+/** 行内抑制审计字段（契约 v3） */
+export interface Suppression {
+  kind: 'inSource'
+  /** 指令里的 reason（必填，进审计） */
+  justification: string
+  /** 指令所在行（1-based，原文件坐标） */
+  directiveLine: number
+}
 
 // —— oxlint 原始 JSON 形状（`-f json`，oxlint 1.83.0 实测，见 docs/spikes/vertical-slice-m1.md） ——
 
@@ -62,6 +77,8 @@ export interface NormalizedDiagnostic {
   /** 相对项目根的 POSIX 路径（.vue 已由上层回映射） */
   file: string
   span: OxlintSpan
+  /** 逐 finding 覆盖（引擎协议预留；缺省取 registry 默认） */
+  confidence?: Confidence
 }
 
 // —— 统一诊断模型（平台消费面） ——
@@ -77,8 +94,14 @@ export interface LintsightDiagnostic {
   span: OxlintSpan
   fingerprint: string
   owner: Owner
+  /** 契约 v3：逐 finding 置信度 */
+  confidence: Confidence
+  /** 契约 v3：CWE 标签（registry 登记；无 CWE 关系为空数组） */
+  cweTags: string[]
   /** 引擎数据流证据链（taint path）；JS 语法级诊断无此字段 */
   pathEvents?: PathEvent[]
+  /** 契约 v3：仅被行内指令抑制的诊断带此字段（仍保留在报告中供审计） */
+  suppression?: Suppression
 }
 
 // —— 归一化 ——
@@ -201,6 +224,7 @@ export function suppressSuperseded<T extends LintsightDiagnostic>(
 export function toLintsightDiagnostic(
   d: NormalizedDiagnostic & { pathEvents?: PathEvent[] }
 ): LintsightDiagnostic {
+  const entry = getRegistryEntry(d.ruleId)
   return {
     contractVersion: CONTRACT_VERSION,
     ruleId: d.ruleId,
@@ -210,10 +234,34 @@ export function toLintsightDiagnostic(
     span: d.span,
     fingerprint: computeFingerprint(d),
     owner: deriveOwner(d.ruleId),
+    confidence: d.confidence ?? entry?.confidence ?? 'medium',
+    cweTags: entry?.cweTags ?? [],
     // 空数组等同无证据链：省略字段保持 JSON 报告面干净（SARIF 侧同口径）
     ...(d.pathEvents?.length ? { pathEvents: d.pathEvents } : {})
   }
 }
+
+/** 缓存命中后的元数据水合（G2）：registry 的 confidence/cweTags 变更不应让缓存陈旧 */
+export function refreshDiagnosticMetadata<T extends LintsightDiagnostic>(
+  d: T
+): T {
+  const entry = getRegistryEntry(d.ruleId)
+  return {
+    ...d,
+    confidence: entry?.confidence ?? 'medium',
+    cweTags: entry?.cweTags ?? []
+  }
+}
+
+export {
+  applySuppressions,
+  parseInlineSuppressions,
+  type AppliedSuppressions,
+  type FileSuppressions,
+  type InlineSuppressionDirective,
+  type SuppressionIssue,
+  type SuppressionIssueCode
+} from './suppression'
 
 // —— 确定性排序（M1-DR4：并行扫描下保证报告与指纹跨运行稳定） ——
 

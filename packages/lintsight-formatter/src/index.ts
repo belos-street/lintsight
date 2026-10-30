@@ -9,6 +9,8 @@ export interface ReportSummary {
   error: number
   warning: number
   info: number
+  /** 契约 v3：行内抑制的诊断数（不计入 error/warning/info） */
+  suppressed?: number
 }
 
 /** SARIF codeFlows/relatedLocations 的证据链事件（结构化本地类型，与
@@ -23,6 +25,10 @@ export interface PathEventLike {
 
 export interface ReportLike {
   contractVersion: string
+  /** 契约 v3：报告级工具版本（SARIF driver.version 同源） */
+  toolVersion?: string
+  /** 契约 v3：引擎可用性（SARIF properties 消费） */
+  engineStatus?: string
   files: number
   summary: ReportSummary
   diagnostics: {
@@ -31,6 +37,16 @@ export interface ReportLike {
     severity: string
     ruleId: string
     message: string
+    /** 契约 v3：逐 finding 置信度 */
+    confidence?: string
+    /** 契约 v3：CWE 标签（SARIF taxonomies/taxa 消费） */
+    cweTags?: string[]
+    /** 契约 v3：行内抑制审计字段 */
+    suppression?: {
+      kind: string
+      justification: string
+      directiveLine: number
+    }
     /** M3 契约 v2：引擎 taint 证据链（可选） */
     pathEvents?: PathEventLike[]
     /** M3：SARIF partialFingerprints 消费面（可选） */
@@ -45,13 +61,15 @@ export function formatJson(report: ReportLike): string {
 export function formatText(report: ReportLike): string {
   const lines: string[] = []
   for (const d of report.diagnostics) {
+    const suppressed = d.suppression ? '  [suppressed]' : ''
     lines.push(
-      `${d.file}:${d.span.line}:${d.span.column}  ${d.severity.padEnd(7)}  ${d.ruleId}  ${d.message}`
+      `${d.file}:${d.span.line}:${d.span.column}  ${d.severity.padEnd(7)}  ${d.ruleId}  ${d.message}${suppressed}`
     )
   }
   if (report.diagnostics.length > 0) lines.push('')
+  const suppressed = report.summary.suppressed ?? 0
   lines.push(
-    `summary: ${report.summary.error} error(s), ${report.summary.warning} warning(s), ${report.summary.info} info, ${report.files} file(s)`
+    `summary: ${report.summary.error} error(s), ${report.summary.warning} warning(s), ${report.summary.info} info, ${suppressed} suppressed, ${report.files} file(s)`
   )
   return lines.join('\n')
 }

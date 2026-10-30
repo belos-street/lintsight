@@ -21,6 +21,9 @@ export interface RegistryEntry {
   status: RegistryStatus
   /** 平台侧置信账目，与 meta.confidence 联动校验；试用误报证据反哺调整 */
   confidence: Confidence
+  /** CWE 标签（契约 v3）；无 CWE 关系的规则省略（默认空数组）。
+   * JS 条目由 registry.test 与插件 meta.tags 的 cwe-* 集合对齐；engine 条目手工登记。 */
+  cweTags?: string[]
   /** 一句话规则说明（SARIF shortDescription）；JS 条目 = 插件 meta.docs.description */
   description: string
   /** 缺省严重级（SARIF defaultConfiguration.level）；JS 条目 = 插件 meta.severity */
@@ -139,6 +142,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-798'],
     description:
       '禁止硬编码凭证（password/secret/token/api_key 等命名 + 字符串字面量）',
     defaultSeverity: 'error'
@@ -149,6 +153,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-1333'],
     description: '检测正则中的嵌套量词（ReDoS 静态特征）',
     defaultSeverity: 'warning'
   },
@@ -158,6 +163,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-1321'],
     description: '禁止通过字面量/计算键写 __proto__ 与 constructor.prototype',
     defaultSeverity: 'error'
   },
@@ -167,6 +173,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-78'],
     description: '禁止 child_process.exec/execSync 执行非字面量命令',
     defaultSeverity: 'error'
   },
@@ -176,6 +183,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'low',
+    cweTags: ['cwe-22'],
     description: 'fs 文件 API 路径参数为非字面量时提示路径穿越风险',
     defaultSeverity: 'warning'
   },
@@ -185,6 +193,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-94'],
     description: '禁止 require()/import() 的模块说明符为非字面量',
     defaultSeverity: 'error'
   },
@@ -194,6 +203,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-327'],
     description: '禁止 MD5/SHA1 哈希（crypto.createHash 字面量参数）',
     defaultSeverity: 'warning'
   },
@@ -203,6 +213,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-338'],
     description:
       '禁止 Math.random 赋值给敏感命名标识符（token/secret/otp/salt 等）',
     defaultSeverity: 'error'
@@ -213,6 +224,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-312'],
     description: '禁止向 localStorage/sessionStorage 写入凭证命名键',
     defaultSeverity: 'error'
   },
@@ -222,6 +234,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-79'],
     description: '禁止向 innerHTML/outerHTML/document.write 写入非字面量内容',
     defaultSeverity: 'error'
   },
@@ -231,6 +244,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-89'],
     description: '禁止模板插值/字符串拼接构造 SQL 语句',
     defaultSeverity: 'error'
   },
@@ -240,6 +254,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-942'],
     description:
       '禁止 CORS 通配来源（Access-Control-Allow-Origin: * 或 cors origin:true）',
     defaultSeverity: 'warning'
@@ -250,6 +265,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-94'],
     description: '禁止 vm.runInContext 系执行非字面量脚本',
     defaultSeverity: 'error'
   },
@@ -259,6 +275,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-614', 'cwe-1004'],
     description: 'Set-Cookie 缺少 HttpOnly/Secure 标志',
     defaultSeverity: 'warning'
   },
@@ -269,6 +286,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-79'],
     description:
       '禁止向 Angular bypassSecurityTrust* 传入非字面量内容（绕过 XSS 防护）',
     defaultSeverity: 'error'
@@ -279,6 +297,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-548'],
     description:
       '禁止用 serveIndex/serve-index 开启目录浏览（文件名/元数据暴露）',
     defaultSeverity: 'warning'
@@ -291,6 +310,7 @@ export const registry: RegistryEntry[] = [
     detection: 'syntax',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-95'],
     description: 'eval() 动态代码执行（CWE-95）',
     defaultSeverity: 'error'
   },
@@ -300,6 +320,7 @@ export const registry: RegistryEntry[] = [
     detection: 'taint',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-22'],
     description: '外部可控文件名未消毒抵达 fs 读写（CWE-22）',
     defaultSeverity: 'error',
     // 数据流版命中（含证据链）时抑制同位置的语法级低置信版本（M2-DR5/§4.4 归属矩阵）
@@ -311,6 +332,7 @@ export const registry: RegistryEntry[] = [
     detection: 'taint',
     status: 'active',
     confidence: 'high',
+    cweTags: ['cwe-78'],
     description: '外部可控输入抵达 shell 执行（CWE-78）',
     defaultSeverity: 'error',
     // 同模式：taint 版（污染源才报）命中 → 抑制语法级超集（任何非字面量都报）同位置诊断
@@ -322,6 +344,7 @@ export const registry: RegistryEntry[] = [
     detection: 'taint',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-918'],
     description: '外部可控 URL 抵达服务端出站请求（CWE-918）',
     defaultSeverity: 'error'
   },
@@ -331,6 +354,7 @@ export const registry: RegistryEntry[] = [
     detection: 'taint',
     status: 'active',
     confidence: 'medium',
+    cweTags: ['cwe-1321'],
     description: '可控对象流入合并/深写目标（CWE-1321）',
     defaultSeverity: 'error'
   },
@@ -374,6 +398,7 @@ export const registry: RegistryEntry[] = [
     // 分支控制流不可判（v0 过程内口径），allowlist 子串匹配绕过属语义级——
     // 保守报告面，confidence 不上 high
     confidence: 'medium',
+    cweTags: ['cwe-601'],
     description: '外部可控 URL 未精确匹配校验即进入重定向（开放重定向/钓鱼）',
     defaultSeverity: 'warning'
   }
@@ -381,6 +406,11 @@ export const registry: RegistryEntry[] = [
 
 export function getRegistryEntry(ruleId: string): RegistryEntry | undefined {
   return registry.find((e) => e.ruleId === ruleId)
+}
+
+/** CWE 标签（契约 v3）：未登记/无 CWE 关系的规则返回空数组 */
+export function getCweTags(ruleId: string): string[] {
+  return getRegistryEntry(ruleId)?.cweTags ?? []
 }
 
 export function isRegistered(ruleId: string): boolean {

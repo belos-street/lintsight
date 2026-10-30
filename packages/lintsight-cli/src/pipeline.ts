@@ -11,12 +11,18 @@ import { stat, unlink } from 'node:fs/promises'
 import pkg from '../package.json'
 import { runOxlint } from './oxlint-bridge'
 import {
+  applySuppressions,
   CONTRACT_VERSION,
   normalizeDiagnostics,
   normalizeFilePath,
+  parseInlineSuppressions,
+  refreshDiagnosticMetadata,
   sortDiagnostics,
   suppressSuperseded,
   toLintsightDiagnostic,
+  type Confidence,
+  type EngineStatus,
+  type FileSuppressions,
   type LintsightDiagnostic,
   type OxlintJsonOutput
 } from '@lintsight/diagnostic'
@@ -116,10 +122,36 @@ async function looksLikeGeneratedBundle(abs: string): Promise<boolean> {
   }
 }
 
+/** 读取有诊断的文件并解析行内抑制指令（G2）。
+ * 只读报告涉及的 file（.vue 读原文件）；读失败/文件已删 → 无指令，fail-open。 */
+async function loadInlineSuppressions(
+  cwd: string,
+  diagnostics: LintsightDiagnostic[]
+): Promise<Map<string, FileSuppressions>> {
+  const files = new Set(diagnostics.map((d) => d.file))
+  const out = new Map<string, FileSuppressions>()
+  await Promise.all(
+    [...files].map(async (file) => {
+      try {
+        const text = await Bun.file(path.resolve(cwd, file)).text()
+        out.set(file, parseInlineSuppressions(text))
+      } catch (e) {
+        // 读失败不阻塞报告（抑制是增强能力，不是扫描前置条件）
+        void e
+      }
+    })
+  )
+  return out
+}
+
 export interface LintsightReport {
   contractVersion: string
+  /** 契约 v3：单一版本源（G14 前取 CLI 包版本） */
+  toolVersion: string
+  /** 契约 v3：引擎可用性（missing 不再静默） */
+  engineStatus: EngineStatus
   files: number
-  summary: { error: number; warning: number; info: number }
+  summary: { error: number; warning: number; info: number; suppressed: number }
   diagnostics: LintsightDiagnostic[]
 }
 
@@ -205,6 +237,8 @@ export async function runPipeline(
     fix?: boolean
     /** 内容哈希缓存（T1.16），默认开启；--no-cache 关闭 */
     cache?: boolean
+    /** 契约 v3：CI 门禁置信度阈值（缺省 low = 现有「任何 error 即 1」） */
+    failOn?: Confidence
   } = {}
 ): Promise<PipelineResult> {
   const cwd = opts.cwd ?? process.cwd()
@@ -349,7 +383,8 @@ export async function runPipeline(
           const entry = await readCacheEntry(cacheCtx, key)
           if (entry !== null) {
             hits++
-            results.set(u.storeRel, entry)
+            // G2：缓存命中后按当前 registry 水合 confidence/cweTags（抑制在合并后应用）
+            results.set(u.storeRel, entry.map(refreshDiagnosticMetadata))
             return
           }
           misses.push({
@@ -508,7 +543,9 @@ export async function runPipeline(
           file: storeRel,
           span: ed.span,
           // 契约 v2：taint 证据链透传（SARIF codeFlows/relatedLocations 消费）
-          pathEvents: ed.pathEvents
+          pathEvents: ed.pathEvents,
+          // 契约 v3：逐 finding 置信度覆盖（引擎未发送时取 registry 默认）
+          confidence: ed.confidence
         })
         const group = engineGroups.get(storeRel)
         if (group) group.push(diag)
@@ -539,25 +576,52 @@ export async function runPipeline(
 
     // 合并（缓存命中 + 本次扫描）→ 双报消解（M2 §4.4：数据流版抑制同位置语法级版）
     // → 确定性排序（M1-DR4）
-    const diagnostics = sortDiagnostics(suppressSuperseded(mergedDiagnostics))
+    const ordered = sortDiagnostics(suppressSuperseded(mergedDiagnostics))
 
-    const summary = { error: 0, warning: 0, info: 0 }
+    // G2：行内抑制（缓存命中后每轮重算；被抑制诊断保留并带审计字段）
+    const suppressionIndex = await loadInlineSuppressions(cwd, ordered)
+    const applied = applySuppressions(ordered, suppressionIndex)
+    for (const issue of applied.invalid) {
+      logger.warn(
+        `suppression: ${issue.file}:${issue.line} 指令无效（${issue.code}），已忽略`
+      )
+    }
+    const diagnostics = applied.diagnostics
+
+    const summary = { error: 0, warning: 0, info: 0, suppressed: 0 }
     for (const d of diagnostics) {
+      // 被抑制诊断保留在报告中供审计，但不计入 summary / exit / fail-on
+      if (d.suppression) {
+        summary.suppressed++
+        continue
+      }
       if (d.severity === 'error') summary.error++
       else if (d.severity === 'warning') summary.warning++
       else summary.info++
     }
+
+    // 契约 v3：--fail-on 置信度阈值（缺省 low = 现有「任何 error 即 1」）
+    const failRank: Record<Confidence, number> = { low: 1, medium: 2, high: 3 }
+    const failOn = opts.failOn ?? 'low'
+    const failing = diagnostics.some(
+      (d) =>
+        !d.suppression &&
+        d.severity === 'error' &&
+        failRank[d.confidence] >= failRank[failOn]
+    )
 
     logger.info(
       `scanned ${scannedFiles} file(s) (cache: ${hits} hit / ${misses.length} miss), ${diagnostics.length} diagnostic(s)`
     )
 
     return {
-      exitCode: summary.error > 0 ? 1 : 0,
+      exitCode: failing ? 1 : 0,
       degraded,
       cache: { enabled: cacheCtx.enabled, hits, misses: misses.length },
       report: {
         contractVersion: diagnostics[0]?.contractVersion ?? CONTRACT_VERSION,
+        toolVersion: pkg.version,
+        engineStatus: engineResult.status,
         files: units.length,
         summary,
         diagnostics

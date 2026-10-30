@@ -11,7 +11,7 @@ import { createLogger, type LogLevel } from '@lintsight/shared'
 
 const args = process.argv.slice(2)
 
-const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text|sarif] [--output <file>] [--log-level debug|info|warn|error] [--fix] [--no-cache]`
+const usage = `lintsight v${pkg.version} — usage: lintsight <paths...> [--config <lintsight.config.json>] [--format json|text|sarif] [--output <file>] [--log-level debug|info|warn|error] [--fail-on high|medium|low] [--fix] [--no-cache]`
 
 function readOption(name: string): string | undefined {
   const i = args.indexOf(name)
@@ -39,8 +39,20 @@ if (!['debug', 'info', 'warn', 'error'].includes(logLevel)) {
   )
   process.exit(2)
 }
+// 契约 v3：CI 门禁阈值；缺省 low = 现有「任何 error 即 1」
+const failOn = readOption('--fail-on') ?? 'low'
+if (!['high', 'medium', 'low'].includes(failOn)) {
+  console.error(`lintsight: --fail-on 期望 high|medium|low，得到 '${failOn}'`)
+  process.exit(2)
+}
 
-const optionNames = ['--format', '--log-level', '--config', '--output']
+const optionNames = [
+  '--format',
+  '--log-level',
+  '--config',
+  '--output',
+  '--fail-on'
+]
 const paths = args.filter(
   (a, i) => !a.startsWith('-') && !optionNames.includes(args[i - 1]) // 前一个是选项名 → 当前是选项值
 )
@@ -54,6 +66,7 @@ const logger = createLogger(logLevel as LogLevel)
 const result = await runPipeline(paths, {
   config: readOption('--config'),
   logLevel: logLevel as LogLevel,
+  failOn: failOn as 'high' | 'medium' | 'low',
   fix: args.includes('--fix'),
   cache: !args.includes('--no-cache')
 })
@@ -67,7 +80,8 @@ if (result.report) {
     defaultLevel: e.defaultSeverity === 'error' ? 'error' : 'warning',
     ...(e.ruleId.startsWith('lintsight')
       ? { helpUri: 'https://github.com/belos-street/lintsight#规则面' }
-      : {})
+      : {}),
+    ...(e.cweTags?.length ? { cweTags: e.cweTags } : {})
   }))
   const formatted = formatters[format as FormatName](result.report, {
     toolVersion: pkg.version,
@@ -75,10 +89,11 @@ if (result.report) {
   })
   const output = readOption('--output')
   if (output) {
-    // 报告落盘（平台对接 / IDE 浏览）；stdout 行为不变
+    // 契约 v3：--output 时 stdout 必须为空（报告只落文件；日志走 stderr）
     await Bun.write(path.resolve(output), formatted)
     logger.info(`report written: ${path.resolve(output)}`)
+  } else {
+    console.log(formatted)
   }
-  console.log(formatted)
 }
 process.exit(result.exitCode)

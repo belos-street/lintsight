@@ -22,6 +22,8 @@ export interface SarifRuleMeta {
   shortDescription?: string
   defaultLevel?: 'error' | 'warning' | 'note'
   helpUri?: string
+  /** 契约 v3：CWE 标签（rules[].properties.cweTags） */
+  cweTags?: string[]
 }
 
 export interface SarifOptions {
@@ -39,6 +41,29 @@ interface SarifLocation {
   message?: { text: string }
 }
 
+interface SarifTaxon {
+  id: string
+  name: string
+}
+
+interface SarifTaxonomy {
+  name: string
+  informationUri: string
+  taxa: SarifTaxon[]
+}
+
+interface SarifTaxonReference {
+  id: string
+  index: number
+  toolComponent: { name: string }
+}
+
+interface SarifSuppression {
+  kind: 'inSource'
+  justification: string
+  properties?: { directiveLine: number }
+}
+
 interface SarifResult {
   ruleId: string
   ruleIndex: number
@@ -52,6 +77,12 @@ interface SarifResult {
     }[]
   }[]
   partialFingerprints?: Record<string, string>
+  /** 契约 v3：CWE 标签引用 */
+  taxa?: SarifTaxonReference[]
+  /** 契约 v3：逐 finding 置信度 */
+  properties?: { confidence?: string }
+  /** 契约 v3：行内抑制（结果仍在 results[]，由消费端标记为已抑制） */
+  suppressions?: SarifSuppression[]
 }
 
 function toLevel(severity: string): 'error' | 'warning' | 'note' {
@@ -89,6 +120,26 @@ export function formatSarif(
   const ruleIds = [...new Set(report.diagnostics.map((d) => d.ruleId))].sort()
   const ruleIndex = new Map(ruleIds.map((id, i) => [id, i]))
   const metaById = new Map((opts.rules ?? []).map((m) => [m.id, m]))
+
+  // 契约 v3：CWE taxonomy 只收录报告实际出现的标签（不内嵌全量字典）
+  const cweIds = [
+    ...new Set(report.diagnostics.flatMap((d) => d.cweTags ?? []))
+  ].sort()
+  const cweIndex = new Map(cweIds.map((id, i) => [id, i]))
+  const taxonomies: SarifTaxonomy[] =
+    cweIds.length > 0
+      ? [
+          {
+            name: 'CWE',
+            informationUri: 'https://cwe.mitre.org/',
+            // SARIF 消费面用 CWE 官方大写形态（cwe-79 → CWE-79）
+            taxa: cweIds.map((id) => ({
+              id: id.toUpperCase(),
+              name: id.toUpperCase()
+            }))
+          }
+        ]
+      : []
 
   const results: SarifResult[] = report.diagnostics.map((d) => {
     const location: SarifLocation = {
@@ -129,6 +180,27 @@ export function formatSarif(
               lintsightFingerprintV1: d.fingerprint
             }
           }
+        : {}),
+      ...(d.cweTags?.length
+        ? {
+            taxa: d.cweTags.map((id) => ({
+              id: id.toUpperCase(),
+              index: cweIndex.get(id)!,
+              toolComponent: { name: 'CWE' }
+            }))
+          }
+        : {}),
+      ...(d.confidence ? { properties: { confidence: d.confidence } } : {}),
+      ...(d.suppression
+        ? {
+            suppressions: [
+              {
+                kind: 'inSource' as const,
+                justification: d.suppression.justification,
+                properties: { directiveLine: d.suppression.directiveLine }
+              }
+            ]
+          }
         : {})
     }
   })
@@ -164,11 +236,15 @@ export function formatSarif(
                       }
                     }
                   : {}),
-                ...(meta?.helpUri ? { helpUri: meta.helpUri } : {})
+                ...(meta?.helpUri ? { helpUri: meta.helpUri } : {}),
+                ...(meta?.cweTags?.length
+                  ? { properties: { cweTags: meta.cweTags } }
+                  : {})
               }
             })
           }
         },
+        ...(taxonomies.length > 0 ? { taxonomies } : {}),
         results
       }
     ]

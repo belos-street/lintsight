@@ -14,7 +14,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { parseJsonc } from '@lintsight/config-bridge'
 import type { ArchConfig } from '@lintsight/config-bridge'
-import type { PathEvent } from '@lintsight/diagnostic'
+import type { Confidence, EngineStatus, PathEvent } from '@lintsight/diagnostic'
 import { registry } from '@lintsight/diagnostic/registry'
 import type { Logger } from '@lintsight/shared'
 
@@ -149,13 +149,32 @@ export interface EngineDiagnostic {
   /** taint 规则证据链（design-m2 §4.2）；普通规则无此字段。
    * 契约 v2（M3）起随 LintsightDiagnostic.pathEvents 透传给消费面。 */
   pathEvents?: PathEvent[]
+  /** 契约 v3：逐 finding 置信度覆盖（Rust 本轮不发送；缺省取 registry） */
+  confidence?: Confidence
 }
 
 export interface EngineRunResult {
   /** null = 引擎不可用/失败（降级）；非 null = 协议正常（可为空数组） */
   diagnostics: EngineDiagnostic[] | null
-  /** true = 引擎曾可用但本次失败（fail-open 降级） */
+  /** true = 引擎曾可用但本次失败（fail-open 降级）；missing 状态为 false */
   degraded: boolean
+  /** 契约 v3：报告级 engineStatus（G6 完整接线失败场景） */
+  status: EngineStatus
+}
+
+/** engineStatus 映射（契约 v3）：优先级 missing > timeout > crashed > degraded > ok。
+ * `timeout` 的真实信号由 G6/G5 接线；G2 仅定义映射并单测。 */
+export function deriveEngineStatus(input: {
+  bin: string | null
+  timedOut?: boolean
+  crashed?: boolean
+  missingRules?: readonly string[]
+}): EngineStatus {
+  if (!input.bin) return 'missing'
+  if (input.timedOut) return 'timeout'
+  if (input.crashed) return 'crashed'
+  if ((input.missingRules?.length ?? 0) > 0) return 'degraded'
+  return 'ok'
 }
 
 /** opt-in 引擎规则（配置/包表驱动才注册，summary 缺席是正常形态）——
@@ -213,8 +232,12 @@ export async function runEngine(
 ): Promise<EngineRunResult> {
   const cwd = opts.cwd ?? process.cwd()
   const bin = resolveEngineBin(cwd)
-  if (!bin || files.length === 0) {
-    return { diagnostics: null, degraded: false }
+  if (!bin) {
+    return { diagnostics: null, degraded: false, status: 'missing' }
+  }
+  if (files.length === 0) {
+    // 二进制可用但没有待分析文件：无工作可做，按 ok 记录（pipeline 正常不会走到）
+    return { diagnostics: null, degraded: false, status: 'ok' }
   }
 
   try {
@@ -242,7 +265,7 @@ export async function runEngine(
     ])
     const exitCode = await proc.exited
     if (exitCode !== 0) {
-      return { diagnostics: null, degraded: true }
+      return { diagnostics: null, degraded: true, status: 'crashed' }
     }
 
     const diagnostics: EngineDiagnostic[] = []
@@ -253,7 +276,7 @@ export async function runEngine(
       try {
         obj = JSON.parse(line)
       } catch {
-        return { diagnostics: null, degraded: true } // 协议损坏 → 降级
+        return { diagnostics: null, degraded: true, status: 'crashed' } // 协议损坏 → 降级
       }
       const rec = obj as { type?: string; ruleId?: string } & Partial<{
         version: string
@@ -267,18 +290,19 @@ export async function runEngine(
       diagnostics.push(obj as EngineDiagnostic)
     }
     // 规则面对账（M3 review 发现 ②）：常驻面缺席 = 陈旧引擎产物信号（静默丢规则）
-    if (summary && opts.logger) {
-      const missing = missingEngineRules(summary.rules)
-      if (missing.length > 0) {
-        opts.logger.warn(
-          `engine: 规则面缺失 ${missing.join(', ')}${
-            summary.version ? `（引擎 v${summary.version}）` : ''
-          }——疑似陈旧产物，请 cargo build --release 重建 lintsight-engine`
-        )
-      }
+    const missing = summary
+      ? missingEngineRules(summary.rules)
+      : expectedEngineRules() // summary 缺席 = 协议不完整，按规则面缺失降级
+    if (missing.length > 0 && opts.logger) {
+      opts.logger.warn(
+        `engine: 规则面缺失 ${missing.join(', ')}${
+          summary?.version ? `（引擎 v${summary.version}）` : ''
+        }——疑似陈旧产物，请 cargo build --release 重建 lintsight-engine`
+      )
     }
-    return { diagnostics, degraded: false }
+    const status = deriveEngineStatus({ bin, missingRules: missing })
+    return { diagnostics, degraded: status === 'degraded', status }
   } catch {
-    return { diagnostics: null, degraded: true }
+    return { diagnostics: null, degraded: true, status: 'crashed' }
   }
 }
