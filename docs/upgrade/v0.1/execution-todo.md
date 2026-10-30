@@ -20,9 +20,10 @@
 
 ### W1 集成契约与可观测性
 
-- [x] **G2 契约 v3**
+- [~] **G2 契约 v3**
   - owner：engine + platform
-  - 变更：`docs/changes/20261030-contract-v3/`（已实现；scanner 消费签字按用户约定可后补，未伪造）
+  - 变更：`docs/changes/20261030-contract-v3/`（代码与本地验收完成；scanner 消费签字待补，未伪造）
+  - 阻塞：scanner 消费签字（用户最初约定「G2 的 scanner 签字可后补」；按验收纪律状态保持 `[~]` 直到签字）。corpus 基线陈旧与 G1 同源、归 G3（G1 已获用户批准例外），G2 不以该项收口。
   - 内容：
     - 诊断 JSON/SARIF 增加 `confidence`（**逐 finding**，规则 meta 只做默认值）、`cweTags`、`engineStatus`、`toolVersion`。
     - `engineStatus` 枚举：`ok | degraded | missing | crashed | timeout`。
@@ -31,13 +32,14 @@
     - `--fail-on` 支持 `high`；`--output` 时 stdout 必须为空。
   - 验收：golden/SARIF 快照更新；scanner 消费测试通过；缺引擎时报告可见 `engineStatus`。
   - 证据（2026-10-30）：
-    - `bun run test`：206 pass / 0 fail；`cargo test --release`：52 passed；`lint`：0 warnings；`format:check`：clean。
+    - `bun run test`：207 pass / 0 fail；`cargo test --release`：52 passed；`lint`：0 warnings；`format:check`：clean。
     - `report-snapshot.test.ts` → `__golden__/report-v3.json`（contractVersion=3、toolVersion、engineStatus=crashed 固定、summary.suppressed、逐 finding confidence/cweTags）。
     - `engine-bridge.test.ts`：`deriveEngineStatus` 五态 + missing/crashed/ok 路径。
-    - `suppression.test.ts`：合法/缺 reason/不匹配/.vue/冷热/引擎 no-eval 抑制；`fail-on.test.ts`：low/medium/high、抑制、warning；`cli-output.test.ts`：`--output` stdout 为空、无 output 走 stdout、非法 `--fail-on` exit 2。
+    - `suppression.test.ts`：合法/缺 reason/不匹配/.vue/冷热/引擎 no-eval 抑制；`fail-on.test.ts`：low/medium/high、抑制、warning；`cli-output.test.ts`：`--output` stdout 为空、无 output 走 stdout、非法/缺值 `--fail-on` exit 2。
+    - `cweTags` 对外统一大写 `CWE-79`（JSON 与 SARIF 同口径），golden 已同步。
     - `sarif.test.ts`：`taxonomies/taxa/properties.confidence/suppressions/rules[].properties.cweTags`；CLI SARIF 实测 `taxonomies=1/taxa=15`，55 条结果带 taxa。
     - `bun run corpus:check`：FAIL（与 G1 相同的既有基线陈旧：`no-floating-promise -28`、`no-hardcoded-credentials +115`；本 change 不改检测面，未 `--save`）。
-    - scanner 签字：**待补**（用户已在任务约定「G2 的 scanner 签字可后补」）；未签字前不宣称平台侧验收闭合。
+    - scanner 签字：**待补**（用户已在任务约定「G2 的 scanner 签字可后补」；未签字前 G2 保持 `[~]`，不宣称平台侧验收闭合）。
   - 依赖：scanner 调用契约。
 - [~] **G6 fail-open 可观测**
   - owner：engine

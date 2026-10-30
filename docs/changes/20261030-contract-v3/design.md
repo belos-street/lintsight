@@ -39,13 +39,14 @@ export interface LintsightDiagnostic {
 
 ```text
 confidence = findingOverride ?? registryEntry(ruleId)?.confidence ?? 'medium'
-cweTags    = registryEntry(ruleId)?.cweTags ?? []
+cweTags    = (registryEntry(ruleId)?.cweTags ?? []).map(t => t.toUpperCase())
 ```
 
+- `cweTags` 对外统一为 CWE 官方大写形态（`CWE-79`）；registry/插件 meta 内部仍用小写，输出时大写化，JSON 与 SARIF 同口径。
 - `findingOverride` 只在引擎协议预留（TS 侧 `EngineDiagnostic.confidence?`）；Rust 本轮不发送，所有 finding 暂取 registry 默认，但模型已支持逐 finding。
 - 未登记规则（oxlint-native、`internal/*`）默认 `medium` + 空 `cweTags`；避免未校准规则被 `--fail-on high` 直接拦。
 - **指纹不变**：`computeFingerprint` 仍只用 ruleId/file/span/message；新增字段不参与。
-- 缓存命中时用 `refreshDiagnosticMetadata(d)` 按**当前 registry** 重算 `confidence`/`cweTags`，避免 registry 元数据变更后缓存陈旧。
+- 缓存命中时用 `refreshDiagnosticMetadata(d)` 按**当前 registry** 重算 `confidence`/`cweTags`，避免 registry 元数据变更后缓存陈旧。已知限制：M1 无 finding 级覆盖；若未来缓存 finding 覆盖，需增加来源标记，避免水合覆盖逐 finding 值。
 
 `registry.ts` 增加 `cweTags: string[]`：
 
@@ -105,7 +106,7 @@ deriveEngineStatus(input: {
 
 解析与应用：
 
-1. 只对**本轮有诊断**的文件读取原文件内容（`.vue` 读原 `.vue`，不是虚拟块）；按 `storeRel` 缓存一次。
+1. 只对**本轮有诊断**的文件读取原文件内容（`.vue` 读原 `.vue`，不是虚拟块）；按 `storeRel` 缓存一次。已知边界：干净文件里的非法指令不会解析/告警（性能考虑，契约中明示）。
 2. 逐行匹配：`^\s*//\s*lintsight-ignore-next-line\s+([^\s:]+)\s*:\s*(.+?)\s*$`。
 3. `reason` 必须非空；`ruleId` 精确匹配诊断 `ruleId`。
 4. 指令作用于**下一行**：`diag.span.line === directiveLine + 1` 且同文件；多行 span 以起始行为准。

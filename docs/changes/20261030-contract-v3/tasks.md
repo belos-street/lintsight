@@ -43,7 +43,7 @@
   - 内容：golden 固定 `OXLINT_ENGINE_BIN` 为不存在路径（`engineStatus='crashed'` 环境无关）；contractVersion 断言升 3；summary 含 suppressed。
   - 验收点：删除旧 golden 后重生成并人工 review diff；`bun test packages/lintsight-cli/test/{report-snapshot,closed-loop}.test.ts`。
 
-- [x] **任务 7：全量验证、scanner 证据与状态同步**（scanner 签字按用户约定待补，未伪造）
+- [~] **任务 7：全量验证、scanner 证据与状态同步**（本地验证完成；scanner 签字待补，G2 保持 `[~]`）
   - 涉及文件：`docs/upgrade/v0.1/upgrade-plan.md`（契约章节）、`execution-todo.md`、`.agents/memory/decisions.md`、本 change 目录
   - 内容：
     - 实现前先在 `upgrade-plan.md` 补契约 v3 章节（schema 字段/SARIF/exit 语义）；

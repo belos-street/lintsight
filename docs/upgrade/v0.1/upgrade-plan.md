@@ -473,7 +473,7 @@ interface FrameworkProfile {
 #### M4 契约 v3（G2 实现约定）
 
 - **JSON 报告**：`contractVersion` / `toolVersion` / `engineStatus` / `files` / `summary{error,warning,info,suppressed}` / `diagnostics`。
-- **逐 finding 字段**：`confidence`（high|medium|low；finding 覆盖 → registry 默认 → medium 兜底）、`cweTags`（registry 登记）、`suppression?`（仅行内抑制，含 `kind/justification/directiveLine`）。
+- **逐 finding 字段**：`confidence`（high|medium|low；finding 覆盖 → registry 默认 → medium 兜底）、`cweTags`（registry 登记，**对外统一大写 `CWE-79`**；JSON 与 SARIF 同口径）、`suppression?`（仅行内抑制，含 `kind/justification/directiveLine`）。
 - **engineStatus**：`ok | degraded | missing | crashed | timeout`；`timeout` 的状态映射在 G2 定义，真实超时信号由 G6/G5 接线。
 - **行内抑制**：`// lintsight-ignore-next-line <ruleId>: <reason>`；reason 必填；仅下一行生效；被抑制诊断保留在 `diagnostics` 并带 `suppression`，但不计入 summary / exit / `--fail-on`。
 - **exit**：`--fail-on high|medium|low`（默认 `low` = 现有「任何 error 即 1」）；仅未抑制的 `severity=error` 且 `confidence` 不低于阈值时 exit 1；运行错误仍 exit 2。
