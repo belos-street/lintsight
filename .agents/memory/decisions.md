@@ -87,7 +87,7 @@
 
 ## D14 · G9 JSX sink 采用名称启发式 + Vue tsx 最长优先
 
-- **结论**：新增 `lintsight/no-jsx-dangerous-html`（error/medium）与 `lintsight/no-unsafe-jsx-url`（warning/medium）；URL 动态值仅在 AST 命名命中 user/input/query/search/hash/location/redirect/returnUrl/callbackUrl/params 时报告，`href={route}`/`config.url`/`routerLink` 不报；literal `javascript:`/`data:` 不受限。Vue `<script lang="tsx|jsx">` 的 lang 正则必须最长优先（tsx|ts|jsx|js），否则 tsx 被误当 ts。
+- **结论**：新增 `lintsight/no-jsx-dangerous-html`（error/medium）与 `lintsight/no-unsafe-jsx-url`（warning/medium）；URL 动态值仅在 AST 命名命中 user/input/query/search/hash/location/redirect/returnUrl/callbackUrl/params 时报告，`href={route}`/`config.url`/`routerLink` 不报；literal `javascript:`/`data:` 与**模板/二元拼接静态危险 scheme** 不受限（模板用 cooked）；名称遍历跳过类型节点。Vue `<script lang="tsx|jsx">` 的 lang 正则必须最长优先（tsx|ts|jsx|js），否则 tsx 被误当 ts。
 - **理由**：Ghost corpus 动态 URL 53 条路由/配置命中 → 名称启发式降为 0（FP<10% 硬门禁）；JSX 语法规避 react 插件覆盖默认集；Vue tsx 虚拟文件后缀错误会导致 TSX 解析失败。
 - **来源**：`docs/changes/20261102-tsx-contract/`；`fixtures/tsx|jsx|vue`；`rule-count` 44；corpus 3463。
 - **日期**：2026-11-02

@@ -87,6 +87,11 @@ meta: {
   - 安全 MIME 判定同样用小写：`data:image/png` / `jpeg` / `gif` / `webp`；
   - 大小写/前导空白必须进 fixtures，防止 `startsWith` 直判留下绕过面。
 - 表达式内字符串字面量（`href={' javascript:...'}`）走同一归一化。
+- **动态构造的危险 scheme（High）**：
+  - 模板串首段取 `quasis[0].value.cooked ?? raw`；`\u006aavascript\u003a` 转义后仍是 `javascript:` → 报；
+  - 模板首段归一化后以 `javascript:` / 危险 `data:` 开头时，**先于**锚定放行与名称启发直接报（如 `` href={`javascript:${payload}`} ``）；
+  - `BinaryExpression('+' )` 的左侧/右侧静态前缀（Literal / 模板 cooked）危险 scheme 直接报（如 `'javascript:' + payload`）；
+  - 无插值模板用 cooked，避免 raw 转义绕过。
 
 **动态 URL 名称启发式（G9 精度边界）**：
 
@@ -104,6 +109,8 @@ meta: {
 **`docs.falsePositives`（规则实现时必须写入）**：
 
 - `href={route}` / `href={config.url}` / `href={routerLink}` 等非可疑命名不报（P0 精度边界；代价是可能漏报同名用户可控值）。
+- 名称启发式的更宽漏报面：`href={url}` / `{payload}` / `{next}` / `{target}` / `{dest}` / `{destination}` / `{body}` / `{req.body.next}` / `{request.url}` / `{data.url}` / `{document.URL}` / `{returnTo}` / `{callback}` 均不报；P1 可评估“裸 url/payload 报、config/route/router/static 根对象排除”的根感知启发式。
+- 类型注解不参与名称启发（`safeValue as UserInput` 不因 `UserInput` 误报）；`typeAnnotation`/`typeParameters`/`returnType` 等类型节点跳过。
 - `{...props}` 与自定义组件的动态 href/src 不在 P0 检测面。
 - `img` 动态 src 不报；`avif`/`bmp` 等 `data:` 图片会报（P0 保守）。
 
@@ -131,10 +138,17 @@ meta: {
 | `fixtures/tsx/no-unsafe-jsx-url.bad-4.tsx` | unsafe-url | 1 条（`href=" JaVaScRiPt:alert(1)"` 大小写+前导空白） |
 | `fixtures/tsx/no-unsafe-jsx-url.bad-5.tsx` | unsafe-url | 1 条（`src={'DATA:IMAGE/SVG+XML,...'}`） |
 | `fixtures/tsx/no-unsafe-jsx-url.bad-6.tsx` | unsafe-url | 1 条（`href={req.query.next}`，名称启发式命中） |
+| `fixtures/tsx/no-unsafe-jsx-url.bad-7.tsx` | unsafe-url | 1 条（`` href={`javascript:${payload}`} ``） |
+| `fixtures/tsx/no-unsafe-jsx-url.bad-8.tsx` | unsafe-url | 1 条（`'javascript:' + payload`） |
+| `fixtures/tsx/no-unsafe-jsx-url.bad-9.tsx` | unsafe-url | 1 条（`` href={`data:text/html,${html}`} ``） |
+| `fixtures/tsx/no-unsafe-jsx-url.bad-10.tsx` | unsafe-url | 1 条（`` href={`data:image/svg+xml,${svg}`} ``） |
+| `fixtures/tsx/no-unsafe-jsx-url.bad-11.tsx` | unsafe-url | 1 条（`` `\u006aavascript\u003aalert(1)` `` cooked 归一化） |
 | `fixtures/tsx/no-unsafe-jsx-url.good-1.tsx` | unsafe-url | 0（`https://`、`#anchor`） |
 | `fixtures/tsx/no-unsafe-jsx-url.good-2.tsx` | unsafe-url | 0（`` href={`/users/${id}`} `` 锚定） |
 | `fixtures/tsx/no-unsafe-jsx-url.good-3.tsx` | unsafe-url | 0（`data:image/png;base64,...`） |
 | `fixtures/tsx/no-unsafe-jsx-url.good-5.tsx` | unsafe-url | 0（`href={route}`/`config.url`/`routerLink` 不在启发式） |
+| `fixtures/tsx/no-unsafe-jsx-url.good-6.tsx` | unsafe-url | 0（`safeValue as UserInput` 类型注解不参与名称启发） |
+| `fixtures/tsx/no-unsafe-jsx-url.good-7.tsx` | unsafe-url | 0（url/payload/next/target/body/request.url/data.url/returnTo/callback 漏报边界） |
 | `fixtures/tsx/syntax-basic.tsx` | 解析契约 | 0 parse-error；含 fragment/泛型箭头/spread |
 | `fixtures/jsx/*.jsx` | 两条规则 | 与 tsx 对齐的最小 bad/good 各 2~3 条 |
 | `fixtures/vue/jsx-sink.vue` | unsafe-url | 1 条，回映射到 `.vue` 行号 |

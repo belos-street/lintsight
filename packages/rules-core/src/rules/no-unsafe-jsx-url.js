@@ -15,6 +15,7 @@ function normalizeString(value) {
 }
 
 function isDangerousScheme(value, attrName) {
+  if (typeof value !== 'string') return false
   const normalized = normalizeString(value)
   if (normalized.startsWith('javascript:')) return true
   if (normalized.startsWith('data:')) {
@@ -25,7 +26,8 @@ function isDangerousScheme(value, attrName) {
   return false
 }
 
-/** 从 JSXAttribute.value 取静态字符串；动态/非字符串返回 null */
+/** 从 JSXAttribute.value 取静态字符串；动态/非字符串返回 null。
+ * 无插值模板取 cooked（转义后真实字符串），否则 `\u006aavascript:` 会漏报。 */
 function staticString(attr) {
   if (attr.value?.type === 'Literal' && typeof attr.value.value === 'string') {
     return attr.value.value
@@ -39,8 +41,27 @@ function staticString(attr) {
       expr?.type === 'TemplateLiteral' &&
       (!expr.expressions || expr.expressions.length === 0)
     ) {
-      return expr.quasis?.[0]?.value?.raw ?? null
+      return (
+        expr.quasis?.[0]?.value?.cooked ?? expr.quasis?.[0]?.value?.raw ?? null
+      )
     }
+  }
+  return null
+}
+
+/** 表达式的静态前缀：Literal / 模板首段 cooked / 二元拼接任一侧静态面 */
+function staticPrefix(node) {
+  if (!node) return null
+  if (node.type === 'Literal' && typeof node.value === 'string') {
+    return node.value
+  }
+  if (node.type === 'TemplateLiteral') {
+    return (
+      node.quasis?.[0]?.value?.cooked ?? node.quasis?.[0]?.value?.raw ?? null
+    )
+  }
+  if (node.type === 'BinaryExpression' && node.operator === '+') {
+    return staticPrefix(node.left) ?? staticPrefix(node.right)
   }
   return null
 }
@@ -50,6 +71,21 @@ function staticString(attr) {
  * 等路由/配置值造成 corpus 大面积误报。literal javascript:/data: 不受此限。 */
 const SUSPECT_NAME =
   /(user[_-]?input|input|query|search|hash|location|redirect|return[_-]?url|callback[_-]?url|url[_-]?param|params?)/i
+
+const SKIP_KEYS = new Set([
+  'parent',
+  'range',
+  'loc',
+  'start',
+  'end',
+  'typeAnnotation',
+  'typeParameters',
+  'typeArguments',
+  'returnType',
+  'superTypeParameters',
+  'implements',
+  'decorators'
+])
 
 function hasSuspectName(node) {
   if (!node || typeof node !== 'object') return false
@@ -63,20 +99,31 @@ function hasSuspectName(node) {
     return true
   }
   for (const key of Object.keys(node)) {
-    if (key === 'parent' || key === 'range' || key === 'loc') continue
+    if (SKIP_KEYS.has(key)) continue
     if (hasSuspectName(node[key])) return true
   }
   return false
 }
 
-/** 动态表达式是否安全（锚定相对路径模板放行；字符串字面量走 staticString） */
-function isDynamicUnsafe(expr) {
+/** 动态表达式是否危险：静态危险 scheme（模板/二元拼接）优先于名称启发与锚定放行 */
+function isDynamicUnsafe(expr, attrName) {
   if (!expr) return false
   if (expr.type === 'Literal') return false
   if (expr.type === 'TemplateLiteral') {
+    const first =
+      expr.quasis?.[0]?.value?.cooked ?? expr.quasis?.[0]?.value?.raw ?? ''
+    if (isDangerousScheme(first, attrName)) return true
     if (!expr.expressions || expr.expressions.length === 0) return false
-    const first = expr.quasis?.[0]?.value?.raw ?? ''
     if (/^[/#?]/.test(first)) return false
+    return hasSuspectName(expr)
+  }
+  if (expr.type === 'BinaryExpression') {
+    if (
+      isDangerousScheme(staticPrefix(expr.left), attrName) ||
+      isDangerousScheme(staticPrefix(expr.right), attrName)
+    ) {
+      return true
+    }
     return hasSuspectName(expr)
   }
   return hasSuspectName(expr)
@@ -111,7 +158,8 @@ export default {
         '<img src="data:image/png;base64,..." />'
       ],
       falsePositives: [
-        '动态 href={route} / href={config.url} / href={routerLink} 不在名称启发式内，不报；同理非 user/input/query/location 等命名的动态 URL 可能漏报（保守边界）',
+        '动态 href={route} / href={config.url} / href={routerLink} 不在名称启发式内，不报；同理 href={url}、href={payload}、href={next}、href={target}、href={dest}、href={destination}、href={body}、href={req.body.next}、href={request.url}、href={data.url}、href={document.URL}、href={returnTo}、href={callback} 等均可能漏报（P0 保守边界）',
+        '类型注解不参与名称启发（`safeValue as UserInput` 不会因 UserInput 误报）',
         'img 动态 src 不报；{...props} spread 与自定义组件的动态 href/src 不分析（P0 边界）',
         'data:image/avif、bmp 等不在安全 MIME 表，当前会报（P0 保守）',
         'vbscript: / file: / blob: 不在 P0 覆盖面'
@@ -151,7 +199,7 @@ export default {
             attr.value?.type === 'JSXExpressionContainer'
               ? attr.value.expression
               : null
-          if (expr && isDynamicUnsafe(expr)) {
+          if (expr && isDynamicUnsafe(expr, attrName)) {
             context.report({
               node: attr,
               messageId: 'unsafeUrl',

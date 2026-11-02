@@ -73,7 +73,7 @@
 
 ## 验收标准
 
-- `jsx-sink.test.ts`：`.tsx` 与 `.jsx` 的 bad/good 矩阵全绿；`dangerouslySetInnerHTML` 与 `href={userInput}` 均命中；literal `javascript:`/`data:`（含大小写/前导空白变体）命中；安全 URL/锚点/静态路径不误报。
+- `jsx-sink.test.ts`：`.tsx` 与 `.jsx` 的 bad/good 矩阵全绿；`dangerouslySetInnerHTML` 与 `href={userInput}` 均命中；literal `javascript:`/`data:`（含大小写/前导空白变体）命中；**模板/二元拼接的静态危险前缀与 cooked 转义（`\u006aavascript\u003a`）命中**；类型注解不误报；安全 URL/锚点/静态路径不误报。
 - `no-unsafe-jsx-url` 的 `docs.falsePositives` 必须写明：名称启发式之外的动态值（`href={route}`、`href={config.url}`、`href={routerLink}` 等）不报，可能漏报；corpus 抽样 security FP **<10% 为硬门禁**，不达标回到方案评审收紧范围，不得放宽验收。
 - `fixtures/tsx|jsx` 全量 pipeline 扫描：无 `internal/parse-error`，重跑报告逐字节一致；至少一条目标诊断 file/line 稳定。
 - Vue fixture：诊断 file 回映射为 `fixtures/vue/jsx-sink.vue`，行号正确；无虚拟 `.tsx` 路径泄漏。

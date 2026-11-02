@@ -15,8 +15,8 @@
 
 - [x] **任务 3：`no-unsafe-jsx-url` 实现与登记**
   - 涉及文件：`packages/rules-core/src/rules/no-unsafe-jsx-url.js`、`packages/rules-core/src/index.js`、`packages/lintsight-diagnostic/src/registry.ts`、`packages/lintsight-cli/test/jsx-sink.test.ts`
-  - 内容：按 design §3.2 判定矩阵（字面量 javascript:/data:、安全 image MIME、**用户可控名称启发式**、锚定模板放行、spread/自定义组件边界）；**先 `trim().toLowerCase()`**；meta（security/warning/medium/cwe-79）；`docs.falsePositives` 写明 `href={route}`/`config.url`/`routerLink` 不报（可能漏报）。
-  - 验收点：`jsx-sink.test.ts` 全绿；good 用例 0 诊断；`href={userInput}`、`href={req.query.next}` 精确命中。
+  - 内容：按 design §3.2 判定矩阵（字面量 javascript:/data:、安全 image MIME、**用户可控名称启发式**、**模板/二元拼接静态危险前缀 + cooked 转义**、锚定模板放行、spread/自定义组件边界、类型注解跳过）；**先 `trim().toLowerCase()`**；meta（security/warning/medium/cwe-79）；`docs.falsePositives` 写明 `url/payload/next/...` 漏报与类型注解边界。
+  - 验收点：`jsx-sink.test.ts` 全绿；good 用例 0 诊断；`href={userInput}`、`href={req.query.next}`、`` `javascript:${payload}` ``、`'javascript:' + payload`、`` `\u006aavascript\u003a...` `` 精确命中。
 
 - [x] **任务 4：pipeline / Vue / 引擎解析契约**
   - 涉及文件：`packages/lintsight-cli/test/jsx-sink.test.ts`、`packages/lintsight-vue-processor/src/index.ts`、`packages/lintsight-vue-processor/test/vue-processor.test.ts`、`crates/lintsight-engine/src/rules.rs`
@@ -46,8 +46,8 @@
 ## 实现证据（2026-11-02）
 
 - `bun run test`：**259 pass / 0 fail**；`bun run lint` 0/0；`bun run format:check` clean；`cargo test --release` **53 passed**（新增 `.tsx` 用例）。
-- `jsx-sink.test.ts` 4 pass：两规则 `.tsx/.jsx` bad/good（含 ` JaVaScRiPt:`、`DATA:IMAGE/SVG+XML`、`req.query.next` 命中；route/config.url/routerLink 不报）；pipeline 无 parse-error + 重跑确定；Vue 回映射。
+- `jsx-sink.test.ts` 4 pass：两规则 `.tsx/.jsx` bad/good（含 ` JaVaScRiPt:`、`DATA:IMAGE/SVG+XML`、`req.query.next` 命中；route/config.url/routerLink 不报）；**模板/二元拼接静态危险前缀（bad-7..10）与 cooked 转义（bad-11）命中**；`safeValue as UserInput` 类型注解不误报（good-6）；url/payload/next/... 漏报边界锁定（good-7）；pipeline 无 parse-error + 重跑确定；Vue 回映射。
 - `vue-processor.test.ts` 14 pass：新增 `lang=tsx/jsx` 最长优先用例；修复前 `<script lang="tsx">` 被误判为 `.ts` 导致 TSX parse-error。
 - registry：JS 29（11 correctness / 18 security）；preset recommended 29+9、security 18 条 error；`bun run rule-count` = `29 + 9 + 6 = 44`。
 - golden：files 149→150，warning 39→40；唯一新增 `lintsight/no-unsafe-jsx-url` on `fixtures/vue/jsx-sink.vue`。
-- corpus：3463 diagnostics（3433 → +30，全部 `no-jsx-dangerous-html`）；`no-unsafe-jsx-url` 在名称启发式后 corpus 命中 **0**（修复前动态路由/配置 53 条会被误报）；双报率 0；基线已评审 `--save`。
+- corpus：3463 diagnostics（3433 → +30，全部 `no-jsx-dangerous-html`）；`no-unsafe-jsx-url` 在名称启发式后 corpus 命中 **0**（修复前动态路由/配置 53 条会被误报）；双报率 0；基线已评审 `--save`。High 修复后 corpus 仍为 3463（模板/二元危险 scheme 在语料未新增命中）。

@@ -68,6 +68,26 @@ describe('G9 JSX sink 规则契约', () => {
         expect: [{ line: 3, column: 13 }]
       },
       {
+        file: 'fixtures/tsx/no-unsafe-jsx-url.bad-7.tsx',
+        expect: [{ line: 3, column: 13 }]
+      },
+      {
+        file: 'fixtures/tsx/no-unsafe-jsx-url.bad-8.tsx',
+        expect: [{ line: 3, column: 13 }]
+      },
+      {
+        file: 'fixtures/tsx/no-unsafe-jsx-url.bad-9.tsx',
+        expect: [{ line: 3, column: 13 }]
+      },
+      {
+        file: 'fixtures/tsx/no-unsafe-jsx-url.bad-10.tsx',
+        expect: [{ line: 3, column: 13 }]
+      },
+      {
+        file: 'fixtures/tsx/no-unsafe-jsx-url.bad-11.tsx',
+        expect: [{ line: 3, column: 13 }]
+      },
+      {
         file: 'fixtures/jsx/no-unsafe-jsx-url.bad-1.jsx',
         expect: [{ line: 3, column: 13 }]
       },
@@ -89,6 +109,14 @@ describe('G9 JSX sink 规则契约', () => {
       },
       {
         file: 'fixtures/tsx/no-unsafe-jsx-url.good-5.tsx',
+        expect: []
+      },
+      {
+        file: 'fixtures/tsx/no-unsafe-jsx-url.good-6.tsx',
+        expect: []
+      },
+      {
+        file: 'fixtures/tsx/no-unsafe-jsx-url.good-7.tsx',
         expect: []
       },
       {

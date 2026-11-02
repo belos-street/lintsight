@@ -111,6 +111,7 @@
     - `bun run rule-count`：registered JS 27（11/16）+ engine 9；enabled own 27 + builtin 9；effective **42**（`none` = 6）。
     - golden 新增 2 条（array-callback-return / no-proto），summary error 74→76；corpus 3433（+41，逐条归因；双报率 0），基线已 `--save`。
     - README 明确：preset 仅在有 config 时生效；无 config 仍只有 oxlint correctness + 引擎 6 条；`preset:none` 回退；`--fail-on low` 会拦 low confidence。
+    - G9 落地后预设/计数由 G9 证据更新为 29 条 JS / 18 security / effective 44（本节 27/42 为 G12 当时基线）。
 - [ ] **H5 FrameworkProfile v0**
   - owner：engine
   - 内容：Profile 注册表（入口、source/sink/sanitizer、模板、宏、规则包、置信度策略）；Vue 3 + Express/Koa/Hono（Nest basic）。
@@ -191,8 +192,9 @@
     - Vue `<script lang="tsx|jsx">`：修复 `vue-processor` lang 正则最长优先（`tsx` 不再被 `ts` 前缀误判）；`vue-processor.test.ts` 14 pass。
     - Rust `a.tsx` SourceType + JSX 表达式内 `no-eval` 用例通过；`cargo test --release` 53 passed。
     - golden：files 149→150、warning 39→40（唯一新增 `no-unsafe-jsx-url` on `fixtures/vue/jsx-sink.vue`）。
-    - corpus：3463（+30 全部 `no-jsx-dangerous-html`；`no-unsafe-jsx-url` 名称启发式后命中 0，避免 53 条路由/配置误报）；双报率 0；基线已评审 `--save`。
-    - `bun run test` 259 pass / 0 fail；`bun run lint` 0/0；`format:check` clean。
+    - corpus：3463（+30 全部 `no-jsx-dangerous-html`；`no-unsafe-jsx-url` 名称启发式后命中 0，避免 53 条路由/配置误报）；双报率 0；基线已评审 `--save`；High 修复后 corpus 不变。
+    - High 漏报修复（2026-11-02 评审）：模板/二元拼接的静态危险 scheme（`` `javascript:${payload}` ``、`'javascript:' + payload`、`data:text/html`、`data:image/svg+xml`）直接报；无插值模板用 cooked，`\u006aavascript\u003a` 不再绕过；`hasSuspectName` 跳过 typeAnnotation/typeParameters/returnType，`safeValue as UserInput` 不误报；fixtures bad-7..11、good-6/7。
+    - `bun run test` 259 pass / 0 fail；`bun run lint` 0/0；`format:check` clean；`cargo test --release` 53 passed。
 
 ### W6 基准 v1
 

@@ -2204,6 +2204,7 @@ function normalizeString(value) {
   return value.trim().toLowerCase()
 }
 function isDangerousScheme(value, attrName) {
+  if (typeof value !== 'string') return false
   const normalized = normalizeString(value)
   if (normalized.startsWith('javascript:')) return true
   if (normalized.startsWith('data:')) {
@@ -2225,13 +2226,44 @@ function staticString(attr) {
       expr?.type === 'TemplateLiteral' &&
       (!expr.expressions || expr.expressions.length === 0)
     ) {
-      return expr.quasis?.[0]?.value?.raw ?? null
+      return (
+        expr.quasis?.[0]?.value?.cooked ?? expr.quasis?.[0]?.value?.raw ?? null
+      )
     }
+  }
+  return null
+}
+function staticPrefix(node) {
+  if (!node) return null
+  if (node.type === 'Literal' && typeof node.value === 'string') {
+    return node.value
+  }
+  if (node.type === 'TemplateLiteral') {
+    return (
+      node.quasis?.[0]?.value?.cooked ?? node.quasis?.[0]?.value?.raw ?? null
+    )
+  }
+  if (node.type === 'BinaryExpression' && node.operator === '+') {
+    return staticPrefix(node.left) ?? staticPrefix(node.right)
   }
   return null
 }
 var SUSPECT_NAME =
   /(user[_-]?input|input|query|search|hash|location|redirect|return[_-]?url|callback[_-]?url|url[_-]?param|params?)/i
+var SKIP_KEYS = new Set([
+  'parent',
+  'range',
+  'loc',
+  'start',
+  'end',
+  'typeAnnotation',
+  'typeParameters',
+  'typeArguments',
+  'returnType',
+  'superTypeParameters',
+  'implements',
+  'decorators'
+])
 function hasSuspectName(node) {
   if (!node || typeof node !== 'object') return false
   if (Array.isArray(node)) return node.some(hasSuspectName)
@@ -2244,18 +2276,29 @@ function hasSuspectName(node) {
     return true
   }
   for (const key of Object.keys(node)) {
-    if (key === 'parent' || key === 'range' || key === 'loc') continue
+    if (SKIP_KEYS.has(key)) continue
     if (hasSuspectName(node[key])) return true
   }
   return false
 }
-function isDynamicUnsafe(expr) {
+function isDynamicUnsafe(expr, attrName) {
   if (!expr) return false
   if (expr.type === 'Literal') return false
   if (expr.type === 'TemplateLiteral') {
+    const first =
+      expr.quasis?.[0]?.value?.cooked ?? expr.quasis?.[0]?.value?.raw ?? ''
+    if (isDangerousScheme(first, attrName)) return true
     if (!expr.expressions || expr.expressions.length === 0) return false
-    const first = expr.quasis?.[0]?.value?.raw ?? ''
     if (/^[/#?]/.test(first)) return false
+    return hasSuspectName(expr)
+  }
+  if (expr.type === 'BinaryExpression') {
+    if (
+      isDangerousScheme(staticPrefix(expr.left), attrName) ||
+      isDangerousScheme(staticPrefix(expr.right), attrName)
+    ) {
+      return true
+    }
     return hasSuspectName(expr)
   }
   return hasSuspectName(expr)
@@ -2289,7 +2332,8 @@ var no_unsafe_jsx_url_default = {
         '<img src="data:image/png;base64,..." />'
       ],
       falsePositives: [
-        '动态 href={route} / href={config.url} / href={routerLink} 不在名称启发式内，不报；同理非 user/input/query/location 等命名的动态 URL 可能漏报（保守边界）',
+        '动态 href={route} / href={config.url} / href={routerLink} 不在名称启发式内，不报；同理 href={url}、href={payload}、href={next}、href={target}、href={dest}、href={destination}、href={body}、href={req.body.next}、href={request.url}、href={data.url}、href={document.URL}、href={returnTo}、href={callback} 等均可能漏报（P0 保守边界）',
+        '类型注解不参与名称启发（`safeValue as UserInput` 不会因 UserInput 误报）',
         'img 动态 src 不报；{...props} spread 与自定义组件的动态 href/src 不分析（P0 边界）',
         'data:image/avif、bmp 等不在安全 MIME 表，当前会报（P0 保守）',
         'vbscript: / file: / blob: 不在 P0 覆盖面'
@@ -2327,7 +2371,7 @@ var no_unsafe_jsx_url_default = {
             attr.value?.type === 'JSXExpressionContainer'
               ? attr.value.expression
               : null
-          if (expr && isDynamicUnsafe(expr)) {
+          if (expr && isDynamicUnsafe(expr, attrName)) {
             context.report({
               node: attr,
               messageId: 'unsafeUrl',
