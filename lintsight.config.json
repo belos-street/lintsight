@@ -1,5 +1,7 @@
 {
   // lintsight 仓库自身配置（dogfood）——schema 校验由 @lintsight/config-bridge 提供
+  // G12：preset 缺省 recommended；显式声明便于阅读（显式 rules 仍逐条覆盖）
+  "preset": "recommended",
   "rules": {
     "lintsight/no-empty-catch": "error",
     "lintsight/no-async-array-method": "error",

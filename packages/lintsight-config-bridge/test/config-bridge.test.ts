@@ -195,19 +195,21 @@ describe('翻译器', () => {
 })
 
 describe('等价报告', () => {
-  test('lintsight/* → ✅ 自有插件；processor → 🔄 需手写', () => {
+  test('lintsight/* → ✅ 自有插件；processor → 🔄 需手写；preset 行', () => {
     const rows = equivalenceReport({
       rules: { 'lintsight/a': 'error' },
       ignore: [],
       overrides: [{ files: ['**/*.vue'], processor: '@lintsight/vue' }]
     })
-    expect(rows).toHaveLength(2)
+    expect(rows).toHaveLength(3)
     expect(rows[0]).toEqual({
       rule: 'lintsight/a',
       status: '✅ 直接映射',
       note: '自有 JS Plugin 规则'
     })
     expect(rows[1].status).toBe('🔄 需手写')
+    expect(rows[2].rule).toBe('preset: recommended')
+    expect(rows[2].status).toBe('✅ 直接映射')
   })
 })
 

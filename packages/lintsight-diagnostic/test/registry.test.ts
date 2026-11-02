@@ -62,6 +62,18 @@ describe('规则注册表 CI 校验（T1.11）', () => {
     }
   })
 
+  test('注册表 category 与 meta.category 一致（G12 预设单一事实源）', () => {
+    for (const [key, rule] of Object.entries(plugin.rules)) {
+      const entry = getRegistryEntry(`${PLUGIN_PREFIX}${key}`)
+      expect(entry!.category, `${PLUGIN_PREFIX}${key}`).toBe(rule.meta.category)
+    }
+    const js = registry.filter(
+      (e) => e.owner === 'lintsight-js' && e.status === 'active'
+    )
+    expect(js.filter((e) => e.category === 'correctness')).toHaveLength(11)
+    expect(js.filter((e) => e.category === 'security')).toHaveLength(16)
+  })
+
   test('注册表 cweTags 与插件 meta.tags 的 cwe-* 集合一致（契约 v3）', () => {
     for (const [key, rule] of Object.entries(plugin.rules)) {
       const entry = getRegistryEntry(`${PLUGIN_PREFIX}${key}`)

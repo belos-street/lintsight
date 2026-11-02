@@ -6,11 +6,17 @@
 
 import { parseJsonc } from './jsonc'
 import { builtinMapping } from './builtin-mapping'
+import {
+  BUILTIN_PRESET_RULES,
+  PRESET_NAMES,
+  expandPreset,
+  type PresetName
+} from './presets'
 
 // —— 配置类型 ——
 
 type Severity = 'error' | 'warn' | 'off'
-type RuleSetting = Severity | [Severity, Record<string, unknown>]
+export type RuleSetting = Severity | [Severity, Record<string, unknown>]
 
 export interface LintsightOverride {
   files: string[]
@@ -38,6 +44,8 @@ export interface ArchConfig {
 }
 
 export interface LintsightConfig {
+  /** G12：默认预设；缺省 recommended。none = 仅 builtinMapping + 显式 rules */
+  preset?: PresetName
   rules?: Record<string, RuleSetting>
   /** 忽略的路径 glob（相对扫描根或项目根；pipeline 侧匹配执行——B1） */
   ignore?: string[]
@@ -99,6 +107,19 @@ export function validateConfig(raw: unknown): {
   }
   const o = raw as Record<string, unknown>
   const config: LintsightConfig = {}
+
+  if (o.preset !== undefined) {
+    if (
+      typeof o.preset !== 'string' ||
+      !PRESET_NAMES.includes(o.preset as PresetName)
+    ) {
+      errors.push(
+        `preset: 期望 'recommended' | 'security' | 'none'，得到 ${JSON.stringify(o.preset)}`
+      )
+    } else {
+      config.preset = o.preset as PresetName
+    }
+  }
 
   if (o.rules !== undefined) {
     if (
@@ -294,6 +315,14 @@ export function equivalenceReport(config: LintsightConfig): EquivalenceRow[] {
       })
     }
   }
+  const preset = config.preset ?? 'recommended'
+  if (preset !== 'none') {
+    rows.push({
+      rule: `preset: ${preset}`,
+      status: '✅ 直接映射',
+      note: `内置预设展开（${Object.keys(BUILTIN_PRESET_RULES).length} 条内置 + registry 自有规则，明细见生成 oxlintrc）`
+    })
+  }
   return rows
 }
 
@@ -317,7 +346,12 @@ export function translate(
   config: LintsightConfig,
   opts: { rulesPluginPath: string }
 ): { oxlintrc: OxlintrcDoc; equivalent: EquivalenceRow[] } {
-  const rules: Record<string, unknown> = { ...builtinMapping.rules }
+  // G12：builtin → preset → 用户显式 rules（后者永远覆盖）
+  const preset = config.preset ?? 'recommended'
+  const rules: Record<string, unknown> = {
+    ...builtinMapping.rules,
+    ...expandPreset(preset)
+  }
   for (const [k, v] of Object.entries(config.rules ?? {}))
     rules[k] = translateSetting(v)
 
@@ -497,3 +531,7 @@ export async function generateOxlintrc(
 
 /** tsconfig.json 是 JSONC（注释/尾逗号）——供 cli 侧读取 tsconfig paths（FR-304 别名兜底） */
 export { parseJsonc } from './jsonc'
+
+// G12：预设数据/展开对外（rule-count、dead-rule 防呆、快照测试）
+export { BUILTIN_PRESET_RULES, PRESET_NAMES, expandPreset } from './presets'
+export type { PresetName } from './presets'

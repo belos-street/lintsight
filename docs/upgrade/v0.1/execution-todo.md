@@ -96,15 +96,21 @@
 
 ### W3 框架 Profile v0 + 默认预设
 
-- [ ] **G12 默认 recommended/security 预设**
+- [x] **G12 默认 recommended/security 预设**
   - owner：config + rules
+  - 变更：`docs/changes/20261102-default-preset/`（已实现）
   - 内容：
-    - 规则账：27 条 JS = **11 正确性 + 16 安全**。
-    - severity 策略：security 默认 error，low confidence 不进 `--fail-on high`。
-    - `react/no-danger` 等 React 规则按 profile 门控，**不默认给 Vue 项目**。
-    - 新增 registered/enabled/effective 计数脚本与快照测试。
-  - 验收：空配置项目扫描已知坏样本能出安全诊断；预设测试锁定；27 条 JS 规则不再默认全关。
-  - 证据：`builtin-mapping.test.ts` 预设快照；空配置坏样本扫描报告；计数脚本输出三口径。
+    - 规则账：27 条 JS = **11 正确性 + 16 安全**；registry 新增 `category` 作为预设单一事实源。
+    - `preset: recommended（缺省）/ security / none`；security 把 16 条安全规则与安全 1b 提升为 error。
+    - severity 策略：low confidence 不进 `--fail-on high`（`--fail-on low/medium` 仍拦）。
+    - 1b 实测修正：9 条启用；`react/no-danger` 存在但默认未启用/需 plugins（不进预设，React 归 H5）；`no-unsafe-finally` 已由 correctness 默认启用；`typescript/no-misused-promises` 依赖 type-aware；`no-await-in-loop` 因 corpus +420 warning 移出。
+    - 新增 registered/enabled/effective 计数脚本与快照测试；dead-rule 按 `source+name` 防呆。
+  - 验收：空配置（`{}`）坏样本出安全诊断；无 config 项目不启用 preset（显式断言）；预设测试锁定；27 条 JS 不再默认全关。
+  - 证据（2026-11-02）：
+    - `bun run test` 254 pass / 0 fail；`preset-e2e.test.ts` 4 pass；`preset-snapshot.test.ts` 5 pass；`preset-dead-rules.test.ts` 1 pass；`scripts/rule-count.test.ts` 3 pass。
+    - `bun run rule-count`：registered JS 27（11/16）+ engine 9；enabled own 27 + builtin 9；effective **42**（`none` = 6）。
+    - golden 新增 2 条（array-callback-return / no-proto），summary error 74→76；corpus 3433（+41，逐条归因；双报率 0），基线已 `--save`。
+    - README 明确：preset 仅在有 config 时生效；无 config 仍只有 oxlint correctness + 引擎 6 条；`preset:none` 回退；`--fail-on low` 会拦 low confidence。
 - [ ] **H5 FrameworkProfile v0**
   - owner：engine
   - 内容：Profile 注册表（入口、source/sink/sanitizer、模板、宏、规则包、置信度策略）；Vue 3 + Express/Koa/Hono（Nest basic）。

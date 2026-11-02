@@ -13,7 +13,7 @@
     },
     "packages/lintsight-cli": {
       "name": "@lintsight/cli",
-      "version": "0.0.1",
+      "version": "0.1.0-alpha.0",
       "bin": {
         "lintsight": "./src/cli.ts",
       },
@@ -31,6 +31,9 @@
     "packages/lintsight-config-bridge": {
       "name": "@lintsight/config-bridge",
       "version": "0.0.1",
+      "dependencies": {
+        "@lintsight/diagnostic": "workspace:*",
+      },
     },
     "packages/lintsight-diagnostic": {
       "name": "@lintsight/diagnostic",

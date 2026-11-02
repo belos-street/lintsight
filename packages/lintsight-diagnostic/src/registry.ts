@@ -13,12 +13,20 @@ export type DetectionLayer = 'syntax' | 'local' | 'taint'
 export type RegistryStatus = 'active' | 'retired'
 export type Confidence = 'high' | 'medium' | 'low'
 export type DefaultSeverity = 'error' | 'warning'
+export type RuleCategory =
+  | 'correctness'
+  | 'security'
+  | 'performance'
+  | 'maintainability'
+  | 'architecture'
 
 export interface RegistryEntry {
   ruleId: string
   owner: Owner
   detection: DetectionLayer
   status: RegistryStatus
+  /** G12 预设单一事实源：与规则 meta.category 对齐（JS 条目由 registry.test 校验） */
+  category: RuleCategory
   /** 平台侧置信账目，与 meta.confidence 联动校验；试用误报证据反哺调整 */
   confidence: Confidence
   /** CWE 标签（契约 v3）；无 CWE 关系的规则省略（默认空数组）。
@@ -34,7 +42,7 @@ export interface RegistryEntry {
   supersedes?: string[]
 }
 
-export const registry: RegistryEntry[] = [
+const baseRegistry: Omit<RegistryEntry, 'category'>[] = [
   {
     ruleId: 'lintsight/no-empty-catch',
     owner: 'lintsight-js',
@@ -403,6 +411,41 @@ export const registry: RegistryEntry[] = [
     defaultSeverity: 'warning'
   }
 ]
+
+/** G12：category 单一事实源映射（JS 正确性 11 条显式列出；其余 JS = security）。
+ * 新增 JS 规则若属 correctness 必须加入本集合——registry.test 会按 meta.category 校验。 */
+const JS_CORRECTNESS_IDS = new Set([
+  'lintsight/no-empty-catch',
+  'lintsight/no-async-array-method',
+  'lintsight/no-floating-promise',
+  'lintsight/no-swallowed-promise-error',
+  'lintsight/no-closure-loop-var',
+  'lintsight/no-array-map-side-effect',
+  'lintsight/no-json-structured-clone',
+  'lintsight/no-ignored-reduce-result',
+  'lintsight/no-empty-promise-catch',
+  'lintsight/no-async-constructor-call',
+  'lintsight/no-sync-io-in-async'
+])
+
+/** 引擎架构/依赖规则（其余 engine = security） */
+const ENGINE_ARCHITECTURE_IDS = new Set([
+  'lintsight-engine/arch-boundaries',
+  'lintsight-engine/no-import-cycle',
+  'lintsight-engine/no-deep-import'
+])
+
+function categoryOf(entry: Omit<RegistryEntry, 'category'>): RuleCategory {
+  if (entry.owner === 'lintsight-js') {
+    return JS_CORRECTNESS_IDS.has(entry.ruleId) ? 'correctness' : 'security'
+  }
+  return ENGINE_ARCHITECTURE_IDS.has(entry.ruleId) ? 'architecture' : 'security'
+}
+
+export const registry: RegistryEntry[] = baseRegistry.map((entry) => ({
+  ...entry,
+  category: categoryOf(entry)
+}))
 
 export function getRegistryEntry(ruleId: string): RegistryEntry | undefined {
   return registry.find((e) => e.ruleId === ruleId)

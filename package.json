@@ -23,7 +23,8 @@
     "corpus:recall": "bun run scripts/corpus-recall.ts",
     "check:change-id": "bun run scripts/check-change-id.ts",
     "check:change-id:ci": "bun run scripts/check-change-id.ts --range",
-    "version:check": "bun run scripts/version-check.ts"
+    "version:check": "bun run scripts/version-check.ts",
+    "rule-count": "bun run scripts/rule-count.ts"
   },
   "engines": {
     "bun": ">=1.2"

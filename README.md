@@ -100,7 +100,11 @@ json 报告（`--format json` 默认输出）节选：
 
 ```jsonc
 {
-  // 规则键逐条列举，值为级别或 [级别, 选项对象]
+  // G12 预设（缺省 recommended；none = 不启用预设，仅内置 correctness + 显式 rules）
+  // ⚠️ preset 仅在存在本配置文件（或 --config）时生效；无配置文件的项目
+  //    仍只跑 oxlint correctness + 引擎 6 条常驻规则（自有 JS 规则 0 启用）
+  "preset": "recommended",
+  // 规则键逐条列举，值为级别或 [级别, 选项对象]（显式值覆盖预设）
   "rules": {
     "lintsight/no-empty-catch": "error",
     "lintsight/no-hardcoded-credentials": ["error", { "testFiles": "report" }],
@@ -134,6 +138,12 @@ json 报告（`--format json` 默认输出）节选：
 
 要点：
 
+- **默认预设（G12）**：
+  - `recommended`（缺省）：27 条自有 JS 规则 + 9 条 1b 内置规则按 registry/固定级别启用；`security` 将 16 条自有安全规则与安全 1b 规则提升为 `error`；`none` 恢复“仅内置 correctness + 显式 rules”。
+  - 预设只在存在 `lintsight.config.json` / `--config` 时生效；**无配置文件项目不会自动生成 recommended 配置**。
+  - `security` 下 low confidence 规则（如 `no-non-literal-fs-filename`）为 `error`，`--fail-on high` 不拦、`--fail-on low/medium` 会拦。
+  - `eslint/no-await-in-loop` 不默认启用（语料实测 +420 warning，perf 非安全面，待 perf/strict 预设）。
+  - `react/no-danger` 虽存在于 oxlint 1.83.0，但默认未启用且需要 `plugins` 覆盖默认插件集 → 不在预设中，React 面归后续 Profile。
 - **扫描面治理**（信噪比的前提）：
   - `ignore`：glob 相对**扫描根或项目根**匹配；无通配结尾的模式按目录名语义处理（`coverage` 亦排除 `coverage/**`）。模式不进 oxlint 配置——oxlint 的 `ignorePatterns` 严格相对其配置文件目录解析，而 lintsight 生成的配置在 `.lintsight-cache/` 下一层，故由 pipeline 侧统一过滤（含扫描外部目录的形态）。
   - 默认忽略：`node_modules` / `.git` / `.lintsight-cache` / `dist` / `build` / `out` / `coverage` / `.next` / `.nuxt` / `.output` / `.svelte-kit` / `.turbo` / `.parcel-cache` / `.vercel` 目录名，以及 `*.min.js` / `*.bundle.js` / `*.chunk.js` 等产物文件名。

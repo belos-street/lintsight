@@ -4,7 +4,7 @@
   "engineStatus": "missing",
   "files": 149,
   "summary": {
-    "error": 74,
+    "error": 76,
     "warning": 39,
     "info": 0,
     "suppressed": 0
@@ -58,6 +58,23 @@
       },
       "fingerprint": "78acf27e333571ef6efc946bc25f1c2eb04915132570d8cf4d153230a4536e51",
       "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": []
+    },
+    {
+      "contractVersion": "3",
+      "ruleId": "eslint/array-callback-return",
+      "severity": "error",
+      "message": "Callback for array method \"Array.prototype.map\" does not return on all code paths",
+      "file": "fixtures/ts/no-array-map-side-effect.good-2.ts",
+      "span": {
+        "offset": 191,
+        "length": 24,
+        "line": 3,
+        "column": 20
+      },
+      "fingerprint": "a59e554e55e319534221f1edd81ef98db39384d0006b0050f756b6ee900bcb4b",
+      "owner": "oxlint-native",
       "confidence": "medium",
       "cweTags": []
     },
@@ -1271,6 +1288,23 @@
       "cweTags": [
         "CWE-94"
       ]
+    },
+    {
+      "contractVersion": "3",
+      "ruleId": "eslint/no-proto",
+      "severity": "error",
+      "message": "The '__proto__' property is deprecated",
+      "file": "fixtures/ts/no-prototype-pollution-syntax.bad-1.ts",
+      "span": {
+        "offset": 131,
+        "length": 16,
+        "line": 3,
+        "column": 3
+      },
+      "fingerprint": "ac88f08d76909d5a5c2f1886757009e3ba1796dac5e38294dc8eb7daa2ec210d",
+      "owner": "oxlint-native",
+      "confidence": "medium",
+      "cweTags": []
     },
     {
       "contractVersion": "3",
