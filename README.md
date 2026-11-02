@@ -25,9 +25,9 @@
 
 ## 特性
 
-- **双引擎，一份报告**：oxlint 内置规则面（900 注册 / 约 123 默认启用）+ 自有规则 36 条（注册；JS 轨道 27 + 引擎轨道 9），合并层按指纹去重、按 `supersedes` 消解同位置双报。
+- **双引擎，一份报告**：oxlint 内置规则面（900 注册 / 约 123 默认启用）+ 自有规则 38 条（注册；JS 轨道 29 + 引擎轨道 9），合并层按指纹去重、按 `supersedes` 消解同位置双报。
 - **污点分析带证据链**：引擎 taint 规则输出 `source → propagation → [sanitizer] → sink` 的 pathEvents 证据链，供平台 AI 研判与人工复核。
-- **误报治理是工程纪律**：每条规则强制 `falsePositives` 自证；6 个真实仓库（zod / dayjs / express / juice-shop / nodegoat / ghost，5596 文件）作为语料库基线，诊断面漂移即评审信号；OWASP juice-shop 官方挑战清单逐挑战召回对照制度化。
+- **误报治理是工程纪律**：每条规则强制 `falsePositives` 自证；6 个真实仓库（zod / dayjs / express / juice-shop / nodegoat / ghost，5586 文件）作为语料库基线，诊断面漂移即评审信号；OWASP juice-shop 官方挑战清单逐挑战召回对照制度化。
 - **fail-open**：引擎二进制缺失或崩溃 → 自动降级纯 M1 扫描，绝不阻塞业务流水线。
 - **确定性输出**：诊断按 (file, offset, ruleId) 排序，指纹 = `sha256(ruleId + file + span + message)`，跨运行可 diff、可入库。
 - **内容哈希缓存**：引擎/配置/插件任一指纹变化自动失效；`--fix` 模式自动绕过。
@@ -139,7 +139,7 @@ json 报告（`--format json` 默认输出）节选：
 要点：
 
 - **默认预设（G12）**：
-  - `recommended`（缺省）：27 条自有 JS 规则 + 9 条 1b 内置规则按 registry/固定级别启用；`security` 将 16 条自有安全规则与安全 1b 规则提升为 `error`；`none` 恢复“仅内置 correctness + 显式 rules”。
+  - `recommended`（缺省）：29 条自有 JS 规则 + 9 条 1b 内置规则按 registry/固定级别启用；`security` 将 18 条自有安全规则与安全 1b 规则提升为 `error`；`none` 恢复“仅内置 correctness + 显式 rules”。
   - 预设只在存在 `lintsight.config.json` / `--config` 时生效；**无配置文件项目不会自动生成 recommended 配置**。
   - `security` 下 low confidence 规则（如 `no-non-literal-fs-filename`）为 `error`，`--fail-on high` 不拦、`--fail-on low/medium` 会拦。
   - `eslint/no-await-in-loop` 不默认启用（语料实测 +420 warning，perf 非安全面，待 perf/strict 预设）。
@@ -155,7 +155,7 @@ json 报告（`--format json` 默认输出）节选：
 
 ## 规则面
 
-### JS 轨道（`lintsight/<name>`，27 条）
+### JS 轨道（`lintsight/<name>`，29 条）
 
 **正确性（11）**
 
@@ -173,7 +173,7 @@ json 报告（`--format json` 默认输出）节选：
 | no-json-structured-clone | 用 `JSON.parse(JSON.stringify())` 深拷贝 |
 | no-sync-io-in-async | async 函数内的同步 IO |
 
-**安全（16）**
+**安全（18）**
 
 | 规则 | 说明 |
 | --- | --- |
@@ -193,6 +193,8 @@ json 报告（`--format json` 默认输出）节选：
 | no-cors-wildcard | CORS `Access-Control-Allow-Origin: *` |
 | no-vm-dynamic-code | `vm.runInNewContext` 等动态代码执行 |
 | no-serve-index | `serveIndex` 开启目录浏览（文件名/元数据暴露，CWE-548） |
+| no-jsx-dangerous-html | JSX `dangerouslySetInnerHTML`（XSS sink） |
+| no-unsafe-jsx-url | JSX `javascript:`/`data:` 字面量与用户可控命名的动态 href/src |
 
 ### 引擎轨道（`lintsight-engine/<name>`，9 条）
 

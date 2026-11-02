@@ -5,7 +5,8 @@
  * - none：空（仅 builtinMapping + 显式 rules）
  *
  * ⚠️ 1b 清单按 oxlint 1.83.0 实测维护：
- * - `react/no-danger` 不存在 → 不写入（死配置）；
+ * - `react/no-danger` 存在（`--rules`: `no-danger|react`），但默认未启用且启用需
+ *   `plugins`（覆盖默认插件集）→ 不写入预设（React 面归 H5）；
  * - `eslint/no-unsafe-finally` 已由 correctness 默认启用 → 不重复；
  * - `typescript/no-misused-promises` 依赖 --type-aware → 不进默认预设。
  * `preset-snapshot.test.ts` 会对 `oxlint --rules` 做 source+name 存在性校验。

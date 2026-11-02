@@ -16,7 +16,8 @@
     - `react/no-danger` **存在**于 `oxlint --rules`（`no-danger | react`），但默认未启用；启用需 `plugins:["react"]`，而该字段会覆盖默认插件集（实测 unicorn/promise 失效）。本方案仍不启用（React Profile 归 H5），并在 dead-rule 防呆中记录“存在但不在预设”而非“不存在”。
     - `react/no-danger-with-children` 存在，同样不启用。
     - `eslint/no-unsafe-finally` 已被 correctness 类别默认启用，不属于缺口。
-    - 可用且显式启用后可命中的 1b：`eslint/no-new-func`、`no-throw-literal`、`no-fallthrough`、`array-callback-return`、`no-promise-executor-return`、`no-proto`、`no-prototype-builtins`、`no-await-in-loop`、`promise/catch-or-return`、`unicorn/no-document-cookie`。
+    - 可用且显式启用后可命中的 1b：`eslint/no-new-func`、`no-throw-literal`、`no-fallthrough`、`array-callback-return`、`no-promise-executor-return`、`no-proto`、`no-prototype-builtins`、`promise/catch-or-return`、`unicorn/no-document-cookie`（9 条）。
+    - `eslint/no-await-in-loop` 可用但 **已移出默认预设**：corpus 实测 +420 warning（perf 非安全，稀释信号），待 perf/strict 预设再评估。
   - 关联条目：upgrade-plan G12 / H1、execution-todo W3 G12、requirements FR-201/FR-204、P0 规则提案 §1b。
 - 痛点：新项目开箱只有 correctness lint，安全价值不可见；用户需手抄 27 条规则；没有 recommended/security 两档；1b 映射未落地。
 

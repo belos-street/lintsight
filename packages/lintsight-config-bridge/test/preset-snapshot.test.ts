@@ -1,6 +1,6 @@
 /**
  * G12 预设快照：recommended / security / none 的规则覆盖面与 severity。
- * 数字口径：own 27（G9 后 29）+ builtin 10；effective 由 scripts/rule-count 验证。
+ * 数字口径：own 29（G9 后）+ builtin 9；effective 由 scripts/rule-count 验证（44）。
  */
 import { describe, expect, test } from 'bun:test'
 import {
