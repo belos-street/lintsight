@@ -178,13 +178,21 @@
     - 首轮 CI（2026-10-30）rust 矩阵红灯：`cargo fmt/clippy` 未带 `--manifest-path`（仓库根无 Cargo.toml）+ clippy 存量 8 error + rustfmt 存量 9 处 diff；已修复（workflow 三处命令改 manifest-path、修 `never_loop`/`needless_return`×5/`manual_flatten`/`non_upper_case_globals`、`cargo fmt` 应用、`actions/checkout@v4→v5`）。本地等价门禁：fmt exit 0、clippy exit 0、`cargo test --release` 52 passed。
     - `check:change-id:ci --range` 已实现；`scripts/check-change-id.test.ts` 覆盖纯函数与 cutoff；staged 模式保留。
     - **未完成（外部依赖）**：branch protection 未配置、无 CI 运行链接、无 `lintsight-heavy` runner、bench 基线未重建（本机无 hyperfine）。G3 保持 `[~]`，不伪造签字。
-- [ ] **G9 TSX/JSX 契约（拆分）**
+- [x] **G9 TSX/JSX 契约（拆分）**
   - owner：rules + QA
+  - 变更：`docs/changes/20261102-tsx-contract/`（已实现）
   - 范围：
     - **TSX 语法 P0（M4）**：解析、JSX 属性 sink、Vue/React JSX 基础用例；
     - **React 框架语义 P2（M6）**：hooks/server components；React 规则不默认进 Vue 项目。
   - 验收：TSX 坏/好用例矩阵通过；`dangerouslySetInnerHTML`/`href={userInput}` 可命中。
-  - 证据：`fixtures/tsx/*.tsx` + `fixtures/jsx/*.jsx`；`jsx-sink.test.ts`。
+  - 证据（2026-11-02）：
+    - `fixtures/tsx/*.tsx`（含 fragment/泛型箭头/spread/大小写空白变体）、`fixtures/jsx/*.jsx`、`fixtures/vue/jsx-sink.vue`；`jsx-sink.test.ts` 4 pass（两规则 bad/good + pipeline + Vue 回映射）。
+    - 新规则：`lintsight/no-jsx-dangerous-html`（error/medium/cwe-79）、`lintsight/no-unsafe-jsx-url`（warning/medium/cwe-79，动态 URL 名称启发式；route/config.url/routerLink 不报）；registry JS 29 = 11 correctness + 18 security；preset 29+9、security 18 条 error。
+    - Vue `<script lang="tsx|jsx">`：修复 `vue-processor` lang 正则最长优先（`tsx` 不再被 `ts` 前缀误判）；`vue-processor.test.ts` 14 pass。
+    - Rust `a.tsx` SourceType + JSX 表达式内 `no-eval` 用例通过；`cargo test --release` 53 passed。
+    - golden：files 149→150、warning 39→40（唯一新增 `no-unsafe-jsx-url` on `fixtures/vue/jsx-sink.vue`）。
+    - corpus：3463（+30 全部 `no-jsx-dangerous-html`；`no-unsafe-jsx-url` 名称启发式后命中 0，避免 53 条路由/配置误报）；双报率 0；基线已评审 `--save`。
+    - `bun run test` 259 pass / 0 fail；`bun run lint` 0/0；`format:check` clean。
 
 ### W6 基准 v1
 

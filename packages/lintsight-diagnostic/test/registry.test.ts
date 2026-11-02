@@ -71,7 +71,7 @@ describe('规则注册表 CI 校验（T1.11）', () => {
       (e) => e.owner === 'lintsight-js' && e.status === 'active'
     )
     expect(js.filter((e) => e.category === 'correctness')).toHaveLength(11)
-    expect(js.filter((e) => e.category === 'security')).toHaveLength(16)
+    expect(js.filter((e) => e.category === 'security')).toHaveLength(18)
   })
 
   test('注册表 cweTags 与插件 meta.tags 的 cwe-* 集合一致（契约 v3）', () => {

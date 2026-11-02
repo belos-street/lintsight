@@ -65,7 +65,8 @@ function parseRawBlock(source: string, m: RegExpExecArray): RawBlock {
   if (stripped.startsWith('\r\n')) stripped = stripped.slice(2)
   else if (stripped.startsWith('\n')) stripped = stripped.slice(1)
   const hasSameLineOpen = stripped === content && content.length > 0
-  const lang = attrs.match(/lang="?(ts|tsx|js|jsx)"?/)?.[1] ?? 'js'
+  // ⚠️ 交替顺序必须最长优先：`ts` 会先匹配 `tsx` 的前缀，导致虚拟文件被当成 .ts
+  const lang = attrs.match(/lang="?(tsx|ts|jsx|js)"?/)?.[1] ?? 'js'
   return {
     attrs,
     isSetup: /\bsetup\b/.test(attrs),

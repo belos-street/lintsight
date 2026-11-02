@@ -2,16 +2,16 @@ import { describe, expect, test } from 'bun:test'
 import { computeCounts, ENGINE_RESIDENT } from './rule-count'
 
 describe('G12 rule-count 三口径', () => {
-  test('recommended = own 27 + builtin 9 + engine 6 = 42', () => {
+  test('recommended = own 29 + builtin 9 + engine 6 = 44（G9 后）', () => {
     const c = computeCounts({})
     expect(c.registered).toEqual({
-      js: 27,
+      js: 29,
       correctness: 11,
-      security: 16,
+      security: 18,
       engine: 9
     })
-    expect(c.enabled).toEqual({ own: 27, builtin: 9 })
-    expect(c.effective).toBe(42)
+    expect(c.enabled).toEqual({ own: 29, builtin: 9 })
+    expect(c.effective).toBe(44)
     expect(ENGINE_RESIDENT).toHaveLength(6)
   })
 
@@ -26,7 +26,7 @@ describe('G12 rule-count 三口径', () => {
       preset: 'recommended',
       rules: { 'lintsight/no-empty-catch': 'off', 'eslint/no-new-func': 'off' }
     })
-    expect(c.enabled).toEqual({ own: 26, builtin: 8 })
-    expect(c.effective).toBe(26 + 8 + 6)
+    expect(c.enabled).toEqual({ own: 28, builtin: 8 })
+    expect(c.effective).toBe(28 + 8 + 6)
   })
 })

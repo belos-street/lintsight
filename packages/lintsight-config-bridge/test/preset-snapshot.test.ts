@@ -18,22 +18,24 @@ const builtinRuleIds = (rules: Record<string, unknown>): string[] =>
   Object.keys(rules).filter((k) => k in BUILTIN_PRESET_RULES)
 
 describe('G12 preset 快照', () => {
-  test('recommended = 27 条自有 + 9 条 1b', () => {
+  test('recommended = 29 条自有 + 9 条 1b（G9 后）', () => {
     const { oxlintrc } = translate(
       { rules: {} },
       { rulesPluginPath: '/abs/rules/index.js' }
     )
-    expect(ownRuleIds(oxlintrc.rules)).toHaveLength(27)
+    expect(ownRuleIds(oxlintrc.rules)).toHaveLength(29)
     expect(builtinRuleIds(oxlintrc.rules)).toHaveLength(9)
     expect(oxlintrc.rules['lintsight/no-hardcoded-credentials']).toBe('error')
     expect(oxlintrc.rules['lintsight/no-non-literal-fs-filename']).toBe('warn')
+    expect(oxlintrc.rules['lintsight/no-jsx-dangerous-html']).toBe('error')
+    expect(oxlintrc.rules['lintsight/no-unsafe-jsx-url']).toBe('warn')
     expect(oxlintrc.rules['eslint/no-new-func']).toBe('error')
     expect(oxlintrc.rules['eslint/no-await-in-loop']).toBeUndefined()
     expect(oxlintrc.rules['eslint/no-unsafe-finally']).toBeUndefined()
     expect(oxlintrc.rules['react/no-danger']).toBeUndefined()
   })
 
-  test('security 预设：16 条自有安全规则 + 安全 1b 提升为 error；correctness 不变', () => {
+  test('security 预设：18 条自有安全规则 + 安全 1b 提升为 error；correctness 不变', () => {
     const rules = expandPreset('security')
     const security = registry.filter(
       (e) =>
@@ -41,10 +43,11 @@ describe('G12 preset 快照', () => {
         e.status === 'active' &&
         e.category === 'security'
     )
-    expect(security).toHaveLength(16)
+    expect(security).toHaveLength(18)
     for (const entry of security) {
       expect(rules[entry.ruleId], entry.ruleId).toBe('error')
     }
+    expect(rules['lintsight/no-unsafe-jsx-url']).toBe('error')
     expect(rules['lintsight/no-sync-io-in-async']).toBe('warn')
     expect(rules['eslint/no-new-func']).toBe('error')
     expect(rules['eslint/no-prototype-builtins']).toBe('error')

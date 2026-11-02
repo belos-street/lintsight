@@ -310,6 +310,28 @@ const baseRegistry: Omit<RegistryEntry, 'category'>[] = [
       '禁止用 serveIndex/serve-index 开启目录浏览（文件名/元数据暴露）',
     defaultSeverity: 'warning'
   },
+  // —— G9 TSX/JSX 语法面（P0） ——
+  {
+    ruleId: 'lintsight/no-jsx-dangerous-html',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active',
+    confidence: 'medium',
+    cweTags: ['cwe-79'],
+    description: '禁止 JSX dangerouslySetInnerHTML（XSS sink）',
+    defaultSeverity: 'error'
+  },
+  {
+    ruleId: 'lintsight/no-unsafe-jsx-url',
+    owner: 'lintsight-js',
+    detection: 'syntax',
+    status: 'active',
+    confidence: 'medium',
+    cweTags: ['cwe-79'],
+    description:
+      '禁止 JSX 中的 javascript:/data: URL 与高风险元素上的动态 href/src',
+    defaultSeverity: 'warning'
+  },
 
   // —— M2 引擎规则（T2.3~T2.4 起；design-m2 §4.2 ruleId 命名空间 lintsight-engine/<name>） ——
   {

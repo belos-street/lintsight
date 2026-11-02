@@ -77,3 +77,17 @@
 - **理由**：SARIF 规范要求被抑制结果仍在 `results[]`；平台审计需要 reason；删除会造成 JSON/SARIF 口径分裂。消费方必须以 summary 或 suppression 字段为准，不能只看 `diagnostics.length`。
 - **来源**：`docs/changes/20261030-contract-v3/`；`upgrade-plan.md` §8 M4 契约 v3。
 - **日期**：2026-10-30
+
+## D13 · G12 预设默认档只在存在配置文件时生效
+
+- **结论**：`preset: recommended(缺省) / security / none`；`recommended` = 29 条自有 JS（G9 后）+ 9 条 1b 内置；`security` 将 18 条自有安全规则与安全 1b 提升为 error；**无 `lintsight.config.json`/`--config` 的项目不生成默认配置，行为保持现状**。`eslint/no-await-in-loop` 因 corpus +420 warning 不默认启用；react 插件不启用（`react/no-danger` 存在但默认未启用且需要 `plugins`）。
+- **理由**：默认安全面开箱可见；避免改变无配置自动发现行为；perf 噪声与 react 插件集覆盖风险经实测排除；low confidence 由 `--fail-on` 按 confidence 过滤，不需要改 severity 语义。
+- **来源**：`docs/changes/20261102-default-preset/`；`README.md` 配置章节；`upgrade-plan.md` 修订 11。
+- **日期**：2026-11-02
+
+## D14 · G9 JSX sink 采用名称启发式 + Vue tsx 最长优先
+
+- **结论**：新增 `lintsight/no-jsx-dangerous-html`（error/medium）与 `lintsight/no-unsafe-jsx-url`（warning/medium）；URL 动态值仅在 AST 命名命中 user/input/query/search/hash/location/redirect/returnUrl/callbackUrl/params 时报告，`href={route}`/`config.url`/`routerLink` 不报；literal `javascript:`/`data:` 不受限。Vue `<script lang="tsx|jsx">` 的 lang 正则必须最长优先（tsx|ts|jsx|js），否则 tsx 被误当 ts。
+- **理由**：Ghost corpus 动态 URL 53 条路由/配置命中 → 名称启发式降为 0（FP<10% 硬门禁）；JSX 语法规避 react 插件覆盖默认集；Vue tsx 虚拟文件后缀错误会导致 TSX 解析失败。
+- **来源**：`docs/changes/20261102-tsx-contract/`；`fixtures/tsx|jsx|vue`；`rule-count` 44；corpus 3463。
+- **日期**：2026-11-02

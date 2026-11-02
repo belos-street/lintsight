@@ -2,10 +2,10 @@
   "contractVersion": "3",
   "toolVersion": "0.1.0-alpha.0",
   "engineStatus": "missing",
-  "files": 149,
+  "files": 150,
   "summary": {
     "error": 76,
-    "warning": 39,
+    "warning": 40,
     "info": 0,
     "suppressed": 0
   },
@@ -2059,6 +2059,25 @@
       "confidence": "high",
       "cweTags": [
         "CWE-327"
+      ]
+    },
+    {
+      "contractVersion": "3",
+      "ruleId": "lintsight/no-unsafe-jsx-url",
+      "severity": "warning",
+      "message": "Unsafe URL in JSX attribute \"href\": javascript:/data: or a dynamic value may enable XSS. (no-unsafe-jsx-url)",
+      "file": "fixtures/vue/jsx-sink.vue",
+      "span": {
+        "offset": 78,
+        "length": 16,
+        "line": 7,
+        "column": 13
+      },
+      "fingerprint": "e189ab76c0b3c79377ab811ef10a04d98e1fe45996cab285fafa80d43f047a2d",
+      "owner": "lintsight-js",
+      "confidence": "medium",
+      "cweTags": [
+        "CWE-79"
       ]
     },
     {

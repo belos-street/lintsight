@@ -106,6 +106,17 @@ const b = 2
     expect(isInPlaceVirtualPath('src/App.vue.ts')).toBe(false) // 用户自己的文件
     expect(isInPlaceVirtualPath('src/App.ts')).toBe(false)
   })
+
+  test('lang=tsx/jsx 最长优先匹配（G9：避免 ts 匹配 tsx 前缀）', () => {
+    const tsx = selectScriptBlock(
+      '<script lang="tsx">\nconst x = <div />\n</script>'
+    )
+    expect(tsx.block!.lang).toBe('tsx')
+    const jsx = selectScriptBlock(
+      '<script lang="jsx">\nconst x = <div />\n</script>'
+    )
+    expect(jsx.block!.lang).toBe('jsx')
+  })
 })
 
 describe('vue-processor: 就地临时文件 + fix 回写（T1.14/T1.15）', () => {

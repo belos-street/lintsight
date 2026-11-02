@@ -2146,6 +2146,200 @@ var no_serve_index_default = {
   }
 }
 
+// packages/rules-core/src/rules/no-jsx-dangerous-html.js
+var no_jsx_dangerous_html_default = {
+  meta: {
+    category: 'security',
+    severity: 'error',
+    confidence: 'medium',
+    typeRequirement: 'none',
+    tags: ['cwe-79', 'owasp-a03'],
+    fixable: undefined,
+    schema: [],
+    messages: {
+      dangerousHtml:
+        'Avoid dangerouslySetInnerHTML; sanitize the HTML or use safe DOM APIs. (no-jsx-dangerous-html)'
+    },
+    docs: {
+      description: '禁止 JSX dangerouslySetInnerHTML（XSS sink）',
+      rationale:
+        'dangerouslySetInnerHTML 直接把字符串当 HTML 插入 DOM，未清洗/清洗不彻底即成 XSS；应使用安全的 DOM/组件 API 或经过可信净化。',
+      badExamples: [
+        '<div dangerouslySetInnerHTML={{ __html: userInput }} />',
+        '<Component dangerouslySetInnerHTML={{ __html: html }} />'
+      ],
+      goodExamples: [
+        '<div>{userInput}</div>',
+        '<SafeHtml value={sanitize(userInput)} />'
+      ],
+      falsePositives: [
+        '即使 value 是 DOMPurify.sanitize(...) 也会报告（medium confidence 的保守选择；可用行内 ignore）',
+        '组件名/元素类型不影响判定：任何 JSX 元素上的该 prop 都报',
+        'Vue v-html 归 G8 的 lintsight/no-v-html，不在本规则面'
+      ]
+    }
+  },
+  create(context) {
+    return {
+      JSXOpeningElement(node) {
+        for (const attr of node.attributes ?? []) {
+          if (attr?.type !== 'JSXAttribute') continue
+          if (
+            attr.name?.type === 'JSXIdentifier' &&
+            attr.name.name === 'dangerouslySetInnerHTML'
+          ) {
+            context.report({ node: attr, messageId: 'dangerousHtml' })
+          }
+        }
+      }
+    }
+  }
+}
+
+// packages/rules-core/src/rules/no-unsafe-jsx-url.js
+var HREF_ELEMENTS = new Set(['a', 'area', 'link'])
+var SRC_ELEMENTS = new Set(['iframe', 'script'])
+var SAFE_IMAGE_DATA = /^data:image\/(png|jpeg|gif|webp)(;|,)/
+function normalizeString(value) {
+  return value.trim().toLowerCase()
+}
+function isDangerousScheme(value, attrName) {
+  const normalized = normalizeString(value)
+  if (normalized.startsWith('javascript:')) return true
+  if (normalized.startsWith('data:')) {
+    if (attrName === 'src' && SAFE_IMAGE_DATA.test(normalized)) return false
+    return true
+  }
+  return false
+}
+function staticString(attr) {
+  if (attr.value?.type === 'Literal' && typeof attr.value.value === 'string') {
+    return attr.value.value
+  }
+  if (attr.value?.type === 'JSXExpressionContainer') {
+    const expr = attr.value.expression
+    if (expr?.type === 'Literal' && typeof expr.value === 'string') {
+      return expr.value
+    }
+    if (
+      expr?.type === 'TemplateLiteral' &&
+      (!expr.expressions || expr.expressions.length === 0)
+    ) {
+      return expr.quasis?.[0]?.value?.raw ?? null
+    }
+  }
+  return null
+}
+var SUSPECT_NAME =
+  /(user[_-]?input|input|query|search|hash|location|redirect|return[_-]?url|callback[_-]?url|url[_-]?param|params?)/i
+function hasSuspectName(node) {
+  if (!node || typeof node !== 'object') return false
+  if (Array.isArray(node)) return node.some(hasSuspectName)
+  if (node.type === 'Identifier' && SUSPECT_NAME.test(node.name)) return true
+  if (
+    node.type === 'MemberExpression' &&
+    node.property?.type === 'Identifier' &&
+    SUSPECT_NAME.test(node.property.name)
+  ) {
+    return true
+  }
+  for (const key of Object.keys(node)) {
+    if (key === 'parent' || key === 'range' || key === 'loc') continue
+    if (hasSuspectName(node[key])) return true
+  }
+  return false
+}
+function isDynamicUnsafe(expr) {
+  if (!expr) return false
+  if (expr.type === 'Literal') return false
+  if (expr.type === 'TemplateLiteral') {
+    if (!expr.expressions || expr.expressions.length === 0) return false
+    const first = expr.quasis?.[0]?.value?.raw ?? ''
+    if (/^[/#?]/.test(first)) return false
+    return hasSuspectName(expr)
+  }
+  return hasSuspectName(expr)
+}
+var no_unsafe_jsx_url_default = {
+  meta: {
+    category: 'security',
+    severity: 'warning',
+    confidence: 'medium',
+    typeRequirement: 'none',
+    tags: ['cwe-79', 'owasp-a03'],
+    fixable: undefined,
+    schema: [],
+    messages: {
+      unsafeUrl:
+        'Unsafe URL in JSX attribute "{{name}}": javascript:/data: or a dynamic value may enable XSS. (no-unsafe-jsx-url)'
+    },
+    docs: {
+      description:
+        '禁止 JSX 中的 javascript:/data: URL 与高风险元素上的动态 href/src',
+      rationale:
+        'javascript:/data: URL 与外部可控的动态 URL 可被用于 XSS/开放重定向；应在渲染前做协议白名单与 URL 校验。',
+      badExamples: [
+        '<a href={userInput}>x</a>',
+        '<a href="javascript:alert(1)">x</a>',
+        '<iframe src={url} />'
+      ],
+      goodExamples: [
+        '<a href="https://example.com">x</a>',
+        '<a href={`/users/${id}`}>x</a>',
+        '<img src="data:image/png;base64,..." />'
+      ],
+      falsePositives: [
+        '动态 href={route} / href={config.url} / href={routerLink} 不在名称启发式内，不报；同理非 user/input/query/location 等命名的动态 URL 可能漏报（保守边界）',
+        'img 动态 src 不报；{...props} spread 与自定义组件的动态 href/src 不分析（P0 边界）',
+        'data:image/avif、bmp 等不在安全 MIME 表，当前会报（P0 保守）',
+        'vbscript: / file: / blob: 不在 P0 覆盖面'
+      ]
+    }
+  },
+  create(context) {
+    return {
+      JSXOpeningElement(node) {
+        const elementName =
+          node.name?.type === 'JSXIdentifier' ? node.name.name : ''
+        const isIntrinsic = /^[a-z]/.test(elementName)
+        for (const attr of node.attributes ?? []) {
+          if (attr?.type !== 'JSXAttribute') continue
+          if (attr.name?.type !== 'JSXIdentifier') continue
+          const attrName = attr.name.name
+          if (attrName !== 'href' && attrName !== 'src') continue
+          const literal = staticString(attr)
+          if (literal !== null) {
+            if (isDangerousScheme(literal, attrName)) {
+              context.report({
+                node: attr,
+                messageId: 'unsafeUrl',
+                data: { name: attrName }
+              })
+            }
+            continue
+          }
+          if (!isIntrinsic) continue
+          const targeted =
+            (attrName === 'href' && HREF_ELEMENTS.has(elementName)) ||
+            (attrName === 'src' && SRC_ELEMENTS.has(elementName))
+          if (!targeted) continue
+          const expr =
+            attr.value?.type === 'JSXExpressionContainer'
+              ? attr.value.expression
+              : null
+          if (expr && isDynamicUnsafe(expr)) {
+            context.report({
+              node: attr,
+              messageId: 'unsafeUrl',
+              data: { name: attrName }
+            })
+          }
+        }
+      }
+    }
+  }
+}
+
 // packages/rules-core/src/index.js
 var src_default = {
   name: 'lintsight',
@@ -2177,7 +2371,9 @@ var src_default = {
     'no-vm-dynamic-code': no_vm_dynamic_code_default,
     'no-insecure-cookie': no_insecure_cookie_default,
     'no-unsafe-trust-bypass': no_unsafe_trust_bypass_default,
-    'no-serve-index': no_serve_index_default
+    'no-serve-index': no_serve_index_default,
+    'no-jsx-dangerous-html': no_jsx_dangerous_html_default,
+    'no-unsafe-jsx-url': no_unsafe_jsx_url_default
   }
 }
 export { src_default as default }

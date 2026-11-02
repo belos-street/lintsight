@@ -472,6 +472,22 @@ mod tests {
         spans
     }
 
+    /// G9：`.tsx` SourceType 解析 + 既有规则在 JSX 表达式内工作
+    fn hits_tsx(source: &str) -> Vec<Span> {
+        let allocator = oxc_allocator::Allocator::default();
+        let mut spans = Vec::new();
+        crate::context::with_context(&allocator, "a.tsx", source, |ctx| {
+            spans = NoEval.check(ctx).into_iter().map(|d| d.span).collect();
+        });
+        spans
+    }
+
+    #[test]
+    fn detects_eval_inside_tsx_expression() {
+        let spans = hits_tsx("const el = <div>{eval(code)}</div>\n");
+        assert_eq!(spans.len(), 1);
+    }
+
     #[test]
     fn detects_direct_eval_call() {
         let spans = hits("eval('1+1')\n");
