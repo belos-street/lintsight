@@ -1,6 +1,6 @@
 # Proposal: G12 默认 recommended/security 预设
 
-> change-id：`20261102-default-preset` · 日期：`2026-11-02` · 状态：已确认进入实现（评审整改：无 config 边界 / effective 口径 / dead-rule 匹配已钉死）
+> change-id：`20261102-default-preset` · 日期：`2026-11-02` · 状态：已实现（评审整改：无 config 边界 / effective 口径 / dead-rule 匹配已钉死）
 
 ## 确认记录
 
